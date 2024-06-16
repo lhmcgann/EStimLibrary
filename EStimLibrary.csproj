@@ -1,0 +1,53 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="HardwareMaps\Data\" />
+    <None Remove="Core\" />
+    <None Remove="Extensions\" />
+    <None Remove="Core\Haptics\" />
+    <None Remove="Core\HardwareInterfaces\" />
+    <None Remove="Core\SpatialModel\" />
+    <None Remove="Core\Stimulation\" />
+    <None Remove="Extensions\Haptics\" />
+    <None Remove="Extensions\HardwareInterfaces\" />
+    <None Remove="Extensions\SpatialModel\" />
+    <None Remove="Extensions\Stimulation\" />
+    <None Remove="Extensions\Stimulation\Stimulators\" />
+    <None Remove="Extensions\Stimulation\Pulses\" />
+    <None Remove="Extensions\Stimulation\Phases\" />
+    <None Remove="Core\Stimulation\Patterns\" />
+    <None Remove="Extensions\Stimulation\Patterns\" />
+    <None Remove="Extensions\Stimulation\Trains\" />
+    <None Remove="Extensions\SpatialModel\StringHierarchy\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Core\" />
+    <Folder Include="Extensions\" />
+    <Folder Include="Core\Haptics\" />
+    <Folder Include="Core\HardwareInterfaces\" />
+    <Folder Include="Core\SpatialModel\" />
+    <Folder Include="Core\Stimulation\" />
+    <Folder Include="Extensions\Haptics\" />
+    <Folder Include="Extensions\HardwareInterfaces\" />
+    <Folder Include="Extensions\SpatialModel\" />
+    <Folder Include="Extensions\Stimulation\" />
+    <Folder Include="Extensions\Stimulation\Stimulators\" />
+    <Folder Include="Extensions\Stimulation\Pulses\" />
+    <Folder Include="Extensions\Stimulation\Phases\" />
+    <Folder Include="Core\Stimulation\Patterns\" />
+    <Folder Include="Extensions\Stimulation\Patterns\" />
+    <Folder Include="Extensions\Stimulation\Trains\" />
+    <Folder Include="Extensions\SpatialModel\StringHierarchy\" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="System.IO.Ports" Version="7.0.0" />
+    <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+</Project>

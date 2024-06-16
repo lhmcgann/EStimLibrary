@@ -1,0 +1,91 @@
+﻿// Any JObject with an "options" property can be selected as the model root. Any property within the nested JObject of that "options" property is then a valid value for a location within the model. If a property within the "options" JObject contains its own "options" property...
+// For example, "hand" could be the model root. "body" would be a valid value, but just "finger" would not because "finger" has an "options" property. Thus, you would have to select one of the "finger" "options" and concatenate that property name to "finger" to make it a valid value: e.g., "index finger". To go
+
+{
+    "_requiredModifiers": [ "x", "y", "z" ],
+    "body": {
+        "modifiers": {
+            "x": [ "left", "middle", "right" ],
+            "y": [ "superior", "central", "inferior" ],
+            "z": [ "anterior", "posterior" ]
+        },
+        "subregions": {
+            "core": {
+                "subregions": {
+                    "head": {},
+                    "neck": {},
+                    "trunk": {}
+                }
+            },
+            "lowerExtremity": {
+                "options": [ "left", "right" ],
+                "modifiers": {
+                    "x": [ "medial", "middle", "lateral" ],
+                    "y": [ "proximal", "intermediate", "distal" ],
+                    "z": [ "front", "back" ]
+                },
+                "subregions": {
+                    "thigh": {},
+                    "shank": {},
+                    "foot": {
+                        "subregions": {
+                            "footbody": {},
+                            "toe": {
+                                "options": [ "big", "index", "middle", "ring", "pinky" ]
+                            }
+                        }
+                    }
+                }
+            },
+            "upperExtremity": {
+                "options": [ "left", "right" ],
+                "modifiers": {
+                    // directionality terms should hold true w/in scope regardless of pose outside of scope, i.e., should hold if hand is pronated, supinated, etc
+                    "x": [ "medial", "middle", "lateral" ], // this one is not pose-independent: deps on z :/
+                    "y": [ "proximal", "intermediate", "distal" ],
+                    "z": [ "front", "back" ]
+                },
+                "subregions": {
+                    "upperArm": {
+                        "modifiers": {
+                            "x": [ "medial", "central", "lateral" ],
+                            "z": [ "front", "back" ]
+                        }
+                    },
+                    "forearm": {
+                        "modifiers": {
+                            "x": [ "medial", "central", "lateral" ],
+                            "z": [ "volar", "dorsal" ]
+                        }
+                    },
+                    "hand": {
+                        "modifiers": {
+                            // directionality terms should hold true w/in scope regardless of pose outside of scope, i.e., should hold if hand is pronated, supinated, etc
+                            "x": [ "ulnar", "median", "radial" ],
+                            "z": [ "palmar", "dorsal" ]
+                        },
+                        "subregions": {
+                            "handbody": {
+                                "modifiers": {
+                                    "x": [ "ulnar", "central", "radial" ]
+                                }
+                            },
+                            "finger": {
+                                "options": [ "thumb", "index", "middle", "ring", "pinky" ],
+                                "modifiers": {
+                                    "x": [ "ulnar", "central", "radial" ]
+                                },
+                                "subregions": {
+                                    "phalanx": {
+                                        "options": [ "proximal", "intermediate", "distal" ]
+                                    }
+
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
