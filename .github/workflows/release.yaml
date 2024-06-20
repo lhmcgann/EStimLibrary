@@ -62,6 +62,7 @@ jobs:
           asset_path: ${{ steps.find-pkg.outputs.PKG }}
           asset_name: EStimLibrary-${{ matrix.os }}-${{ github.ref_name }}.nupkg
           asset_content_type: application/zip
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Notify of Release
         if: github.event.release.prerelease == false
