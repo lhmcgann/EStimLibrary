@@ -1,0 +1,47 @@
+name: Release Pipeline
+
+on:
+  release:
+    types: [published, prereleased]
+
+jobs:
+  release:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '7.x' # Adjust to your target .NET version
+
+      - name: Restore dependencies
+        run: dotnet restore EStimLibrary.sln
+
+      - name: Build solution
+        run: dotnet build EStimLibrary.sln --no-restore --configuration Release
+
+      - name: Package .dll
+        run: dotnet pack src/EStimLibrary/EStimLibrary.csproj --configuration Release --no-build --output nupkg/
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: nupkg/EStimLibrary.*.nupkg
+          asset_name: EStimLibrary-${{ matrix.os }}-${{ github.event.release.tag_name }}.nupkg
+          asset_content_type: application/zip
+
+      - name: Notify of Release
+        if: github.event.release.prerelease == false
+        run: echo "This is a full release on ${{ matrix.os }}."
+
+      - name: Notify of Pre-Release
+        if: github.event.release.prerelease == true
+        run: echo "This is a pre-release on ${{ matrix.os }}."
