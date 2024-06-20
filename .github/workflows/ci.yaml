@@ -6,11 +6,13 @@ on:
       - '**/*.cs'       # Trigger only when source code changed.
     branches:
       - main
+      - '**release**'   # Trigger on branches with 'release' in the name
   pull_request:
     paths:
       - '**/*.cs'       # Trigger only when source code changed.
     branches:
       - main
+      - '**release**'   # Trigger on branches with 'release' in the name
 
 jobs:
   build-and-test:
