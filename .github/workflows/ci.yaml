@@ -26,16 +26,13 @@ jobs:
           dotnet-version: '7.x' # Adjust to your target .NET version
 
       - name: Restore dependencies
-        run: dotnet restore YourLibrary.sln
+        run: dotnet restore EStimLibrary.sln
 
       - name: Build solution
-        run: dotnet build YourLibrary.sln --no-restore --configuration Release
+        run: dotnet build EStimLibrary.sln --no-restore --configuration Release
 
       - name: Run unit tests and collect coverage
-        run: dotnet test tests/YourLibrary.UnitTests/YourLibrary.UnitTests.csproj --no-build --configuration Release --collect:"XPlat Code Coverage"
-
-      - name: Run integration tests and collect coverage
-        run: dotnet test tests/YourLibrary.IntegrationTests/YourLibrary.IntegrationTests.csproj --no-build --configuration Release --collect:"XPlat Code Coverage"
+        run: dotnet test tests/EStimLibrary.UnitTests/EStimLibrary.UnitTests.csproj --no-build --configuration Release --collect:"XPlat Code Coverage"
 
       - name: Install ReportGenerator
         run: dotnet tool restore
