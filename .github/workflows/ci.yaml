@@ -2,14 +2,18 @@ name: CI Pipeline
 
 on:
   push:
-    paths:
-      - '**/*.cs'       # Trigger only when source code changed.
+    paths:              # Trigger when source code or build files changed.
+      - '**/*.cs'
+      - '**/*.sln'
+      - '**/*.csproj'
     branches:
       - main
       - '**release**'   # Trigger on branches with 'release' in the name
   pull_request:
-    paths:
-      - '**/*.cs'       # Trigger only when source code changed.
+    paths:              # Trigger when source code or build files changed.
+      - '**/*.cs'
+      - '**/*.sln'
+      - '**/*.csproj'
     branches:
       - main
       - '**release**'   # Trigger on branches with 'release' in the name
