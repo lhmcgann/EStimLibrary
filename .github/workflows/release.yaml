@@ -5,7 +5,8 @@ on:
     types: [published, prereleased]
 
 jobs:
-  release:
+  release-build-assets:
+    timeout-minutes: 15
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
@@ -29,6 +30,9 @@ jobs:
 
       - name: Package .dll
         run: dotnet pack src/EStimLibrary/EStimLibrary.csproj --configuration Release --no-build --output nupkg/
+
+      - name: List output files
+        run: ls -l nupkg/
 
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1

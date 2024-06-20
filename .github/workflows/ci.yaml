@@ -20,6 +20,7 @@ on:
 
 jobs:
   build-and-test:
+    timeout-minutes: 15
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
