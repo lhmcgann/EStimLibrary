@@ -1,0 +1,52 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '7.x' # Adjust to your target .NET version
+
+      - name: Restore dependencies
+        run: dotnet restore YourLibrary.sln
+
+      - name: Build solution
+        run: dotnet build YourLibrary.sln --no-restore --configuration Release
+
+      - name: Run unit tests and collect coverage
+        run: dotnet test tests/YourLibrary.UnitTests/YourLibrary.UnitTests.csproj --no-build --configuration Release --collect:"XPlat Code Coverage"
+
+      - name: Run integration tests and collect coverage
+        run: dotnet test tests/YourLibrary.IntegrationTests/YourLibrary.IntegrationTests.csproj --no-build --configuration Release --collect:"XPlat Code Coverage"
+
+      - name: Install ReportGenerator
+        run: dotnet tool restore
+
+      - name: Generate coverage report
+        run: |
+          reportgenerator -reports:tests/**/coverage.cobertura.xml -targetdir:coverage -reporttypes:Html
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: coverage
+
