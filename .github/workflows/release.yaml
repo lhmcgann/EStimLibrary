@@ -37,7 +37,7 @@ jobs:
         env:
           TAG: ${{ steps.get-tag.outputs.TAG }}
         # Strip the v prefix from the GitHub tag.
-        run: echo "VERSION=${TAG#v}" >> $GITHUB_OUTPUTS
+        run: echo "VERSION=${TAG#v}" >> "$GITHUB_OUTPUTS"
 
       - name: Package .dll
         env:
