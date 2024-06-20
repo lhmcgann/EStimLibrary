@@ -28,20 +28,33 @@ jobs:
       - name: Build solution
         run: dotnet build EStimLibrary.sln --no-restore --configuration Release
 
+      - name: Get release tag 
+        id: get-tag
+        run: echo "TAG=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+
+      - name: Get pure version
+        id: get-version
+        env:
+          TAG: ${{ steps.get-tag.outputs.TAG }}
+        # Strip the v prefix from the GitHub tag.
+        run: echo "VERSION=${TAG#v}" >> $GITHUB_OUTPUTS
+
       - name: Package .dll
-        run: |
-          TAG=${{ github.ref_name }}
-          VERSION=${TAG#v}      # Strip the v prefix from the GitHub tag.
-          dotnet pack src/EStimLibrary/EStimLibrary.csproj --configuration Release --no-build --output nupkg/ /p:Version=${VERSION}
+        env:
+          VERSION: ${{ steps.get-version.outputs.VERSION }}
+        run:
+          dotnet pack src/EStimLibrary/EStimLibrary.csproj --configuration Release --no-build --output nupkg/ /p:Version="${VERSION}"
 
       - name: List output files
         run: ls -l nupkg/
 
       - name: Upload Release Asset
+        env:
+          VERSION: ${{ steps.get-version.outputs.VERSION }}
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: nupkg/EStimLibrary.${{ github.ref_name #v }}.nupkg
+          asset_path: "nupkg/EStimLibrary.${VERSION}.nupkg"
           asset_name: EStimLibrary-${{ matrix.os }}-${{ github.ref_name }}.nupkg
           asset_content_type: application/zip
 
