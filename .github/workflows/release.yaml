@@ -43,7 +43,7 @@ jobs:
         env:
           VERSION: ${{ steps.get-version.outputs.VERSION }}
         run:
-          dotnet pack src/EStimLibrary/EStimLibrary.csproj --configuration Release --no-build --output nupkg/ /p:Version="${VERSION}"
+          dotnet pack src/EStimLibrary/EStimLibrary.csproj --configuration Release --no-build --output nupkg/ /p:PackageVersion="${VERSION}"
 
       - name: List output files
         run: ls -l nupkg/
