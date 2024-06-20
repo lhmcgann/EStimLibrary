@@ -31,21 +31,21 @@ jobs:
       - name: Package .dll
         run: |
           TAG=${{ github.ref_name }}
-          VERSION_SUFFIX=${TAG#v}       # Strip the v prefix from the GitHub tag.
-          dotnet pack src/EStimLibrary/EStimLibrary.csproj --configuration Release --no-build --output nupkg/ /p:VersionSuffix=${VERSION_SUFFIX}
+          VERSION=${TAG#v}      # Strip the v prefix from the GitHub tag.
+          dotnet pack src/EStimLibrary/EStimLibrary.csproj --configuration Release --no-build --output nupkg/ /p:Version=${VERSION}
 
       - name: List output files
         run: ls -l nupkg/
 
       - name: Get package file name
         id: get-package
-        run: echo "::set-output name=package_file::$(ls nupkg/EStimLibrary.*.nupkg)"
+        run: echo "name=package_file::$(ls nupkg/EStimLibrary.*.nupkg)"
 
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ${{ steps.get-package.outputs.package_file }}
+          asset_path: nupkg/EStimLibrary.${VERSION}.nupkg
           asset_name: EStimLibrary-${{ matrix.os }}-${{ github.ref_name }}.nupkg
           asset_content_type: application/zip
 
