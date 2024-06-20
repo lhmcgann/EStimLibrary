@@ -37,10 +37,6 @@ jobs:
       - name: List output files
         run: ls -l nupkg/
 
-      - name: Get package file name
-        id: get-package
-        run: echo "name=package_file::$(ls nupkg/EStimLibrary.*.nupkg)"
-
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
         with:
