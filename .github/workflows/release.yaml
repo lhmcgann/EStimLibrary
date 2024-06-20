@@ -2,7 +2,7 @@ name: Release Pipeline
 
 on:
   release:
-    types: [published, prereleased]
+    types: [published]
 
 jobs:
   release-build-assets:
@@ -29,17 +29,24 @@ jobs:
         run: dotnet build EStimLibrary.sln --no-restore --configuration Release
 
       - name: Package .dll
-        run: dotnet pack src/EStimLibrary/EStimLibrary.csproj --configuration Release --no-build --output nupkg/
+        run: |
+          TAG=${{ github.ref_name }}
+          VERSION_SUFFIX=${TAG#v}       # Strip the v prefix from the GitHub tag.
+          dotnet pack src/EStimLibrary/EStimLibrary.csproj --configuration Release --no-build --output nupkg/ /p:VersionSuffix=${VERSION_SUFFIX}
 
       - name: List output files
         run: ls -l nupkg/
+
+      - name: Get package file name
+        id: get-package
+        run: echo "::set-output name=package_file::$(ls nupkg/EStimLibrary.*.nupkg)"
 
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: nupkg/EStimLibrary.*.nupkg
-          asset_name: EStimLibrary-${{ matrix.os }}-${{ github.event.release.tag_name }}.nupkg
+          asset_path: ${{ steps.get-package.outputs.package_file }}
+          asset_name: EStimLibrary-${{ matrix.os }}-${{ github.ref_name }}.nupkg
           asset_content_type: application/zip
 
       - name: Notify of Release
