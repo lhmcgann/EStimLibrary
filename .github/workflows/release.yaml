@@ -31,8 +31,13 @@ jobs:
       - name: Get release version
         id: get-version
         run: |
-          TAG="${{ github.ref_name }}"
-          VERSION="${TAG#v}"
+          if [ ${{ matrix.os }} == "windows-latest" ]; then
+            $TAG = "${{ github.ref_name }}"
+            $VERSION = $TAG.Substring(1)
+          else
+            TAG=${{ github.ref_name }}
+            VERSION=${TAG#v}
+          fi
           echo "Version: ${VERSION}"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
