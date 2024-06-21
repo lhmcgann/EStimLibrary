@@ -36,6 +36,22 @@ jobs:
           echo "Version: ${VERSION}"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
+      - name: Find .dll
+        id: find-dll
+        run: |
+          PATH="src/EStimLibrarybin/Release/net*/EStimLibrary.dll"
+          echo "path=$PATH" >> "$GITHUB_OUTPUT"
+
+      - name: Upload .dll
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ${{ steps.find-dll.outputs.path }}
+          asset_name: EStimLibrary-${{ steps.get-version.outputs.version }}-${{ runner.os }}.dll
+          asset_content_type: application/zip
+
       - name: Package .dll
         env:
           VERSION: ${{ steps.get-version.outputs.version }}
@@ -100,6 +116,22 @@ jobs:
           $VERSION = $TAG.Substring(1)
           Write-Host "Version: $VERSION"
           "version=$VERSION" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Find .dll
+        id: find-dll
+        run: |
+          $PATH = "src/EStimLibrarybin/Release/net*/EStimLibrary.dll"
+          "path=$PATH" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Upload .dll
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ${{ steps.find-dll.outputs.path }}
+          asset_name: EStimLibrary-${{ steps.get-version.outputs.version }}-${{ runner.os }}.dll
+          asset_content_type: application/zip
 
       - name: Package .dll
         env:
