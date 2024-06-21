@@ -62,7 +62,7 @@ jobs:
         with:
           upload_url: ${{ github.event.release.upload_url }}
           asset_path: ${{ steps.find-pkg.outputs.PKG }}
-          asset_name: EStimLibrary-${{ matrix.os }}-${{ steps.get-version.outputs.version }}.nupkg
+          asset_name: EStimLibrary-${{ steps.get-version.outputs.version }}-${{ runner.os }}.nupkg
           asset_content_type: application/zip
 
       - name: Notify of Release
@@ -127,7 +127,7 @@ jobs:
         with:
           upload_url: ${{ github.event.release.upload_url }}
           asset_path: ${{ steps.find-pkg.outputs.pkg }}
-          asset_name: EStimLibrary-${{ matrix.os }}-${{ steps.get-version.outputs.version }}.nupkg
+          asset_name: EStimLibrary-${{ steps.get-version.outputs.version }}-${{ runner.os }}.nupkg
           asset_content_type: application/zip
 
       - name: Notify of Release
