@@ -105,8 +105,8 @@ jobs:
         env:
           VERSION: ${{ steps.get-version.outputs.version }}
         run: |
-          Write-Host "Version: $VERSION"
-          dotnet pack src/EStimLibrary/EStimLibrary.csproj --configuration Release --no-build --output nupkg/ /p:PackageVersion="$VERSION"
+          Write-Host "Version: $env.VERSION"
+          dotnet pack src/EStimLibrary/EStimLibrary.csproj --configuration Release --no-build --output nupkg/ /p:PackageVersion="$env.VERSION"
 
       - name: List output files
         run: Get-ChildItem -Path nupkg | Format-Table -Property Name,Length,CreationTime
@@ -116,8 +116,8 @@ jobs:
         env:
           VERSION: ${{ steps.get-version.outputs.version }}
         run: |
-          Write-Host "Version: $VERSION"
-          $PKG = "nupkg/EStimLibrary.$VERSION.nupkg"
+          Write-Host "Version: $env.VERSION"
+          $PKG = "nupkg/EStimLibrary.$env.VERSION.nupkg"
           "pkg=$PKG" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
       - name: Upload Release Asset
