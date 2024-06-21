@@ -55,7 +55,8 @@ jobs:
           echo "PKG=nupkg/EStimLibrary.$VERSION.nupkg" >> "$GITHUB_OUTPUT"
 
       - name: Upload Release Asset
-        uses: tanyagray/action-upload-release-asset@v1.1.3
+        #uses: tanyagray/action-upload-release-asset@v1.1.3
+        uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -120,7 +121,7 @@ jobs:
           "pkg=$PKG" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
       - name: Upload Release Asset
-        uses: action/upload-release-asset@v1
+        uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
