@@ -31,8 +31,8 @@ jobs:
       - name: Get release version
         id: get-version
         run: |
-          TAG: ${{ github.ref_name }}
-          VERSION: ${TAG#v}
+          TAG=${{ github.ref_name }}
+          VERSION=${TAG#v}
           echo "Version: ${VERSION}"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
