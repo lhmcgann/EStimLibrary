@@ -28,21 +28,19 @@ jobs:
       - name: Build solution
         run: dotnet build EStimLibrary.sln --no-restore --configuration Release
 
-      - name: Get release tag 
-        id: get-tag
-        run: echo "TAG=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
-
-      - name: Get pure version
+      - name: Get release version
         id: get-version
-        env:
-          TAG: ${{ steps.get-tag.outputs.TAG }}
-        # Strip the v prefix from the GitHub tag.
-        run: echo "VERSION=${TAG#v}" >> "$GITHUB_OUTPUT"
+        run: |
+          TAG: ${{ github.ref_name }}
+          VERSION: ${TAG#v}
+          echo "Version: ${VERSION}"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: Package .dll
         env:
-          VERSION: ${{ steps.get-version.outputs.VERSION }}
-        run:
+          VERSION: ${{ steps.get-version.outputs.version }}
+        run: |
+          echo "Version: ${VERSION}"
           dotnet pack src/EStimLibrary/EStimLibrary.csproj --configuration Release --no-build --output nupkg/ /p:PackageVersion="${VERSION}"
 
       - name: List output files
@@ -51,8 +49,9 @@ jobs:
       - name: Find package name
         id: find-pkg
         env:
-          VERSION: ${{ steps.get-version.outputs.VERSION }}
-        run:
+          VERSION: ${{ steps.get-version.outputs.version }}
+        run: |
+          echo "Version: ${VERSION}"
           echo "PKG=nupkg/EStimLibrary.${VERSION}.nupkg" >> "$GITHUB_OUTPUT"
 
       - name: Upload Release Asset
@@ -62,7 +61,7 @@ jobs:
         with:
           upload_url: ${{ github.event.release.upload_url }}
           asset_path: ${{ steps.find-pkg.outputs.PKG }}
-          asset_name: EStimLibrary-${{ matrix.os }}-${{ github.ref_name }}.nupkg
+          asset_name: EStimLibrary-${{ matrix.os }}-${{ steps.get-version.outputs.version }}.nupkg
           asset_content_type: application/zip
 
       - name: Notify of Release
