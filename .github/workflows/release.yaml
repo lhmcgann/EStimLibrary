@@ -39,7 +39,7 @@ jobs:
       - name: Find .dll
         id: find-dll
         run: |
-          PATH="src/EStimLibrary/bin/Release/net*/EStimLibrary.dll"
+          PATH="src/EStimLibrary/bin/Release/net7.0/EStimLibrary.dll"
           echo "path=$PATH" >> "$GITHUB_OUTPUT"
 
       - name: Upload .dll
@@ -120,7 +120,7 @@ jobs:
       - name: Find .dll
         id: find-dll
         run: |
-          $PATH = "src/EStimLibrary/bin/Release/net*/EStimLibrary.dll"
+          $PATH = "src/EStimLibrary/bin/Release/net7.0/EStimLibrary.dll"
           "path=$PATH" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
       - name: Upload .dll
