@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 25.0.1706.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EStimLibrary.ConsoleAppDemo", "EStimLibrary.ConsoleAppDemo.csproj", "{519BE4AC-513A-4B98-B15D-955C0DC039B3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EStimLibrary", "..\..\src\EStimLibrary\EStimLibrary.csproj", "{EBD41910-FB08-4872-B16D-5C406C00BC00}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{519BE4AC-513A-4B98-B15D-955C0DC039B3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{519BE4AC-513A-4B98-B15D-955C0DC039B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{519BE4AC-513A-4B98-B15D-955C0DC039B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{519BE4AC-513A-4B98-B15D-955C0DC039B3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EBD41910-FB08-4872-B16D-5C406C00BC00}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EBD41910-FB08-4872-B16D-5C406C00BC00}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EBD41910-FB08-4872-B16D-5C406C00BC00}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EBD41910-FB08-4872-B16D-5C406C00BC00}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {55EB8495-E8D4-480D-BB5F-B1EEFED0C7CD}
+	EndGlobalSection
+EndGlobal
