@@ -1,0 +1,3 @@
+[submodule "models/EStimLibrary.SpatialModels"]
+	path = models/EStimLibrary.SpatialModels
+	url = git@github.com:lhmcgann/EStimLibrary.SpatialModels.git
