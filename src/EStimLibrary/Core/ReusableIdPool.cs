@@ -68,31 +68,35 @@ public class ReusableIdPool
     /// Create a pool of resusable IDs from [baseId, baseId+numIds).
     /// </summary>
     /// <param name="baseId">The base ID at which this pool of IDs will start.
-    /// This value cannot be changed after construction.</param>
-    /// <param name="numIds">The number of IDs in this pool. Can be changed
-    /// after construction.</param>
+    /// Defaults to 0 if a negative number is given. This value cannot be
+    /// changed after construction.</param>
+    /// <param name="numIds">The number of IDs in this pool. Defaults to 0 if a
+    /// negative number is given. Can be changed after construction.</param>
     public ReusableIdPool(int baseId, int numIds)
     {
-        // Store the base ID.
+        // Store the base ID. Property setter handles defaulting to 0.
         this.BaseId = baseId;
 
-        // Store the number of IDs in this pool.
+        // Store the number of IDs in this pool. Property setter handles
+        // defaulting to 0.
         this.NumIds = numIds;
 
-        // Initialize set of used IDs to empty. This is the only set manually edited.
+        // Initialize set of used IDs to empty. This is the only set manually
+        // that is method-editable not auto-generated.
         this.UsedIds = new();
     }
 
     /// <summary>
-    /// Create an empty pool of reusable IDs.
+    /// Create an empty pool of reusable IDs. Base ID defaults to 0.
     /// </summary>
     public ReusableIdPool()
     {
         // Base ID and Num IDs = 0.
-        this.BaseId = 0;
-        this.NumIds = 0;
+        this.BaseId = MIN_BASE_ID;
+        this.NumIds = MIN_NUM_IDS;
 
-        // Initialize set of used IDs to empty. This is the only set manually edited.
+        // Initialize set of used IDs to empty. This is the only set manually
+        // that is method-editable not auto-generated.
         this.UsedIds = new();
     }
 
