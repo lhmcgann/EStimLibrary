@@ -18,6 +18,9 @@ on:
       - main
       - '**release**'   # Trigger on branches with 'release' in the name
 
+env:
+  SLN_PATH: tests/EStimLibrary.UnitTests/EStimLibrary.UnitTests.sln
+
 jobs:
   build-and-test:
     timeout-minutes: 15
@@ -37,10 +40,10 @@ jobs:
           dotnet-version: '7.x' # Adjust to your target .NET version
 
       - name: Restore dependencies
-        run: dotnet restore EStimLibrary.sln
+        run: dotnet restore $SLN_PATH
 
       - name: Build solution
-        run: dotnet build EStimLibrary.sln --no-restore --configuration Release
+        run: dotnet build $SLN_PATH --no-restore --configuration Release
 
       - name: Install ReportGenerator
         run: dotnet tool install -g dotnet-reportgenerator-globaltool
