@@ -22,9 +22,6 @@ on:
       - main
       - '**release**'   # Trigger on branches with 'release' in the name
 
-env:
-  SLN_PATH: tests/EStimLibrary.UnitTests/EStimLibrary.UnitTests.sln
-
 jobs:
   build-and-test:
     timeout-minutes: 15
@@ -43,20 +40,21 @@ jobs:
         with:
           dotnet-version: '7.x' # Adjust to your target .NET version
 
+      # Uncomment this process if you want the windows build to take 3mins extra but get rid of the 'Workload updates are available. Run `dotnet workload list` for more information' msg after building
       #- name: Update dotnet workloads (Windows)
       #  if: matrix.os == 'windows-latest'
       #  run: dotnet workload restore
 
       - name: Restore dependencies
-        run: dotnet restore $SLN_PATH
+        run: dotnet restore tests/EStimLibrary.UnitTests/EStimLibrary.UnitTests.sln
 
-      - name: Build solution without restore (non-Windows)
-        if: matrix.os != 'windows-latest'
-        run: dotnet build $SLN_PATH --no-restore --configuration Release
+      - name: Build solution without restore
+      #  if: matrix.os != 'windows-latest'
+        run: dotnet build tests/EStimLibrary.UnitTests/EStimLibrary.UnitTests.sln --no-restore --configuration Release
 
-      - name: Build solution with restore (Windows)
-        if: matrix.os == 'windows-latest'
-        run: dotnet build tests/EStimLibrary.UnitTests/EStimLibrary.UnitTests.sln --configuration Release
+      #- name: Build solution with restore (Windows)
+      #  if: matrix.os == 'windows-latest'
+      #  run: dotnet build tests/EStimLibrary.UnitTests/EStimLibrary.UnitTests.sln --configuration Release
 
       - name: Install ReportGenerator
         run: dotnet tool install -g dotnet-reportgenerator-globaltool
