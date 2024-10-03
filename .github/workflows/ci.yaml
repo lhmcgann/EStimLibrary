@@ -43,18 +43,20 @@ jobs:
         with:
           dotnet-version: '7.x' # Adjust to your target .NET version
 
-      - name: Update dotnet workloads
-        if: matrix.os == 'windows-latest'
-        run: dotnet workload restore
+      #- name: Update dotnet workloads
+      #  if: matrix.os == 'windows-latest'
+      #  run: dotnet workload restore
 
       - name: Restore dependencies
         run: dotnet restore $SLN_PATH
 
-      - name: Build solution
+      - name: Build solution without restore (non-Windows)
+        if: matrix.os != 'windows-latest'
         run: dotnet build $SLN_PATH --no-restore --configuration Release
 
-      - name: Build test project independently
-        run: dotnet build tests/EStimLibrary.UnitTests/EStimLibrary.UnitTests.sln --configuration Release
+      - name: Build solution with restore (Windows)
+        if: matrix.os == 'windows-latest'
+        run: dotnet build $SLN_PATH --configuration Release
 
       - name: Install ReportGenerator
         run: dotnet tool install -g dotnet-reportgenerator-globaltool
