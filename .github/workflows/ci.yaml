@@ -50,8 +50,8 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore $SLN_PATH
 
-      - name: Build solution without restore (non-Windows)
-        if: matrix.os != 'windows-latest'
+      - name: Build solution without restore
+      #  if: matrix.os != 'windows-latest'
         run: dotnet build $SLN_PATH --no-restore --configuration Release
 
       - name: Build solution with restore (Windows)
