@@ -42,12 +42,21 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '7.x' # Adjust to your target .NET version
+      - name: Update donet workloads
+        run: dotnet workload restore
 
       - name: Restore dependencies
         run: dotnet restore $SLN_PATH
 
       - name: Build solution
         run: dotnet build $SLN_PATH --no-restore --configuration Release
+      - name: Verify build output
+        run: |
+          if [ "${{ runner.os }}" == "Windows" ]; then
+            test -f tests\\EStimLibrary.UnitTests\\bin\\Release\\net7.0\\EStimLibrary.UnitTests.dll
+          else
+            test -f tests/EStimLibrary.UnitTests/bin/Release/net7.0/EStimLibrary.UnitTests.dll
+          fi
 
       - name: Install ReportGenerator
         run: dotnet tool install -g dotnet-reportgenerator-globaltool
