@@ -1,36 +1,31 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.0.31903.59
+# Visual Studio Version 16
+VisualStudioVersion = 25.0.1706.14
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "..\..\src", "{7E35BD38-1080-4A2E-B8B4-7CB0C5C08607}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EStimLibrary", "..\..\src\EStimLibrary\EStimLibrary.csproj", "{FFCAB0A3-2F30-4420-9093-4F69203E59DD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EStimLibrary", "..\..\src\EStimLibrary\EStimLibrary.csproj", "{23710686-EDC8-41FC-AAC8-52B002F488D6}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "..\..\tests", "{2CFC1F67-5CCD-4EE2-8124-CCE906B9634B}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EStimLibrary.UnitTests", "..\..\tests\EStimLibrary.UnitTests\EStimLibrary.UnitTests.csproj", "{C0DD78B0-6C9D-492C-A574-37902B038A1A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EStimLibrary.UnitTests", "EStimLibrary.UnitTests.csproj", "{72932303-54A1-4315-AA34-641006B72149}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FFCAB0A3-2F30-4420-9093-4F69203E59DD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FFCAB0A3-2F30-4420-9093-4F69203E59DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FFCAB0A3-2F30-4420-9093-4F69203E59DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FFCAB0A3-2F30-4420-9093-4F69203E59DD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{72932303-54A1-4315-AA34-641006B72149}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{72932303-54A1-4315-AA34-641006B72149}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{72932303-54A1-4315-AA34-641006B72149}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{72932303-54A1-4315-AA34-641006B72149}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
-	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{23710686-EDC8-41FC-AAC8-52B002F488D6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{23710686-EDC8-41FC-AAC8-52B002F488D6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{23710686-EDC8-41FC-AAC8-52B002F488D6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{23710686-EDC8-41FC-AAC8-52B002F488D6}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C0DD78B0-6C9D-492C-A574-37902B038A1A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C0DD78B0-6C9D-492C-A574-37902B038A1A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C0DD78B0-6C9D-492C-A574-37902B038A1A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C0DD78B0-6C9D-492C-A574-37902B038A1A}.Release|Any CPU.Build.0 = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{23710686-EDC8-41FC-AAC8-52B002F488D6} = {7E35BD38-1080-4A2E-B8B4-7CB0C5C08607}
-		{C0DD78B0-6C9D-492C-A574-37902B038A1A} = {2CFC1F67-5CCD-4EE2-8124-CCE906B9634B}
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8EB6361E-6AD3-47AE-8EDF-049029E84529}
 	EndGlobalSection
 EndGlobal
