@@ -22,6 +22,10 @@ on:
       - main
       - '**release**'   # Trigger on branches with 'release' in the name
 
+env:
+  # NOTE: if want to use this, have to split into Windows (PowerShell) from Mac/Ubuntu (Bash) because PS has different syntax, namely $env:VAR_NAME rather than just $VAR_NAME
+  SLN_PATH: tests/EStimLibrary.UnitTests/EStimLibrary.UnitTests.sln
+
 jobs:
   build-and-test:
     timeout-minutes: 15
@@ -49,12 +53,7 @@ jobs:
         run: dotnet restore tests/EStimLibrary.UnitTests/EStimLibrary.UnitTests.sln
 
       - name: Build solution without restore
-      #  if: matrix.os != 'windows-latest'
         run: dotnet build tests/EStimLibrary.UnitTests/EStimLibrary.UnitTests.sln --no-restore --configuration Release
-
-      #- name: Build solution with restore (Windows)
-      #  if: matrix.os == 'windows-latest'
-      #  run: dotnet build tests/EStimLibrary.UnitTests/EStimLibrary.UnitTests.sln --configuration Release
 
       - name: Install ReportGenerator
         run: dotnet tool install -g dotnet-reportgenerator-globaltool

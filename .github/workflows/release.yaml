@@ -5,6 +5,7 @@ on:
     types: [published]
 
 env:
+  # NOTE: if want to use this, have to split into Windows (PowerShell) from Mac/Ubuntu (Bash) because PS has different syntax, namely $env:VAR_NAME rather than just $VAR_NAME
   SLN_PATH: tests/EStimLibrary.UnitTests/EStimLibrary.UnitTests.sln
 
 jobs:
@@ -107,10 +108,10 @@ jobs:
           dotnet-version: '7.x' # Adjust to your target .NET version
 
       - name: Restore dependencies
-        run: dotnet restore $SLN_PATH
+        run: dotnet restore $env:SLN_PATH
 
       - name: Build solution
-        run: dotnet build $SLN_PATH --no-restore --configuration Release
+        run: dotnet build $env:SLN_PATH --no-restore --configuration Release
 
       - name: Get release version
         id: get-version
