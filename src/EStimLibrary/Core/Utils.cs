@@ -2,6 +2,7 @@
 using System.IO.Ports;
 using System.Reflection;
 
+using EStimLibrary.Core.Haptics;
 using EStimLibrary.Core.Stimulation.Stimulators;
 
 
@@ -591,7 +592,7 @@ public static class Utils
         return File.ReadAllText(filePath);  // May throw an IOException.
     }
 
-    public static string EnumerableToString(IEnumerable<object> values)
+    public static string EnumerableToString<T>(IEnumerable<T> values)
     {
         return $"[{string.Join(',', values)}]";
     }
@@ -611,6 +612,30 @@ public static class Utils
             stringList = new();
             return false;
         }
+    }
+
+    /// <summary>
+    /// Generate a readably structured string listing the dictionary's value
+    /// sets per key.
+    /// </summary>
+    /// <typeparam name="T">Dictionary key type.</typeparam>
+    /// <typeparam name="K">Set value type.</typeparam>
+    /// <param name="d">The dictionary of sets.</param>
+    /// <param name="header">The string to directly prepend to the stringified
+    /// dict.</param>
+    /// <returns>A string prepended by the header and listing each key-valueSet
+    /// pair on a new indented line.</returns>
+    public static string DictOfSetsToString<T, K>(Dictionary<T, SortedSet<K>> d,
+        string header)
+    {
+        string dosStr = header;
+        foreach (var (key, values) in d)
+        {
+            dosStr += $"\t{key}: {Utils.EnumerableToString(
+                values.Select(c => (object)c))}\n";
+        }
+
+        return dosStr;
     }
 
     public static object ConstructWithUserInputParams(Type desiredType)
