@@ -2,18 +2,22 @@ name: CI Pipeline
 
 on:
   push:
-    paths:              # Trigger when source code or build files changed.
+    paths:              # Trigger when source code, sln or prj files, this file, or the xunit config file is changed.
       - '**/*.cs'
       - '**/*.sln'
       - '**/*.csproj'
+      - '**/ci.yaml'
+      = '**/xunit.runner.json'
     branches:
       - main
       - '**release**'   # Trigger on branches with 'release' in the name
   pull_request:
-    paths:              # Trigger when source code or build files changed.
+    paths:              # Trigger when source code, sln or prj files, this file, or the xunit config file is changed.
       - '**/*.cs'
       - '**/*.sln'
       - '**/*.csproj'
+      - '**/ci.yaml'
+      = '**/xunit.runner.json'
     branches:
       - main
       - '**release**'   # Trigger on branches with 'release' in the name
