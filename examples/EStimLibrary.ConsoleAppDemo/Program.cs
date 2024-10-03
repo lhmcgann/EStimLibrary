@@ -19,10 +19,6 @@ using MathNet.Numerics.LinearAlgebra;
 // must be done (if not actively request them be done)? something other than
 // documentation and trust?
 
-#region TESTING
-//Utils.TEST_PRINTS();
-#endregion
-
 
 #region Session Config
 
@@ -179,7 +175,7 @@ if (HARD_CODE_CONFIG)
     }
     else
     {
-        // Percept mapping: Group leads to reachable haptic areas.
+        // Percept mapping: Split leads to reachable haptic areas.
         // Lead group 0 has leads 0 (ulnar ring contact) and 2 (gel pad ground).
         var lp0 = new SortedSet<int>(new[] { 0, 2 });
         var a0 = new StringHierarchyArea(
@@ -585,8 +581,6 @@ else
         session.TryGetBodyModel(bodyModelKey, out var bodyModel);
 
         // Get the reachable haptic area for this pool.
-        //Type areaType = typeof(IArea).MakeGenericType(locationType);
-        //dynamic reachableHapticArea = Utils.ConstructWithUserInputParams(areaType);
         var paramValues = Utils.RequestFactoryCreateParamValues(
             bodyModel.AreaFactory.HelpMsg,
             bodyModel.AreaFactory.ParamLimits, Console.WriteLine,
