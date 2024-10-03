@@ -70,6 +70,7 @@ public class HapticSession
         this._stimManager.OutputsPerStimulator;
 
     public SortedSet<int> LeadIds => new(this._leadManager.Resources.Keys);
+    public Dictionary<int, Lead> Leads => this._leadManager.Resources;
 
     public List<string> BodyModelKeys => this._modelManager.BodyModelKeys;
 
