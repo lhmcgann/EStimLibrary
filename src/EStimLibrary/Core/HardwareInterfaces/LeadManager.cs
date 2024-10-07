@@ -2,14 +2,9 @@
 
 
 /// <summary>
-/// LeadManager represents a collection of physical electrical
-/// contacts that are wired to specific stimulator outputs via leads.
+/// LeadManager represents a collection of physical electrical contacts that are
+/// wired to specific stimulator outputs via leads.
 /// </summary>
-// TODO: carry the rename from InterfacConfiguration to LeadManager throughout
-// the many references in documentation (also, Dictionary refers to Interface
-// Config as a real thing --> so decide based on keeping that or not?)
-// --> probably just keep ICableHardware and figure out what to do w/ Cable
-// existing implementation.
 public class LeadManager : ResourceManager<Lead>
 {
     // Some key properties are inherited from the parent class ResourceManager.

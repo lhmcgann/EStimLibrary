@@ -661,7 +661,7 @@ public static class Utils
         return typeDict[typeName];
     }
 
-    // TODO: delete once the above generalized function is tested
+    #region TODO: delete once the generalized functions are tested
     public static Type SelectStimulatorType(
         Dictionary<string, Type> stimTypeDict,
         out string stimTypeName)
@@ -692,6 +692,7 @@ public static class Utils
         return Utils.GetInt("hardware ID",
             " number associated with this stimulator");
     }
+    #endregion
 
     public static int GetInt(string intName, string intNameExtension = "")
     {
