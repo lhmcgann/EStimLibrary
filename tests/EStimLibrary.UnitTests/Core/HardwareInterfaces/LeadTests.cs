@@ -201,13 +201,8 @@ namespace EStimLibrary.UnitTests.Core.HardwareInterfaces
         // Test for IsFullyIndependent
         [Theory]
         [MemberData(nameof(IsFullyIndependentTestData))]
-        public void IsFullyIndependent_ShouldReturnExpectedResults(SortedSet<int> contacts1, 
-            SortedSet<int> outputs1, SortedSet<int> contacts2, SortedSet<int> outputs2, bool expectedResult)
+        public void IsFullyIndependent_ShouldReturnExpectedResults(Lead lead1, Lead lead2, bool expectedResult)
         {
-            // Arrange
-            var lead1 = new Lead(contacts1, outputs1, Constants.CurrentDirection.SOURCE);
-            var lead2 = new Lead(contacts2, outputs2, Constants.CurrentDirection.SINK);
-
             // Act
             var result = lead1.IsFullyIndependent(lead2);
 
@@ -219,22 +214,120 @@ namespace EStimLibrary.UnitTests.Core.HardwareInterfaces
         {
             return new List<object[]>
             {
+                // Test when the leads are fully independent 
                 new object[] 
                 {
-                    new SortedSet<int> { 1, 2 }, 
-                    new SortedSet<int> { 3 }, 
-                    new SortedSet<int> { 4, 5 }, 
-                    new SortedSet<int> { 6 }, 
-                    true 
+                    new Lead(new SortedSet<int> {1}, 
+                        new SortedSet<int> {1}, Constants.CurrentDirection.SINK),
+                    new Lead(new SortedSet<int> {2}, 
+                        new SortedSet<int> {2}, Constants.CurrentDirection.SOURCE),
+                    true
                 },
                 new object[] 
                 {
-                    new SortedSet<int> { 1, 2 }, 
-                    new SortedSet<int> { 3 }, 
-                    new SortedSet<int> { 2, 4 }, 
-                    new SortedSet<int> { 5 }, 
+                    new Lead(new SortedSet<int> {}, 
+                        new SortedSet<int> {}, Constants.CurrentDirection.SOURCE),
+                    new Lead(new SortedSet<int> {}, 
+                        new SortedSet<int> {}, Constants.CurrentDirection.SINK),
+                    true
+                },
+                new object[] 
+                {
+                    new Lead(new SortedSet<int> {1, 2, 3}, 
+                        new SortedSet<int> {1, 4, 5}, Constants.CurrentDirection.SOURCE),
+                    new Lead(new SortedSet<int> {4, 5, 6}, 
+                        new SortedSet<int> {2, 3, 6}, Constants.CurrentDirection.SOURCE),
+                    true
+                },
+                new object[] 
+                {
+                    new Lead(new SortedSet<int> {1, 4, 5}, 
+                        new SortedSet<int> {1, 4, 5}, Constants.CurrentDirection.SOURCE),
+                    new Lead(new SortedSet<int> {2, 3, 6}, 
+                        new SortedSet<int> {2, 3, 6}, Constants.CurrentDirection.SOURCE),
+                    true
+                },
+                new object[] 
+                {
+                    new Lead(new SortedSet<int> {1}, 
+                        new SortedSet<int> {4}, Constants.CurrentDirection.SINK),
+                    new Lead(new SortedSet<int> {2, 3, 6}, 
+                        new SortedSet<int> {2, 3, 6}, Constants.CurrentDirection.SINK),
+                    true
+                },
+                new object[] 
+                {
+                    new Lead(new SortedSet<int> {1}, 
+                        new SortedSet<int> {4}, Constants.CurrentDirection.SINK),
+                    new Lead(new SortedSet<int> {}, 
+                        new SortedSet<int> {}, Constants.CurrentDirection.SINK),
+                    true
+                },
+                new object[] 
+                {
+                    new Lead(new SortedSet<int> {1, 2, 4}, 
+                        new SortedSet<int> {4}, Constants.CurrentDirection.SINK),
+                    new Lead(new SortedSet<int> {3}, 
+                        new SortedSet<int> {1, 2, 3, 5, 6, 7, 8}, Constants.CurrentDirection.SINK),
+                    true
+                },
+                // Tests for when the leads are not fully independent
+                new object[] 
+                {
+                    new Lead(new SortedSet<int> {1}, 
+                        new SortedSet<int> {1}, Constants.CurrentDirection.SINK),
+                    new Lead(new SortedSet<int> {1}, 
+                        new SortedSet<int> {1}, Constants.CurrentDirection.SOURCE),
                     false 
-                }
+                },
+                new object[] 
+                {
+                    new Lead(new SortedSet<int> {1, 2, 3}, 
+                        new SortedSet<int> {1}, Constants.CurrentDirection.SINK),
+                    new Lead(new SortedSet<int> {1, 2, 3}, 
+                        new SortedSet<int> {1}, Constants.CurrentDirection.SOURCE),
+                    false 
+                },
+                new object[] 
+                {
+                    new Lead(new SortedSet<int> {1}, 
+                        new SortedSet<int> {1, 2, 3}, Constants.CurrentDirection.SINK),
+                    new Lead(new SortedSet<int> {1}, 
+                        new SortedSet<int> {1, 2, 3}, Constants.CurrentDirection.SOURCE),
+                    false 
+                },
+                new object[] 
+                {
+                    new Lead(new SortedSet<int> {1, 2, 3}, 
+                        new SortedSet<int> {1}, Constants.CurrentDirection.SINK),
+                    new Lead(new SortedSet<int> {4, 5, 6}, 
+                        new SortedSet<int> {1}, Constants.CurrentDirection.SOURCE),
+                    false 
+                },
+                new object[] 
+                {
+                    new Lead(new SortedSet<int> {1}, 
+                        new SortedSet<int> {1, 2, 4}, Constants.CurrentDirection.SINK),
+                    new Lead(new SortedSet<int> {1}, 
+                        new SortedSet<int> {3}, Constants.CurrentDirection.SOURCE),
+                    false 
+                },
+                new object[] 
+                {
+                    new Lead(new SortedSet<int> {1}, 
+                        new SortedSet<int> {1, 2, 3, 4}, Constants.CurrentDirection.SINK),
+                    new Lead(new SortedSet<int> {2, 3, 4, 5}, 
+                        new SortedSet<int> {4}, Constants.CurrentDirection.SOURCE),
+                    false 
+                },
+                new object[] 
+                {
+                    new Lead(new SortedSet<int> {8, 9, 10}, 
+                        new SortedSet<int> {3, 4}, Constants.CurrentDirection.SINK),
+                    new Lead(new SortedSet<int> {1, 2, 3, 9}, 
+                        new SortedSet<int> {1}, Constants.CurrentDirection.SOURCE),
+                    false 
+                },
             };
         }
 
