@@ -53,11 +53,9 @@ namespace EStimLibrary.UnitTests.Core.HardwareInterfaces
         [Theory]
         [MemberData(nameof(GetConnectedOutputsTestData))]
         public void GetConnectedOutputs_ShouldReturnExpectedResults(int id, bool searchIsAnOutput, 
-            SortedSet<int> outputSet, SortedSet<int> expectedOutputs, bool expectedResult)
+            Lead lead, SortedSet<int> expectedOutputs, bool expectedResult)
         {
             // Arrange
-            var lead = new Lead(new SortedSet<int> { 1, 2 }, outputSet, Constants.CurrentDirection.SOURCE);
-
             // Act
             var result = lead.GetConnectedOutputs(id, searchIsAnOutput, out var connectedOutputs);
 
@@ -70,9 +68,56 @@ namespace EStimLibrary.UnitTests.Core.HardwareInterfaces
         {
             return new List<object[]>
             {
-                new object[] { 3, true, new SortedSet<int> { 3, 4, 5 }, new SortedSet<int> { 4, 5 }, true },
-                new object[] { 6, true, new SortedSet<int> { 3, 4, 5 }, new SortedSet<int> { 3, 4, 5 }, false },
-                new object[] { 1, false, new SortedSet<int> { 3, 4, 5 }, new SortedSet<int> { 3, 4, 5 }, false }
+                // Testing with an output as input when that output is connected to the lead
+                // We expect true and a modified output set
+                new object[] {3, true, new Lead(new SortedSet<int> {1, 2, 3}, 
+                    new SortedSet<int> {3, 4, 5}, Constants.CurrentDirection.SINK),
+                    new SortedSet<int> {4, 5}, true},
+                new object[] {8, true, new Lead(new SortedSet<int> {1}, 
+                        new SortedSet<int> {3, 4, 5, 6, 8}, Constants.CurrentDirection.SINK),
+                    new SortedSet<int> {3, 4, 5, 6}, true},
+                new object[] {3, true, new Lead(new SortedSet<int> {2, 3, 4, 8}, 
+                        new SortedSet<int> {3}, Constants.CurrentDirection.SINK),
+                    new SortedSet<int> {}, true},
+                // Testing with an output as the input where it is connected to the lead
+                // We expect to get false and an unmodified output set
+                new object[] {6, true, new Lead(new SortedSet<int> {1, 2, 6}, 
+                    new SortedSet<int> {3, 4, 5},Constants.CurrentDirection.SOURCE),
+                    new SortedSet<int> {3, 4, 5}, false},
+                new object[] {6, true, new Lead(new SortedSet<int> {1, 2}, 
+                        new SortedSet<int> {},Constants.CurrentDirection.SOURCE),
+                    new SortedSet<int> {}, false},
+                new object[] {1, true, new Lead(new SortedSet<int> {1, 2}, 
+                        new SortedSet<int> {2, 3, 4, 5, 6, 7, 8},Constants.CurrentDirection.SOURCE),
+                    new SortedSet<int> {2, 3, 4, 5, 6, 7, 8}, false},
+                // Testing with a contact as the input which is connected to the lead
+                // We expect to get true and an unmodified output set
+                new object[] {1, false, new Lead(new SortedSet<int> {1, 2}, 
+                        new SortedSet<int> {3, 4, 5},Constants.CurrentDirection.SINK),
+                    new SortedSet<int> {3, 4, 5}, true},
+                new object[] {2, false, new Lead(new SortedSet<int> {1, 2}, 
+                    new SortedSet<int> {3, 4, 5, 6, 7},Constants.CurrentDirection.SINK),
+                new SortedSet<int> {3, 4, 5, 6, 7}, true},
+                new object[] {2, false, new Lead(new SortedSet<int> {2}, 
+                        new SortedSet<int> {},Constants.CurrentDirection.SINK),
+                    new SortedSet<int> {}, true},
+                new object[] {2, false, new Lead(new SortedSet<int> {1, 2}, 
+                        new SortedSet<int> {1},Constants.CurrentDirection.SINK),
+                    new SortedSet<int> {1}, true},
+                // Testing with a contact as the input which is not connected to the lead
+                // We expect to get false and an unmodified output set
+                new object[] {1, false, new Lead(new SortedSet<int> {2}, 
+                        new SortedSet<int> {3, 4, 5},Constants.CurrentDirection.SINK),
+                    new SortedSet<int> {3, 4, 5}, false},
+                new object[] {2, false, new Lead(new SortedSet<int> {}, 
+                        new SortedSet<int> {3, 4, 5, 6, 7},Constants.CurrentDirection.SINK),
+                    new SortedSet<int> {3, 4, 5, 6, 7}, false},
+                new object[] {2, false, new Lead(new SortedSet<int> {9}, 
+                        new SortedSet<int> {},Constants.CurrentDirection.SINK),
+                    new SortedSet<int> {}, false},
+                new object[] {2, false, new Lead(new SortedSet<int> {5, 6, 7, 8}, 
+                        new SortedSet<int> {1},Constants.CurrentDirection.SINK),
+                    new SortedSet<int> {1}, false}
             };
         }
 
