@@ -46,9 +46,10 @@ public record Lead(SortedSet<int> ContactSet, SortedSet<int> OutputSet,
 
         var validId = false;
         // Search by output or contact ID, respectively.
-        if (searchIsAnOutput && (validId = this.OutputSet.Contains(id)))
+        if (searchIsAnOutput)
         {
             // Exclude the search output ID from the returned set.
+            validId = this.OutputSet.Contains(id);
             connectedOutputs.ExceptWith(new int[] { id });
         }
         else
@@ -83,8 +84,9 @@ public record Lead(SortedSet<int> ContactSet, SortedSet<int> OutputSet,
 
         var validId = false;
         // Search by contact or output ID, respectively.
-        if (searchIsAContact && (validId = this.ContactSet.Contains(id)))
+        if (searchIsAContact)
         {
+            validId = this.ContactSet.Contains(id);
             // Exclude the search contact ID from the returned set.
             connectedContacts.ExceptWith(new int[] { id });
         }
