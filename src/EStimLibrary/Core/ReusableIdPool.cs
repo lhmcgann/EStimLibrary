@@ -1,4 +1,6 @@
-﻿namespace EStimLibrary.Core;
+﻿using System.Numerics;
+
+namespace EStimLibrary.Core;
 
 
 /// <summary>
@@ -44,6 +46,16 @@ public class ReusableIdPool
     {
         get
         {
+            if (this.NumIds == 0)
+            {
+                return new SortedSet<int>();
+            }
+
+            // Ensure that baseId + numIds - 1 does not exceed int.MaxValue
+            if ((long)this.BaseId + (long)this.NumIds - 1 > int.MaxValue)
+            {
+                this.NumIds = Math.Min(NumIds - BaseId, NumIds);
+            }
             // Return all IDs in the [BaseId, BaseId+NumIds) range.
             return new(Enumerable.Range(this.BaseId, this.NumIds));
         }
@@ -74,16 +86,24 @@ public class ReusableIdPool
     /// negative number is given. Can be changed after construction.</param>
     public ReusableIdPool(int baseId, int numIds)
     {
-        // Store the base ID. Property setter handles defaulting to 0.
-        this.BaseId = baseId;
+        // Ensure BaseId is not negative
+        this.BaseId = Math.Max(baseId, MIN_BASE_ID);
 
-        // Store the number of IDs in this pool. Property setter handles
-        // defaulting to 0.
-        this.NumIds = numIds;
+        // Calculate the maximum allowable NumIds
+        long maxAllowableNumIds = (long)int.MaxValue - this.BaseId + 1;
 
-        // Initialize set of used IDs to empty. This is the only set manually
-        // that is method-editable not auto-generated.
-        this.UsedIds = new();
+        // Adjust NumIds if necessary
+        if ((long)numIds > maxAllowableNumIds)
+        {
+            this.NumIds = (int)maxAllowableNumIds;
+        }
+        else
+        {
+            this.NumIds = Math.Max(numIds, MIN_NUM_IDS);
+        }
+
+        // Initialize UsedIds
+        this.UsedIds = new SortedSet<int>();
     }
 
     /// <summary>
@@ -102,13 +122,19 @@ public class ReusableIdPool
 
     public int IncrementNumIds(int increment)
     {
-        this.NumIds += increment;
-        return this.NumIds;
+        if (this.NumIds + increment <= int.MaxValue)
+        {
+            this.NumIds += increment;
+            return this.NumIds;
+        }
+            return -1;
     }
 
     public int ResetNumIds(int newMax)
     {
-        this.NumIds = newMax;
+        if (newMax < 0) this.NumIds = 0;
+        else this.NumIds = newMax;
+        this.UsedIds.RemoveWhere(id => !this.IsValidId(id));
         return this.NumIds;
     }
 
@@ -162,6 +188,7 @@ public class ReusableIdPool
     /// </returns>
     public bool FreeId(int globalId)
     {
+        if (!this.IsValidId(globalId)) return false; // checks if the globalId is in range of the pool IDs
         // If ID currently used, return bool success of the removal operation.
         if (this.IsUsed(globalId))
         {
@@ -210,11 +237,15 @@ public class ReusableIdPool
 
     public SortedSet<int> GetSubset(int startId, int numIds)
     {
+        if (numIds <= 0)
+        {
+            return new SortedSet<int>();
+        }
         if (this.IsValidId(startId))
         {
             // Find the *inclusive* end ID bound.
-            int endId = Math.Min(this.BaseId + startId + numIds,
-                this.BaseId + this.NumIds) - 1;
+            int endId = Math.Min(startId + numIds, 
+                                 this.BaseId + this.NumIds) - 1;
             return this.Ids.GetViewBetween(startId, endId);
         }
         // Return empty set if invalid ID request.
