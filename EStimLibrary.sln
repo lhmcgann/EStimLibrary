@@ -7,6 +7,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{7E35BD38-108
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EStimLibrary", "src\EStimLibrary\EStimLibrary.csproj", "{23710686-EDC8-41FC-AAC8-52B002F488D6}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{6EED0CF2-4443-42D5-8562-2DF5D5697266}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EStimLibrary.UnitTests", "tests\EStimLibrary.UnitTests\EStimLibrary.UnitTests.csproj", "{45810ED1-78CA-40D6-A3A8-5A70F3146507}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -20,8 +24,13 @@ Global
 		{23710686-EDC8-41FC-AAC8-52B002F488D6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{23710686-EDC8-41FC-AAC8-52B002F488D6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{23710686-EDC8-41FC-AAC8-52B002F488D6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{45810ED1-78CA-40D6-A3A8-5A70F3146507}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{45810ED1-78CA-40D6-A3A8-5A70F3146507}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{45810ED1-78CA-40D6-A3A8-5A70F3146507}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{45810ED1-78CA-40D6-A3A8-5A70F3146507}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{23710686-EDC8-41FC-AAC8-52B002F488D6} = {7E35BD38-1080-4A2E-B8B4-7CB0C5C08607}
+		{45810ED1-78CA-40D6-A3A8-5A70F3146507} = {6EED0CF2-4443-42D5-8562-2DF5D5697266}
 	EndGlobalSection
 EndGlobal
