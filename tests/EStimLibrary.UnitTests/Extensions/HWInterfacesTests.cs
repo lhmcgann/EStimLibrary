@@ -42,13 +42,8 @@ namespace EStimLibrary.UnitTests.Extensions.HardwareInterfaces
         [InlineData(0)]
         [InlineData(-1)]
         [InlineData(-10)]
-
-        public void Constructor_ShouldNotInit(int numContacts) {
-            // Init a new object
-            var contactGroup = new ContactGroup(numContacts);
-
-            // contactGroup should fail to be created
-            Assert.Null(contactGroup);
+        public void Constructor_ShouldThrowException(int numContacts) {
+            Assert.Throws<ArgumentException>(() => new ContactGroup(numContacts));
         }
     }
 }

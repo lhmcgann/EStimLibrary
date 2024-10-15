@@ -13,7 +13,8 @@ public class ContactGroup : NeuralInterfaceHardware
 
     public ContactGroup(int numContacts) : base()
     {
-        this._NumContacts = numContacts;
+        if (numContacts > 0) this._NumContacts = numContacts;
+        else throw new ArgumentException("Number of contacts must be positive");
     }
 }
 
