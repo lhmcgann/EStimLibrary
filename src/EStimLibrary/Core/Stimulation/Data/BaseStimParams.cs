@@ -60,6 +60,10 @@ public static class BaseStimParams
     };
 
     // TODO: put in the actual limits for each param; rn just semi-dummy values
+    /// <summary>
+    /// Example dictionary of base stimulation parameter information.
+    /// {paramName: (typepDefAndBounds, defaultOrFixedValue), ...}
+    /// </summary>
     public static Dictionary<string, Tuple<IDataLimits, object>>
         ExampleParamData => new()
     {
