@@ -1,6 +1,4 @@
-﻿using EStimLibrary.Core;
-
-
+﻿
 namespace EStimLibrary.Core.HardwareInterfaces;
 
 
@@ -21,9 +19,18 @@ public record Lead(SortedSet<int> ContactSet, SortedSet<int> OutputSet,
     Constants.CurrentDirection CurrentDirection) :
     IIdentifiable
 {
-    // Manager-given ID of the lead, -1 if unset.
-    public int Id => this._Id;      // IIdentifiable
-    internal int _Id = -1;          // to be set by the manager.
+    
+    /// <summary>
+    /// Gets the manager-given ID of the lead.
+    /// </summary>
+    /// <value>The ID of the lead, or -1 if unset.</value>
+    public int Id => this._Id; // IIdentifiable
+
+    /// <summary>
+    /// Internal storage for the lead ID, to be set by the manager.
+    /// </summary>
+    /// <value>The ID of the lead, default is -1.</value>
+    internal int _Id = -1; // to be set by the manager.
 
     /// <summary>
     /// Get which outputs are connected to a given output or contact by this
