@@ -1,5 +1,4 @@
-﻿
-namespace EStimLibrary.Core.HardwareInterfaces;
+﻿namespace EStimLibrary.Core.HardwareInterfaces;
 
 
 /// <summary>
@@ -19,12 +18,12 @@ public record Lead(SortedSet<int> ContactSet, SortedSet<int> OutputSet,
     Constants.CurrentDirection CurrentDirection) :
     IIdentifiable
 {
-    
+
     /// <summary>
-    /// Gets the manager-given ID of the lead.
+    /// The manager-given ID of the lead.
     /// </summary>
     /// <value>The ID of the lead, or -1 if unset.</value>
-    public int Id => this._Id; // IIdentifiable
+    public int Id => this._Id;  // IIdentifiable
 
     /// <summary>
     /// Internal storage for the lead ID, to be set by the manager.
@@ -79,7 +78,7 @@ public record Lead(SortedSet<int> ContactSet, SortedSet<int> OutputSet,
     /// contact, False if the given search ID is of an output.</param>
     /// <param name="connectedContacts">An output parameter: the set of
     /// contacts connected to the searched contact or output. If a contact was
-    /// searched, the set will exclude that contact. If the method returns False,
+    /// searched, the set will exclude that contact. If the method returns False
     /// this will just be the set of all contacts in this Lead.</param>
     /// <returns>True if the given search ID was found in this Lead and the
     /// returned contact ID set is valid, False if not.</returns>
