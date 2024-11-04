@@ -98,29 +98,32 @@ public record StringHierarchySpec(string[] RegionSet, string[] ModifierSet)
     /// <param name="optionedRegionName">The full region name to parse.</param>
     /// <param name="baseName">An output parameter: the base name upon success,
     /// else and empty string.</param>
-    /// <param name="options">An output parameter: the string of ordered options
-    /// correctly delimited if there are any, empty if not.</param>
+    /// <param name="option">An output parameter: the string that contains the option if
+    /// there is any, empty if not.</param>
     /// <returns>True if valid parse, False if not.</returns>
     public static bool TryParseOptionedRegionName(string optionedRegionName,
-        out string baseName, out string options)
+        out string baseName, out string option)
     {
-        var nameElements = optionedRegionName.Split(
-            OPTION_REGION_DELIMITER);
-
-        // Fail if invalid name format, i.e., empty or >2 elements.
-        var baseNameIdx = nameElements.Count() - 1;
-        if (baseNameIdx < 0)
+        // Check if input is empty
+        if (string.IsNullOrWhiteSpace(optionedRegionName))
         {
-            baseName = options = "";
+            baseName = option = "";
             return false;
         }
 
-        // Else parse the name.
-        // Store the options if there are any. Should precede the base name.
-        var optionSet = nameElements.Take(baseNameIdx).Select(o => o.Trim());
-        options = string.Join(OPTION_REGION_DELIMITER, optionSet);
-        // Return the base name.
-        baseName = nameElements[baseNameIdx].Trim();
+        // Split name elements by OPTION_REGION_DELIMITER
+        var nameElements = optionedRegionName.Split(OPTION_REGION_DELIMITER);
+
+        // Fail if more than 2 elements are present
+        if (nameElements.Length > 2)
+        {
+            baseName = option = "";
+            return false;
+        }
+
+        // Process one or two elements
+        baseName = nameElements[^1].Trim();
+        option = nameElements.Length == 2 ? nameElements[0].Trim() : "";
         return true;
     }
 
