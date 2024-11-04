@@ -50,7 +50,7 @@ public record Lead(SortedSet<int> ContactSet, SortedSet<int> OutputSet,
         // Output the set of outputs even if the requested ID is invalid.
         connectedOutputs = new(this.OutputSet);
 
-        var validId = false;
+        bool validId;
         // Search by output or contact ID, respectively.
         if (searchIsAnOutput)
         {
@@ -88,7 +88,7 @@ public record Lead(SortedSet<int> ContactSet, SortedSet<int> OutputSet,
         // Output the set of contacts even if the requested ID is invalid.
         connectedContacts = new(this.ContactSet);
 
-        var validId = false;
+        bool validId;
         // Search by contact or output ID, respectively.
         if (searchIsAContact)
         {
