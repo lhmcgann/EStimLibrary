@@ -183,7 +183,7 @@ public class LeadTests
             },
             // Testing with an output ID that is not connected to the lead
             // (although there is a connected contact of that ID). We expect to
-            // get false and an unmodified output set.
+            // get false and a full output set.
             new object[]
             {
                 6,
@@ -219,8 +219,8 @@ public class LeadTests
             #endregion Search by Output ID
             #region Search by Contact ID
             // Testing with a connected contact ID. ID also exists as a
-            // connected output ID. We expect to get true but an unmodified
-            // output set
+            // connected output ID. We expect to get true but a full output
+            // set.
             new object[]
             {
                 1,
@@ -265,7 +265,7 @@ public class LeadTests
                 true
             },
             // Testing with a contact as the input which is not connected to
-            // the lead. We expect to get false and an unmodified output set
+            // the lead. We expect to get false and a full output set
             new object[]
             {
                 1,
@@ -369,7 +369,7 @@ public class LeadTests
         {
             #region Search by Contact ID
             // Testing when a connected contact ID is given. We expect true and
-            // a modified set of contacts.
+            // a non-inclusive set of contacts.
             new object[]
             {
                 3,
@@ -414,7 +414,7 @@ public class LeadTests
                 true
             },
             // Testing when an unconnected contact ID is given. We expect false
-            // and an unmodified set of contacts.
+            // and a full set of contacts.
             new object[]
             {
                 4,
@@ -472,8 +472,8 @@ public class LeadTests
             },
             #endregion Search by Contact ID
             #region Search by Output ID
-            // Testing when a connected output is given. We expect true and an
-            // unmodified set of contacts.
+            // Testing when a connected output is given. We expect true and a
+            // full set of contacts.
             new object[]
             {
                 4,
@@ -518,7 +518,7 @@ public class LeadTests
                 true
             },
             // Testing when an unconnected output is given. We expect false and
-            // an unmodified set of contacts.
+            // a full set of contacts.
             new object[]
             {
                 4,
