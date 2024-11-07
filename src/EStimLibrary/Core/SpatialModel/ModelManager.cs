@@ -1,12 +1,14 @@
 ﻿namespace EStimLibrary.Core.SpatialModel;
 
 
-public class ModelManager
+public class ModelManager : ResourceManager<IBodyModel>
 {
-    internal Dictionary<string, IBodyModel> _BodyModels;
+    // internal Dictionary<string, IBodyModel> _BodyModels;
     // Num also used as next available index.
-    public int NumModels => this._BodyModels.Count;
-    public List<string> BodyModelKeys => this._BodyModels.Keys.ToList();
+    public int NumModels => this.NumTotalResources;
+    //public List<string> BodyModelKeys => this._BodyModels.Keys.ToList();
+
+    protected Dictionary<string, int> _NameToIDs;
 
     protected ReusableIdPool _GlobalLocationIdPool;
     protected Dictionary<int, SpatialId> _GlobalToLocalLocationIds;
@@ -17,7 +19,8 @@ public class ModelManager
 
     public ModelManager()
     {
-        this._BodyModels = new();
+        //this._BodyModels = new();
+        this._NameToIDs = new();
 
         this._GlobalLocationIdPool = new();
         this._GlobalToLocalLocationIds = new();
@@ -47,20 +50,34 @@ public class ModelManager
         // If no default-override key is given, use the model name.
         bodyModelKey = (nonNameBodyModelKey == "") ? bodyModel.Name :
             nonNameBodyModelKey;
-
-        // If body model not already stored under the same key, add new model.
-        if (!this._BodyModels.Keys.Contains(bodyModelKey))
+        try
         {
-            // Store in dict of {key: model}
-            this._BodyModels.Add(bodyModelKey, bodyModel);
-            return true;
+            if (TryGetNextAvailableId(out int nextAvailableId))
+            {
+                _NameToIDs.TryAdd(bodyModelKey, nextAvailableId);
+            }
+            return TryAddResource(nextAvailableId, bodyModel);
         }
-        return false;
+        catch (Exception)
+        {
+            return false;
+        }
+        
+        //// If body model not already stored under the same key, add new model.
+        //if (!this._BodyModels.Keys.Contains(bodyModelKey))
+        //{
+        //    // Store in dict of {key: model}
+        //    this._BodyModels.Add(bodyModelKey, bodyModel);
+        //    return true;
+        //}
+        //return false;
     }
 
     protected bool _TryGetBodyModel(string modelKey, out IBodyModel bodyModel)
     {
-        return this._BodyModels.TryGetValue(modelKey, out bodyModel);
+        _NameToIDs.TryGetValue(modelKey, out int id);
+        return this.Resources.TryGetValue(id, out bodyModel).Equals(bodyModel);
+        //return this._BodyModels.TryGetValue(modelKey, out bodyModel);
     }
 
     // TODO: keep these two methods? if so, leave as are - iterating through all
@@ -68,29 +85,42 @@ public class ModelManager
     public bool IsLocationInModel(ILocation location)
     {
         // Check if location is contained in one model.
-        foreach (var (modelKey, bodyModel) in this._BodyModels)
-        {
-            if (bodyModel.IsLocationInModel(location))
-            {
-                return true;
-            }
+        foreach (string key in _NameToIDs.Keys) {
+            _NameToIDs.TryGetValue(key, out int id);
+            TryGetResource(id, out IBodyModel resource);
+            if (resource.IsLocationInModel(location)) return true;
         }
-        // If not found
         return false;
+        //foreach (var (modelKey, bodyModel) in this._BodyModels)
+        //{
+        //    if (bodyModel.IsLocationInModel(location))
+        //    {
+        //        return true;
+        //    }
+        //}
+        //// If not found
+        //return false;
     }
 
     public bool IsAreaInModel(IArea area)
     {
         // Check if area is contained in one model.
-        foreach (var (modelKey, bodyModel) in this._BodyModels)
+        foreach (string key in _NameToIDs.Keys)
         {
-            if (bodyModel.IsAreaInModel(area))
-            {
-                return true;
-            }
+            _NameToIDs.TryGetValue(key, out int id);
+            TryGetResource(id, out IBodyModel resource);
+            if (resource.IsAreaInModel(area)) return true;
         }
-        // If not found
         return false;
+        //foreach (var (modelKey, bodyModel) in this._BodyModels)
+        //{
+        //    if (bodyModel.IsAreaInModel(area))
+        //    {
+        //        return true;
+        //    }
+        //}
+        //// If not found
+        //return false;
     }
 
     // TODO: have a true ModelManager global list of IDs? or just IDs per body
