@@ -102,8 +102,8 @@ namespace EStimLibrary.UnitTests.Core
             Utils.CallObjectMethod(instance, typeof(SampleClass), "SampleMethod", new object[] { 3, 2 }, out var result);
             Assert.Equal(5, result);
         }
-        // Nested mock classes for testing purposes
-        
+
+        // Nested mock classes 
         public class BaseClass { }
         public class DerivedClass : BaseClass { }
         public class UnrelatedClass { }
