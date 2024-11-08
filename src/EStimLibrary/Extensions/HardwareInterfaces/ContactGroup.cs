@@ -10,11 +10,19 @@ public class ContactGroup : NeuralInterfaceHardware
 
     public override int NumContacts => this._NumContacts;
     protected int _NumContacts;
-
+/// <summary>
+/// Create a contact group with a positive integer number of contacts.
+/// </summary>
+/// <param name="numContacts">Number of contacts</param>
+/// <exception cref="ArgumentException">Invalid argument, numContact must be positive</exception>
     public ContactGroup(int numContacts) : base()
     {
-        if (numContacts > 0) this._NumContacts = numContacts;
-        else throw new ArgumentException("Number of contacts must be positive");
+        if (numContacts > 0) {
+            this._NumContacts = numContacts;
+        }
+        else {
+            throw new ArgumentException("Number of contacts must be positive");
+        }
     }
 }
 
