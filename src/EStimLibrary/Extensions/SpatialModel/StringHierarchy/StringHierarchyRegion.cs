@@ -1,4 +1,6 @@
-﻿namespace EStimLibrary.Extensions.SpatialModel.StringHierarchy;
+﻿using System;
+
+namespace EStimLibrary.Extensions.SpatialModel.StringHierarchy;
 
 
 /// <summary>
@@ -120,6 +122,10 @@ public class StringHierarchyRegion
     public void AddSubregion(StringHierarchyRegion subregion,
         out StringHierarchyRegion? existingSubregion)
     {
+        /// <exception cref = "ArgumentNullException"> The provided 
+        /// subregion argument is null.</exception>
+        if (subregion == null) throw new ArgumentNullException();
+
         // Fill the out parameter with the existing subregion if exists.
         if (this.Subregions.TryGetValue(subregion.BaseName,
             out existingSubregion))

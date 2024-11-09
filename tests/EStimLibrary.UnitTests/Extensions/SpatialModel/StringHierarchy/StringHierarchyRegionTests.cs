@@ -1,4 +1,5 @@
 ﻿using EStimLibrary.Extensions.SpatialModel.StringHierarchy;
+using System.Runtime.InteropServices;
 using Xunit.Sdk;
 
 namespace EStimLibrary.UnitTests.Extensions.SpatialModel.StringHierarchy;
@@ -140,6 +141,37 @@ public class StringHierarchyRegionTests
     }
 
     /// <summary>
+    /// Test the ToString method.
+    /// </summary>
+    [Fact]
+    public void ToString_ShouldOutputStringRep()
+    {
+        var nullRegion = new StringHierarchyRegion("base", null);
+        var emptyRegion = new StringHierarchyRegion("root", null, null, new HashSet<string>(), new Dictionary<string, HashSet<string>>(), new Dictionary<string, StringHierarchyRegion>());
+        var regionOptions = new HashSet<string>() { "right", "left" };
+        var regionModifiers = new Dictionary<string, HashSet<string>>
+        {
+            { "modSet1", new HashSet<string>() { "mod1", "mod2" } },
+            { "modSet2", new HashSet<string>() { "mod3", "mod4" } }
+        };
+        var subregionSubregions = new Dictionary<string, StringHierarchyRegion>
+        {
+            { "grandchild", new StringHierarchyRegion("grandchild", null) }
+        };
+        var regionSubregions = new Dictionary<string, StringHierarchyRegion>
+        {
+            { "child1", new StringHierarchyRegion("child1", null, null, new HashSet<string> { "opt1", "opt2" }, null, subregionSubregions) },
+            { "child2", new StringHierarchyRegion("child2", null) }
+        };
+
+        var stringHierarchyRegion = new StringHierarchyRegion("base", emptyRegion, emptyRegion.Options, regionOptions, regionModifiers, regionSubregions);
+
+        Assert.Equal("base", nullRegion.ToString());
+        Assert.Equal("root", emptyRegion.ToString());
+        Assert.Equal("[right,left] base | [mod1,mod2], [mod3,mod4]\n    [right,left] base, [opt1,opt2] child1\n        [right,left] base, [opt1,opt2] child1, grandchild\n    [right,left] base, child2", stringHierarchyRegion.ToString());
+    }
+
+    /// <summary>
     /// Test the TryGetSubregion method with various malformed or otherwise incorrect regions.
     /// </summary>
     [Fact]
@@ -164,53 +196,53 @@ public class StringHierarchyRegionTests
         var output = stringHierarchyRegion.TryGetSubregion("", out foundSubregion);
 
         Assert.False(output);
-        Assert.Equal(null, foundSubregion);
+        Assert.Null(foundSubregion);
 
         output = stringHierarchyRegion.TryGetSubregion("reg1, , reg2", out foundSubregion);
 
         Assert.False(output);
-        Assert.Equal(null, foundSubregion);
+        Assert.Null(foundSubregion);
 
         output = stringHierarchyRegion.TryGetSubregion("reg1,  reg2", out foundSubregion);
 
         Assert.False(output);
-        Assert.Equal(null, foundSubregion);
+        Assert.Null(foundSubregion);
 
         output = stringHierarchyRegion.TryGetSubregion("opt1 opt2 reg1", out foundSubregion);
 
         Assert.False(output);
-        Assert.Equal(null, foundSubregion);
+        Assert.Null(foundSubregion);
 
         output = stringHierarchyRegion.TryGetSubregion("opt1   reg1", out foundSubregion);
 
         Assert.False(output);
-        Assert.Equal(null, foundSubregion);
+        Assert.Null(foundSubregion);
 
         output = stringHierarchyRegion.TryGetSubregion("base2", out foundSubregion);
 
         Assert.False(output);
-        Assert.Equal(null, foundSubregion);
+        Assert.Null(foundSubregion);
 
         output = stringHierarchyRegion.TryGetSubregion("middle base", out foundSubregion);
 
         Assert.False(output);
-        Assert.Equal(null, foundSubregion);
+        Assert.Null(foundSubregion);
 
         output = stringHierarchyRegion.TryGetSubregion("base", out foundSubregion);
 
         Assert.False(output);
-        Assert.Equal(null, foundSubregion);
+        Assert.Null(foundSubregion);
 
         output = stringHierarchyRegion.TryGetSubregion("child1", out foundSubregion);
 
         Assert.False(output);
-        Assert.Equal(null, foundSubregion);
+        Assert.Null(foundSubregion);
 
 
         output = stringHierarchyRegion.TryGetSubregion("left base | modSet1", out foundSubregion);
 
         Assert.False(output);
-        Assert.Equal(null, foundSubregion);
+        Assert.Null(foundSubregion);
     }
 
     /// <summary>
@@ -283,13 +315,19 @@ public class StringHierarchyRegionTests
 
         StringHierarchyRegion oldRegion;
 
-        //stringHierarchyRegion.AddSubregion(null, out oldRegion);
+        var errorSuccess = false;
+        try
+        {
+            stringHierarchyRegion.AddSubregion(null, out oldRegion);
+        }
+        catch (ArgumentNullException ex) { errorSuccess = true; }
+        Assert.True(errorSuccess);
 
         var newChildRegion = new StringHierarchyRegion("child3", null);
 
         stringHierarchyRegion.AddSubregion(newChildRegion, out oldRegion);
 
-        Assert.Equal(null, oldRegion);
+        Assert.Null(oldRegion);
         Assert.Same(newChildRegion, stringHierarchyRegion.Subregions["child3"]);
     }
 
@@ -340,7 +378,6 @@ public class StringHierarchyRegionTests
     /// Test the DeepCopy method with retaining the parent reference.
     /// </summary>
     [Fact]
-    // Test retain and not retain reference; test for null, empty, and normal (check for deep copy)
     public void DeepCopy_ShouldDeepCopy()
     {
         var nullRegion = new StringHierarchyRegion("base", null);
@@ -361,28 +398,33 @@ public class StringHierarchyRegionTests
 
         var nullRegionCopy = nullRegion.DeepCopy(true);
 
-        Assert.Equivalent(nullRegionCopy, nullRegion, true);
-        Assert.NotEqual(nullRegionCopy, nullRegion);
-        Assert.NotSame(nullRegionCopy, nullRegion);
+        Assert.Equivalent(nullRegion, nullRegionCopy, strict: true);
+        Assert.NotEqual(nullRegion, nullRegionCopy);
+        Assert.NotSame(nullRegion, nullRegionCopy);
 
         var emptyRegionCopy = emptyRegion.DeepCopy(true);
 
-        Assert.Equivalent(emptyRegionCopy, emptyRegion, true);
-        Assert.NotEqual(emptyRegionCopy, emptyRegion);
-        Assert.NotSame(emptyRegionCopy, emptyRegion);
+        Assert.Equivalent(emptyRegion, emptyRegionCopy, strict: true);
+        Assert.NotEqual(emptyRegion, emptyRegionCopy);
+        Assert.NotSame(emptyRegion, emptyRegionCopy);
 
         var stringHierarchyRegionCopy = stringHierarchyRegion.DeepCopy(true);
 
-        Assert.Equivalent(stringHierarchyRegionCopy, stringHierarchyRegion, true);
-        Assert.NotEqual(stringHierarchyRegionCopy, stringHierarchyRegion);
-        Assert.NotSame(stringHierarchyRegionCopy, stringHierarchyRegion);
+        Assert.Equal(stringHierarchyRegion.ToString(), stringHierarchyRegionCopy.ToString());
+        Assert.Same(stringHierarchyRegion.ParentRegion, stringHierarchyRegionCopy.ParentRegion);
+        Assert.Equal(stringHierarchyRegion.Options, stringHierarchyRegionCopy.Options);
+        Assert.NotSame(stringHierarchyRegion.Options, stringHierarchyRegionCopy.Options);
+        Assert.Equal(stringHierarchyRegion.Modifiers, stringHierarchyRegionCopy.Modifiers);
+        Assert.NotSame(stringHierarchyRegion.Modifiers, stringHierarchyRegionCopy.Modifiers);
+        // Testing Note: Due to the presence of parentRegion in each of the subregions and due to the deep copying of the subregions themselves, it is not feasible to check equality or equivalence of the subregions
+        Assert.NotEqual(stringHierarchyRegion.Subregions, stringHierarchyRegionCopy.Subregions);
+        Assert.NotSame(stringHierarchyRegion.Subregions, stringHierarchyRegionCopy.Subregions);
     }
 
     /// <summary>
     /// Test the DeepCopy method with retaining the parent reference.
     /// </summary>
     [Fact]
-    // Test retain and not retain reference; test for null, empty, and normal (check for deep copy)
     public void DeepCopy_ShouldDeepCopyResetParent()
     {
         var nullRegion = new StringHierarchyRegion("base", null);
@@ -403,21 +445,27 @@ public class StringHierarchyRegionTests
 
         var parentCopy = parent.DeepCopy(false);
 
-        Assert.NotEqual(parentCopy.ParentRegion, parent.ParentRegion);
+        Assert.NotEqual(parent.ParentRegion, parentCopy.ParentRegion);
         parent.ParentRegion = null;
-        Assert.Equal(parentCopy.ParentRegion, parent.ParentRegion);
-        Assert.Equivalent(parentCopy, parent, true);
-        Assert.NotEqual(parentCopy, parent);
-        Assert.NotSame(parentCopy, parent);
+        Assert.Equal(parent.ParentRegion, parentCopy.ParentRegion);
+        Assert.Equivalent(parent, parentCopy, strict: true);
+        Assert.NotEqual(parent, parentCopy);
+        Assert.NotSame(parent, parentCopy);
 
         var stringHierarchyRegionCopy = stringHierarchyRegion.DeepCopy(false);
 
-        Assert.NotEqual(stringHierarchyRegionCopy.ParentRegion, stringHierarchyRegion.ParentRegion);
+        Assert.NotEqual(stringHierarchyRegion.ParentRegion, stringHierarchyRegionCopy.ParentRegion);
         stringHierarchyRegion.ParentRegion = null;
-        Assert.Equal(stringHierarchyRegionCopy.ParentRegion, stringHierarchyRegion.ParentRegion);
-        Assert.Equivalent(stringHierarchyRegionCopy, stringHierarchyRegion, true);
-        Assert.NotEqual(stringHierarchyRegionCopy, stringHierarchyRegion);
-        Assert.NotSame(stringHierarchyRegionCopy, stringHierarchyRegion);
+        Assert.Equal(stringHierarchyRegion.ParentRegion, stringHierarchyRegionCopy.ParentRegion);
+        Assert.Equal(stringHierarchyRegion.ToString(), stringHierarchyRegionCopy.ToString());
+        Assert.Same(stringHierarchyRegion.ParentRegion, stringHierarchyRegionCopy.ParentRegion);
+        Assert.Equal(stringHierarchyRegion.Options, stringHierarchyRegionCopy.Options);
+        Assert.NotSame(stringHierarchyRegion.Options, stringHierarchyRegionCopy.Options);
+        Assert.Equal(stringHierarchyRegion.Modifiers, stringHierarchyRegionCopy.Modifiers);
+        Assert.NotSame(stringHierarchyRegion.Modifiers, stringHierarchyRegionCopy.Modifiers);
+        // Testing Note: Due to the presence of parentRegion in each of the subregions and due to the deep copying of the subregions themselves, it is not feasible to check equality or equivalence of the subregions
+        Assert.NotEqual(stringHierarchyRegion.Subregions, stringHierarchyRegionCopy.Subregions);
+        Assert.NotSame(stringHierarchyRegion.Subregions, stringHierarchyRegionCopy.Subregions);
     }
 
     /// <summary>
@@ -478,36 +526,5 @@ public class StringHierarchyRegionTests
 
         Assert.True(stringHierarchyRegion.IsValidModifierSpec(modSpec1));
         Assert.True(stringHierarchyRegion.IsValidModifierSpec(modSpec2));
-    }
-
-    /// <summary>
-    /// Test the ToString method.
-    /// </summary>
-    [Fact]
-    public void ToString_ShouldOutputStringRep()
-    {
-        var nullRegion = new StringHierarchyRegion("base", null);
-        var emptyRegion = new StringHierarchyRegion("root", null, null, new HashSet<string>(), new Dictionary<string, HashSet<string>>(), new Dictionary<string, StringHierarchyRegion>());
-        var regionOptions = new HashSet<string>() { "right", "left" };
-        var regionModifiers = new Dictionary<string, HashSet<string>>
-        {
-            { "modSet1", new HashSet<string>() { "mod1", "mod2" } },
-            { "modSet2", new HashSet<string>() { "mod3", "mod4" } }
-        };
-        var subregionSubregions = new Dictionary<string, StringHierarchyRegion>
-        {
-            { "grandchild", new StringHierarchyRegion("grandchild", null) }
-        };
-        var regionSubregions = new Dictionary<string, StringHierarchyRegion>
-        {
-            { "child1", new StringHierarchyRegion("child1", null, null, new HashSet<string> { "opt1", "opt2" }, null, subregionSubregions) },
-            { "child2", new StringHierarchyRegion("child2", null) }
-        };
-
-        var stringHierarchyRegion = new StringHierarchyRegion("base", emptyRegion, emptyRegion.Options, regionOptions, regionModifiers, regionSubregions);
-
-        Assert.Equal("base", nullRegion.ToString());
-        Assert.Equal("root", emptyRegion.ToString());
-        Assert.Equal("[right,left] base | [mod1,mod2], [mod3,mod4]\n    [right,left] base, [opt1,opt2] child1\n        [right,left] base, [opt1,opt2] child1, grandchild\n    [right,left] base, child2", stringHierarchyRegion.ToString());
     }
 }
