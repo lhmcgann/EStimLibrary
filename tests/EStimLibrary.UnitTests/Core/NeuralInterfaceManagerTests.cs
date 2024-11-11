@@ -12,7 +12,7 @@ public class NeuralInterfaceManagerTests
     /// An error is thrown when the Type is invalid, i.e. types are not concrete derived class of NeuralInterfaceHardware.
     /// </summary>
     /// <param name="interfaceType">The type of the hardware interface, for example: ContactGroup, GelPad</param>
-    /// <param name="interfaceSpecificParams">Parameters for the specific type of interface</param>
+    /// <param name="interfaceSpecificParams">Parameters specific to that interface</param>
     [Theory]
     [InlineData(typeof(ReusableIdPool), new object[]{0, 0, new int[0]})]
     [InlineData(typeof(int), new object[]{})]
@@ -31,7 +31,7 @@ public class NeuralInterfaceManagerTests
     /// Given a valid Type, the manager assigns the next available ID to the new neural interface
     /// </summary>
     /// <param name="interfaceType">The type of the hardware interface, for example: ContactGroup, GelPad</param>
-    /// <param name="interfaceSpecificParams">Parameters for the specific type of interface</param>
+    /// <param name="interfaceSpecificParams">Parameters specific to that interface</param>
     [Theory]
     [InlineData(typeof(ContactGroup), new object[]{1})]
     [InlineData(typeof(GelPad), new object[]{})]
@@ -46,18 +46,19 @@ public class NeuralInterfaceManagerTests
         // Assert
         Assert.NotNull(result);
 
-        // Id is stored in the out parameter
+        // That Id is stored in the out parameter
         Assert.True(NIManager.IsValidResourceId(globalInterfaceId));
 
-        // The neural interface object created can later be looked up via the GetNeuralInterface method (ID given must be valid, i.e., previously output by the manager)
-        Assert.True(NIManager.TryGetNeuralInterface(globalInterfaceId, out NeuralInterfaceHardware neuralInterface));
+        // That the neural interface object created can later be looked up via the GetNeuralInterface method
+        Assert.True(NIManager.TryGetNeuralInterface(globalInterfaceId, out _));
     }
+
     /// <summary>
     /// The new neural interface object of the correct Type is created successfully with the given object[] parameters.
     /// Test with classes that takes additional parameters.
     /// </summary>
-    /// <param name="interfaceType"></param>
-    /// <param name="interfaceSpecificParams"></param>
+    /// <param name="interfaceType">The type of the hardware interface, for example: ContactGroup, GelPad</param>
+    /// <param name="interfaceSpecificParams">Parameters specific to that interface</param>
     [Theory]
     [InlineData(typeof(ContactGroup), new object[]{1})]
     [InlineData(typeof(ContactGroup), new object[]{2})]
@@ -88,8 +89,8 @@ public class NeuralInterfaceManagerTests
     /// The new neural interface object of the correct Type is created successfully with the given object[] parameters.
     /// Test with classes that requires no additional parameters.
     /// </summary>
-    /// <param name="interfaceType"></param>
-    /// <param name="interfaceSpecificParams"></param>
+    /// <param name="interfaceType">The type of the hardware interface, for example: ContactGroup, GelPad</param>
+    /// <param name="interfaceSpecificParams">Parameters specific to that interface</param>
     [Theory]
     [InlineData(typeof(GelPad), new object[]{})]
     public void CreateAndRegisterNeuralInterface_ShouldInitWithCorrectParams_WhenValidType_NoAdditionalParams(Type interfaceType, object[] interfaceSpecificParams) 
@@ -118,8 +119,8 @@ public class NeuralInterfaceManagerTests
     /// The manager assigns global contact IDs for the new neural interface. 
     /// Test that this ID is returned by the method CreateAndRegisterNeuralInterface.
     /// </summary>
-    /// <param name="interfaceType"></param>
-    /// <param name="interfaceSpecificParams"></param>
+    /// <param name="interfaceType">The type of the hardware interface, for example: ContactGroup, GelPad</param>
+    /// <param name="interfaceSpecificParams">Parameters specific to that interface</param>
     [Theory]
     [InlineData(typeof(ContactGroup), new object[]{1})]
     [InlineData(typeof(GelPad), new object[]{})]
@@ -140,8 +141,8 @@ public class NeuralInterfaceManagerTests
     /// The manager assigns global contact IDs for the new neural interface. 
     /// Test that this contact assignment upholds global contact ID uniqueness when the interface is the first one added.
     /// </summary>
-    /// <param name="interfaceType"></param>
-    /// <param name="interfaceSpecificParams"></param>
+    /// <param name="interfaceType">The type of the hardware interface, for example: ContactGroup, GelPad</param>
+    /// <param name="interfaceSpecificParams">Parameters specific to that interface</param>
     [Theory]
     [InlineData(typeof(ContactGroup), new object[]{1})]
     [InlineData(typeof(GelPad), new object[]{})]
@@ -161,8 +162,8 @@ public class NeuralInterfaceManagerTests
     /// The manager assigns global contact IDs for the new neural interface. 
     /// Test that this contact assignment upholds global contact ID uniqueness when the interface is not the first one added.
     /// </summary>
-    /// <param name="interfaceType"></param>
-    /// <param name="interfaceSpecificParams"></param>
+    /// <param name="interfaceType">The type of the hardware interface, for example: ContactGroup, GelPad</param>
+    /// <param name="interfaceSpecificParams">Parameters specific to that interface</param>
     [Theory]
     [InlineData(typeof(ContactGroup), new object[]{1})]
     [InlineData(typeof(GelPad), new object[]{})]
@@ -180,6 +181,11 @@ public class NeuralInterfaceManagerTests
         Assert.Equal(allContactIds.Count, allContactIds.Distinct().Count());
     }
 
+    /// <summary>
+    /// The manager assigns global contact IDs for the new neural interface. 
+    /// Test that the correct number of contact IDs was assigned.
+    /// </summary>
+    /// <param name="numContacts">Number of contacts for the Neural Interface</param>
     [Theory]
     [InlineData(1)]
     [InlineData(5)]
