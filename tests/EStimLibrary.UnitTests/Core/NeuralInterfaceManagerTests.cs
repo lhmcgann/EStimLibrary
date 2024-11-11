@@ -17,13 +17,13 @@ public class NeuralInterfaceManagerTests
     [InlineData(typeof(ReusableIdPool), new object[]{0, 0, new int[0]})]
     [InlineData(typeof(int), new object[]{})]
     [InlineData(typeof(NeuralInterfaceHardware), new object[]{})]
-    public void CreateAndRegisterNeuralInterface_ShouldThowError_WhenInvalidType(Type interfaceType, object[] interfaceSpecificParams) {
+    public void CreateAndRegisterNeuralInterface_ShouldThowError_WhenInvalidType(Type interfaceType, object[] interfaceSpecificParams) 
+    {
         // Arrange
         var NIManager = new NeuralInterfaceManager();
-        int globalInterfaceId;
 
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => NIManager.CreateAndRegisterNeuralInterface(interfaceType, interfaceSpecificParams, out globalInterfaceId));
+        Assert.Throws<ArgumentException>(() => NIManager.CreateAndRegisterNeuralInterface(interfaceType, interfaceSpecificParams, out _));
 
     }
 
@@ -35,13 +35,13 @@ public class NeuralInterfaceManagerTests
     [Theory]
     [InlineData(typeof(ContactGroup), new object[]{1})]
     [InlineData(typeof(GelPad), new object[]{})]
-    public void CreateAndRegisterNeuralInterface_ShouldInit_WhenValidType(Type interfaceType, object[] interfaceSpecificParams) {
+    public void CreateAndRegisterNeuralInterface_ShouldInit_WhenValidType(Type interfaceType, object[] interfaceSpecificParams) 
+    {
         // Arrange
         var NIManager = new NeuralInterfaceManager();
-        int globalInterfaceId;
 
         // Act
-        var result = NIManager.CreateAndRegisterNeuralInterface(interfaceType, interfaceSpecificParams, out globalInterfaceId);
+        var result = NIManager.CreateAndRegisterNeuralInterface(interfaceType, interfaceSpecificParams, out int globalInterfaceId);
         
         // Assert
         Assert.NotNull(result);
@@ -62,13 +62,13 @@ public class NeuralInterfaceManagerTests
     [InlineData(typeof(ContactGroup), new object[]{1})]
     [InlineData(typeof(ContactGroup), new object[]{2})]
     [InlineData(typeof(ContactGroup), new object[]{3})]
-    public void CreateAndRegisterNeuralInterface_ShouldInitNeuralInterfaceWithCorrectParams_WhenValidType_WithAdditionalParams(Type interfaceType, object[] interfaceSpecificParams) {
+    public void CreateAndRegisterNeuralInterface_ShouldInitNeuralInterfaceWithCorrectParams_WhenValidType_WithAdditionalParams(Type interfaceType, object[] interfaceSpecificParams) 
+    {
         // Arrange
         var NIManager = new NeuralInterfaceManager();
-        int globalInterfaceId;
 
         // Act
-        var result = NIManager.CreateAndRegisterNeuralInterface(interfaceType, interfaceSpecificParams, out globalInterfaceId);
+        var result = NIManager.CreateAndRegisterNeuralInterface(interfaceType, interfaceSpecificParams, out int globalInterfaceId);
         NIManager.TryGetNeuralInterface(globalInterfaceId, out NeuralInterfaceHardware neuralInterface);
 
         // Assert
@@ -92,13 +92,13 @@ public class NeuralInterfaceManagerTests
     /// <param name="interfaceSpecificParams"></param>
     [Theory]
     [InlineData(typeof(GelPad), new object[]{})]
-    public void CreateAndRegisterNeuralInterface_ShouldInitWithCorrectParams_WhenValidType_NoAdditionalParams(Type interfaceType, object[] interfaceSpecificParams) {
+    public void CreateAndRegisterNeuralInterface_ShouldInitWithCorrectParams_WhenValidType_NoAdditionalParams(Type interfaceType, object[] interfaceSpecificParams) 
+    {
         // Arrange
         var NIManager = new NeuralInterfaceManager();
-        int globalInterfaceId;
 
         // Act
-        var result = NIManager.CreateAndRegisterNeuralInterface(interfaceType, interfaceSpecificParams, out globalInterfaceId);
+        var result = NIManager.CreateAndRegisterNeuralInterface(interfaceType, interfaceSpecificParams, out int globalInterfaceId);
         NIManager.TryGetNeuralInterface(globalInterfaceId, out NeuralInterfaceHardware neuralInterface);
 
         // Assert
@@ -113,4 +113,89 @@ public class NeuralInterfaceManagerTests
             Assert.Equal(new GelPad(), gelPad); 
         }
     }
+
+    /// <summary>
+    /// The manager assigns global contact IDs for the new neural interface. 
+    /// Test that this ID is returned by the method CreateAndRegisterNeuralInterface.
+    /// </summary>
+    /// <param name="interfaceType"></param>
+    /// <param name="interfaceSpecificParams"></param>
+    [Theory]
+    [InlineData(typeof(ContactGroup), new object[]{1})]
+    [InlineData(typeof(GelPad), new object[]{})]
+    public void CreateAndRegisterNeuralInterface_ShouldReturnAssignedGlobalContactIDs(Type interfaceType, object[] interfaceSpecificParams)
+    {
+        // Arrange
+        var NIManager = new NeuralInterfaceManager();
+
+        // Act
+        var contactIds = NIManager.CreateAndRegisterNeuralInterface(interfaceType, interfaceSpecificParams, out _);
+
+        // Assert
+        Assert.NotEmpty(contactIds);
+        Assert.All(contactIds, id => Assert.True(NIManager.IsValidContactId(id)));
+    }
+
+    /// <summary>
+    /// The manager assigns global contact IDs for the new neural interface. 
+    /// Test that this contact assignment upholds global contact ID uniqueness when the interface is the first one added.
+    /// </summary>
+    /// <param name="interfaceType"></param>
+    /// <param name="interfaceSpecificParams"></param>
+    [Theory]
+    [InlineData(typeof(ContactGroup), new object[]{1})]
+    [InlineData(typeof(GelPad), new object[]{})]
+    public void CreateAndRegisterNeuralInterface_ShouldAssignUniqueGlobalContactIDs_WhenFirstInterface(Type interfaceType, object[] interfaceSpecificParams)
+    {
+        // Arrange
+        var NIManager = new NeuralInterfaceManager();
+
+        // Act
+        var contactIds = NIManager.CreateAndRegisterNeuralInterface(interfaceType, interfaceSpecificParams, out _);
+
+        // Assert
+        Assert.Equal(contactIds, contactIds.Distinct());
+    }
+
+    /// <summary>
+    /// The manager assigns global contact IDs for the new neural interface. 
+    /// Test that this contact assignment upholds global contact ID uniqueness when the interface is not the first one added.
+    /// </summary>
+    /// <param name="interfaceType"></param>
+    /// <param name="interfaceSpecificParams"></param>
+    [Theory]
+    [InlineData(typeof(ContactGroup), new object[]{1})]
+    [InlineData(typeof(GelPad), new object[]{})]
+    public void CreateAndRegisterNeuralInterface_ShouldAssignUniqueGlobalContactIDs_WhenNotFirstInterface(Type interfaceType, object[] interfaceSpecificParams)
+    {
+        // Arrange
+        var NIManager = new NeuralInterfaceManager();
+
+        // Act
+        var contactIds1 = NIManager.CreateAndRegisterNeuralInterface(interfaceType, interfaceSpecificParams, out _);
+        var contactIds2 = NIManager.CreateAndRegisterNeuralInterface(interfaceType, interfaceSpecificParams, out _);
+
+        // Assert
+        var allContactIds = contactIds1.Union(contactIds2).ToList();
+        Assert.Equal(allContactIds.Count, allContactIds.Distinct().Count());
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(5)]
+    [InlineData(10)]
+    public void CreateAndRegisterNeuralInterface_ShouldAssignCorrectNumberOfContactIDs(int numContacts)
+    {
+        // Arrange
+        var NIManager = new NeuralInterfaceManager();
+        Type interfaceType = typeof(ContactGroup);
+        object[] parameters = new object[] { numContacts };
+
+        // Act
+        var contactIds = NIManager.CreateAndRegisterNeuralInterface(interfaceType, parameters, out _);
+
+        // Assert
+        Assert.Equal(numContacts, contactIds.Count);
+    }
+
 }
