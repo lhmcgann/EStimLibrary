@@ -81,18 +81,23 @@ public class LeadManager : ResourceManager<Lead>
     /// <returns>True if the lead could be added, False if not.</returns>
     public bool TryAddLead(Lead lead, out int leadId)
     {
-        // Get the next available lead ID and try adding the lead to the
-        // resource pool.
-        if (!this.TryGetNextAvailableId(out leadId) ||
-            !this.TryAddResource(leadId, lead))
+        // First lets check if the lead already has been given an Id
+        // If the lead has already been added return true and the lead's Id
+        if (this.Resources.ContainsValue(lead))
         {
-            // Return early if failed.
+            // This is guaranteed to be the same as in the Resources since 
+            // Leads are compared based on values and Id is a value. 
+            leadId = lead.Id;
+            return true;
+        }
+        if(!(this.TryGetNextAvailableId(out leadId) && 
+             this.TryAddResource(leadId, lead)))
+        {
+            // We return early if this fails
             return false;
         }
-
-        // Actually set the lead's ID.
+        // Update the lead Id
         lead._Id = leadId;
-
         // Update extra internal structs. For all contacts and outputs:
         // a) Mark as wired.
         this._WiredContacts.UnionWith(lead.ContactSet);
@@ -239,12 +244,13 @@ public class LeadManager : ResourceManager<Lead>
     /// not.</returns>
     public bool TryRemoveLead(Lead lead, out int leadId, out Lead removedLead)
     {
-        // Try to get the ID of the Lead (Leads are records: Equals by value).
-        // TODO: actually test if this int? and FirstOrDefault strategy works.
-        // Was having some troubles with it in another class where HasValue
-        // returned true but only because the default value (stored upon lookup
-        // failure) was technically a valid value by that check --> TEST TEST!!!
-        int? id = this.Resources.FirstOrDefault(kv => kv.Value.Equals(lead)).Key;
+        // Check if this Id is in the resources pool.
+        int? id = null;
+        if(this.Resources.ContainsKey(lead.Id))
+        {
+            // Set the Id of the lead to be removed. 
+            id = lead.Id;
+        }
         if (id.HasValue)
         {
             // Store the ID of the lead to be removed.
@@ -268,6 +274,7 @@ public class LeadManager : ResourceManager<Lead>
     // so I/O calls can be handled by another class
     public static void SaveMapToCSV(string outfile)
     {
+        
     }
 
     public static LeadManager LoadMapFromCSV(string infile)
