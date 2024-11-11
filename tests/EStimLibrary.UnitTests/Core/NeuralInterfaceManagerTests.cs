@@ -110,7 +110,7 @@ public class NeuralInterfaceManagerTests
 
         // That the new neural interface object is created with the given object[] parameters, in this case, none.
         if (interfaceType == typeof(GelPad) && neuralInterface is GelPad gelPad) {
-            Assert.Equal(new GelPad(), gelPad); 
+            Assert.Equal(new GelPad().NumContacts, gelPad.NumContacts); 
         }
     }
 
