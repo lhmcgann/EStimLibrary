@@ -43,7 +43,9 @@ public class LeadManagerTests
     {
         // Starting with an empty LeadManager
         var leadManager = new LeadManager();
-
+        var lead = new Lead(new SortedSet<int> { 2, 3, 4, 8 },
+            new SortedSet<int> { 3 }, Constants.CurrentDirection.SINK);
+        
         return new List<object[]>
         {
             new object[]
@@ -56,15 +58,13 @@ public class LeadManagerTests
             new object[]
             {
                 leadManager,
-                new Lead(new SortedSet<int> { 2, 3, 4, 8 },
-                    new SortedSet<int> { 3 }, Constants.CurrentDirection.SINK),
+                lead,
                 1
             },
             new object[]
             {
                 leadManager,
-                new Lead(new SortedSet<int> { 2, 3, 4, 8 },
-                    new SortedSet<int> { 3 }, Constants.CurrentDirection.SINK),
+                lead,
                 1
             }
         };
@@ -72,7 +72,7 @@ public class LeadManagerTests
 
     [Theory]
     [MemberData(nameof(TryAddLeadFirstIdMissingData))]
-    public void TryAddLead_Returns_Correct_Id_When_Some_Id_Frees_Up(LeadManager leadManager, Lead lead, int expectedId)
+    public void TryAddLead_ShouldReturnCorrectId_WhenSomeIdFreesUp(LeadManager leadManager, Lead lead, int expectedId)
     {
         leadManager.TryAddLead(new Lead(new SortedSet<int> { 1, 2, 3 },
             new SortedSet<int> { 3, 4, 5 }, Constants.CurrentDirection.SINK), out _);
