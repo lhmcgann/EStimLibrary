@@ -1,16 +1,18 @@
 ﻿using EStimLibrary.Extensions.SpatialModel.StringHierarchy;
-using System.Runtime.InteropServices;
-using Xunit.Sdk;
+
 
 namespace EStimLibrary.UnitTests.Extensions.SpatialModel.StringHierarchy;
 
 
-// Test class naming convention: LibClassTests
+/// <summary>
+/// Test class for StringHierarchyRegion.
+/// </summary>
 public class StringHierarchyRegionTests
 {
     private readonly ITestOutputHelper _output;
 
-    // Test class constructor creates an output helper so can write console output.
+    // Test class constructor creates an output helper so can write console
+    // output.
     public StringHierarchyRegionTests(ITestOutputHelper testOutputHelper)
     {
         this._output = testOutputHelper;
@@ -24,7 +26,8 @@ public class StringHierarchyRegionTests
     [Fact]
     public void Constructor_ShouldAcceptNull()
     {
-        var stringHierarchyRegion = new StringHierarchyRegion("base", null, null, null, null, null);
+        var stringHierarchyRegion = new StringHierarchyRegion("base", null,
+            null, null, null, null);
 
         Assert.Equal("base", stringHierarchyRegion.BaseName);
         Assert.Null(stringHierarchyRegion.ParentRegion);
@@ -74,7 +77,10 @@ public class StringHierarchyRegionTests
     {
         var parent = new StringHierarchyRegion("root", null);
 
-        var stringHierarchyRegion = new StringHierarchyRegion("base", parent, parent.Options, new HashSet<string>(), new Dictionary<string, HashSet<string>>(), new Dictionary<string, StringHierarchyRegion>());
+        var stringHierarchyRegion = new StringHierarchyRegion("base", parent,
+            parent.Options, new HashSet<string>(),
+            new Dictionary<string, HashSet<string>>(),
+            new Dictionary<string, StringHierarchyRegion>());
 
         Assert.Equal("base", stringHierarchyRegion.BaseName);
         Assert.StrictEqual(parent, stringHierarchyRegion.ParentRegion);
@@ -98,7 +104,9 @@ public class StringHierarchyRegionTests
     [Fact]
     public void Constructor_ShouldDeepCopy()
     {
-        var parent = new StringHierarchyRegion("root", null, null, new HashSet<string>(), new Dictionary<string, HashSet<string>>(), new Dictionary<string, StringHierarchyRegion>());
+        var parent = new StringHierarchyRegion("root", null, null,
+            new HashSet<string>(), new Dictionary<string, HashSet<string>>(),
+            new Dictionary<string, StringHierarchyRegion>());
         var regionOptions = new HashSet<string>() { "right", "left" };
         var regionModifiers = new Dictionary<string, HashSet<string>>
         {
@@ -111,8 +119,9 @@ public class StringHierarchyRegionTests
             { "child2", new StringHierarchyRegion("child2", null) }
         };
 
-        var stringHierarchyRegion = new StringHierarchyRegion("base", parent, parent.Options, regionOptions, regionModifiers, regionSubregions);
-        
+        var stringHierarchyRegion = new StringHierarchyRegion("base", parent,
+            parent.Options, regionOptions, regionModifiers, regionSubregions);
+
         Assert.Equal("base", stringHierarchyRegion.BaseName);
         Assert.Same(parent, stringHierarchyRegion.ParentRegion);
         Assert.Equal(parent.Options, stringHierarchyRegion.ParentOptions);
@@ -121,20 +130,28 @@ public class StringHierarchyRegionTests
         Assert.NotSame(regionOptions, stringHierarchyRegion.Options);
         Assert.True(stringHierarchyRegion.HasOptions);
         Assert.Equal(2, stringHierarchyRegion.OptionedRegionNames.Count);
-        Assert.Equal(new List<string>() {$"right{StringHierarchySpec.OPTION_REGION_DELIMITER}base", $"left{StringHierarchySpec.OPTION_REGION_DELIMITER}base"}, stringHierarchyRegion.OptionedRegionNames);
+        Assert.Equal(new List<string>() {
+            $"right{StringHierarchySpec.OPTION_REGION_DELIMITER}base",
+            $"left{StringHierarchySpec.OPTION_REGION_DELIMITER}base" },
+            stringHierarchyRegion.OptionedRegionNames);
         Assert.Equal(regionModifiers, stringHierarchyRegion.Modifiers);
         Assert.NotSame(regionModifiers, stringHierarchyRegion.Modifiers);
         Assert.True(stringHierarchyRegion.HasModifiers);
         Assert.Equal(regionSubregions, stringHierarchyRegion.Subregions);
         Assert.NotSame(regionSubregions, stringHierarchyRegion.Subregions);
-        Assert.Same(regionSubregions["child1"], stringHierarchyRegion.Subregions["child1"]);
-        Assert.Same(regionSubregions["child2"], stringHierarchyRegion.Subregions["child2"]);
+        Assert.Same(regionSubregions["child1"],
+            stringHierarchyRegion.Subregions["child1"]);
+        Assert.Same(regionSubregions["child2"],
+            stringHierarchyRegion.Subregions["child2"]);
         Assert.True(stringHierarchyRegion.HasSubregions);
         Assert.False(stringHierarchyRegion.IsLeaf);
         Assert.Empty(stringHierarchyRegion.SavedLocations);
         Assert.Empty(stringHierarchyRegion.SavedAreas);
 
-        var child = new StringHierarchyRegion("child", stringHierarchyRegion, stringHierarchyRegion.Options, new HashSet<string>(), new Dictionary<string, HashSet<string>>(), new Dictionary<string, StringHierarchyRegion>());
+        var child = new StringHierarchyRegion("child", stringHierarchyRegion,
+            stringHierarchyRegion.Options, new HashSet<string>(),
+            new Dictionary<string, HashSet<string>>(), new Dictionary<string,
+            StringHierarchyRegion>());
 
         Assert.Same(parent, stringHierarchyRegion.ParentRegion);
         Assert.Equal(parent.Options, stringHierarchyRegion.ParentOptions);
