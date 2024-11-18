@@ -31,7 +31,8 @@ public class ResourceManager<ResourceType>
     {
         // TODO: does Used check validity again?
         return this.IdPool.IsValidId(globalId) &&
-            this.IdPool.IsUsed(globalId) && this.Resources.ContainsKey(globalId);
+            this.IdPool.IsUsed(globalId) &&
+            this.Resources.ContainsKey(globalId);
     }
 
     public bool TryGetNextAvailableId(out int globalId)

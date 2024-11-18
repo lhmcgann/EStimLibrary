@@ -1,6 +1,4 @@
-﻿using System.Numerics;
-
-namespace EStimLibrary.Core;
+﻿namespace EStimLibrary.Core;
 
 
 /// <summary>
@@ -20,32 +18,47 @@ public class ReusableIdPool
     // Private fields should never be accessed or manipulated directly. Use
     // corresponding properties.
 
-    // The base ID value for this pool. All IDs in the pool will be in a
-    // consecutive block including and after this value, up to NumIds IDs.
-    // Guaranteed to be >= 0 at all times after construction.
+    /// <summary>
+    /// The base ID value for this pool. All IDs in the pool will be in a
+    /// consecutive block including and after this value, up to NumIds IDs.
+    /// Guaranteed to be >= 0 at all times after construction.
+    /// </summary>
     private int _baseId;
-    // The number of IDs in this pool. Can be changed via class methods.
-    // Guaranteed to be >= 0 at all times after construction.
+    /// <summary>
+    /// The number of IDs in this pool. Can be changed via class methods.
+    /// Guaranteed to be >= 0 at all times after construction.
+    /// </summary>
     private int _numIds;
 
     // Protective BaseId and NumIds properties for the private fields.
     // Ensures limits when setting the values.
+    /// <summary>
+    /// The lowest ID in this pool. Cannot be below 0.
+    /// </summary>
     public int BaseId
     {
         get => this._baseId;
         protected set => this._baseId = Math.Max(MIN_BASE_ID, value);
     }
+    /// <summary>
+    /// The number of IDs in this pool. Cannot be below 0.
+    /// </summary>
     public int NumIds
     {
         get => this._numIds;
         protected set => this._numIds = Math.Max(MIN_NUM_IDS, value);
     }
 
-    // Total ID pool, generated based on BaseId and NumIds
+    /// <summary>
+    /// Set of IDs in this pool, generated based on BaseId and NumIds:
+    /// [BaseId, BaseId+NumIds)
+    /// Empty if no IDs currently in this pool.
+    /// </summary>
     public SortedSet<int> Ids
     {
         get
         {
+            // Return an empty set if no IDs in this pool.
             if (this.NumIds == 0)
             {
                 return new SortedSet<int>();
@@ -61,17 +74,28 @@ public class ReusableIdPool
         }
     }
 
-    // Set of used IDs and its count. UsedIds is the only set manipulated.
+    /// <summary>
+    /// The number of IDs in this pool that are currently marked as used.
+    /// </summary>
     public int NumUsedIds { get => this.UsedIds.Count; }
+    /// <summary>
+    /// Set of used IDs. UsedIds is the only set manipulated.
+    /// </summary>
     public SortedSet<int> UsedIds { get; protected set; }
 
-    // Set of free IDs and its count.
+    /// <summary>
+    /// The number of IDs in this pool that are currently marked as free, or
+    /// unsused.
+    /// </summary>
     public int NumFreeIds { get => this.FreeIds.Count; }
+    /// <summary>
+    /// Set of free, or unused, IDs.
+    /// </summary>
     public SortedSet<int> FreeIds
     {
         get
         {
-            // Return all except the used IDs.
+            // Return all IDs except the used IDs.
             return new(this.Ids.Except(this.UsedIds));
         }
     }
@@ -83,7 +107,8 @@ public class ReusableIdPool
     /// Defaults to 0 if a negative number is given. This value cannot be
     /// changed after construction.</param>
     /// <param name="numIds">The number of IDs in this pool. Defaults to 0 if a
-    /// negative number is given. Can be changed after construction.</param>
+    /// negative number is given. Can be changed after construction. Will be
+    /// bounded by ((max possible integer value) - baseId + 1).</param>
     public ReusableIdPool(int baseId, int numIds)
     {
         // Ensure BaseId is not negative
@@ -120,6 +145,14 @@ public class ReusableIdPool
         this.UsedIds = new();
     }
 
+    /// <summary>
+    /// Change the number of IDs in this pool by a specified amount.
+    /// </summary>
+    /// <param name="increment">The positive or negavtive integer number of IDs
+    /// to add or remove from the current pool. Cannot icnrement to beyond the
+    /// delta between BaseId and the max possible integer value. Cannot remove
+    /// IDs beyond the highest currently used ID.</param>
+    /// <returns>The resulting NumIds value.</returns>
     public int IncrementNumIds(int increment)
     {
         if (this.NumIds + increment <= int.MaxValue)
@@ -127,14 +160,30 @@ public class ReusableIdPool
             this.NumIds += increment;
             return this.NumIds;
         }
-            return -1;
+        return -1;
     }
 
+    /// <summary>
+    /// Overwrite the number of IDs in this pool to a new specified amount.
+    /// </summary>
+    /// <param name="newMax">The new number of IDs to set in this pool. Will be
+    /// bounded by the delta between BaseId and the max possible integer value,
+    /// and the highest current used ID.</param>
+    /// <returns>The resulting NumIds value.</returns>
     public int ResetNumIds(int newMax)
     {
-        if (newMax < 0) this.NumIds = 0;
-        else this.NumIds = newMax;
+        if (newMax < 0)
+        {
+            this.NumIds = 0;
+        }
+        else
+        {
+            this.NumIds = newMax;
+        }
+
+        // Remove the used ID.
         this.UsedIds.RemoveWhere(id => !this.IsValidId(id));
+
         return this.NumIds;
     }
 
@@ -188,7 +237,11 @@ public class ReusableIdPool
     /// </returns>
     public bool FreeId(int globalId)
     {
-        if (!this.IsValidId(globalId)) return false; // checks if the globalId is in range of the pool IDs
+        // Checks if the globalId is in range of the pool IDs
+        if (!this.IsValidId(globalId))
+        {
+            return false;
+        }
         // If ID currently used, return bool success of the removal operation.
         if (this.IsUsed(globalId))
         {
@@ -244,7 +297,7 @@ public class ReusableIdPool
         if (this.IsValidId(startId))
         {
             // Find the *inclusive* end ID bound.
-            int endId = Math.Min(startId + numIds, 
+            int endId = Math.Min(startId + numIds,
                                  this.BaseId + this.NumIds) - 1;
             return this.Ids.GetViewBetween(startId, endId);
         }
