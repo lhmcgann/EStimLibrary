@@ -1,5 +1,5 @@
 ﻿namespace EStimLibrary.Core.SpatialModel;
-using System.Collections.Generic;
+
 /// <summary>
 /// A record to represent event localization results.
 /// </summary>
