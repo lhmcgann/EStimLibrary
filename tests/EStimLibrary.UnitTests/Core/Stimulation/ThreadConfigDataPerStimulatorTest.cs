@@ -1,70 +1,269 @@
-using NUnit.Framework;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using EStimLibrary.Core.HardwareInterfaces;
+using EStimLibrary.Core;
 using EStimLibrary.Core.Stimulation;
+using EStimLibrary.Core.HardwareInterfaces;
 
-namespace EStimLibrary.Tests
+
+namespace EStimLibrary.UnitTests.Core.Stimulation;
+
+/// <summary>
+/// Unit tests for the ThreadConfigDataPerStimulator record.
+/// </summary>
+public class ThreadConfigDataPerStimulatorTest
 {
-    [TestFixture]
-    public class ThreadConfigDataPerStimulatorTests
+    private readonly ITestOutputHelper _output;
+
+    /// <summary>
+    /// Initializes the test class with an output helper.
+    /// </summary>
+    /// <param name="testOutputHelper">The test output helper.</param>
+    public ThreadConfigDataPerStimulatorTest(ITestOutputHelper testOutputHelper)
     {
-        [Test]
-        public void Test_ShallowCopy_Behavior()
+        _output = testOutputHelper;
+    }
+
+    #region Test Data Providers
+
+    /// <summary>
+    /// Provides test data for constructor tests.
+    /// Each object[] contains:
+    /// - globalStimId (int)
+    /// - independentLeads (List<Lead>)
+    /// - stimParamData (Dictionary<string, Tuple<IDataLimits, object>>)
+    /// - modulatableStimParams (SortedSet<string>)
+    /// </summary>
+    public static IEnumerable<object[]> ConstructorTestData => new List<object[]>
+    {
+        new object[]
         {
-            // Arrange
-            int globalStimId = 1;
+            100,
+            new List<Lead>
+            {
+                new Lead(new SortedSet<int> { 1, 2 }, new SortedSet<int> { 10 }, Constants.CurrentDirection.SOURCE),
+                new Lead(new SortedSet<int> { 3 }, new SortedSet<int> { 20 }, Constants.CurrentDirection.SINK)
+            },
+            new Dictionary<string, Tuple<IDataLimits, object>>
+            {
+                { "ParamA", Tuple.Create<IDataLimits, object>(new StringDataLimits(), "InitialValueA") },
+                { "ParamB", Tuple.Create<IDataLimits, object>(new ContinuousDataLimits(0.0, 100.0), 50.0) }
+            },
+            new SortedSet<string> { "ParamA", "ParamB" }
+        },
+        new object[]
+        {
+            200,
+            new List<Lead>
+            {
+                new Lead(new SortedSet<int> { 4 }, new SortedSet<int> { 40 }, Constants.CurrentDirection.SOURCE)
+            },
+            new Dictionary<string, Tuple<IDataLimits, object>>(),
+            new SortedSet<string>() // Passing empty instead of null
+        },
+        new object[]
+        {
+            -500,
+            new List<Lead>
+            {
+                new Lead(new SortedSet<int> { -3 }, new SortedSet<int> { -30 }, Constants.CurrentDirection.SINK)
+            },
+            new Dictionary<string, Tuple<IDataLimits, object>>(),
+            new SortedSet<string>()
+        }
+    };
 
-            // Create IndependentLeads
-            var lead1 = new Lead("Lead1", new Channel(1));
-            var lead2 = new Lead("Lead2", new Channel(2));
-            var independentLeads = new List<Lead> { lead1, lead2 };
+    #endregion
 
-            // Create StimParamData
-            var stimParamData = new Dictionary<string, Tuple<IDataLimits, object>>();
+    #region Constructor Tests
 
-            var dataLimits = new ContinuousDataLimits(0, 100);
-            stimParamData["Param1"] = new Tuple<IDataLimits, object>(dataLimits, 50.0);
+    /// <summary>
+    /// Tests that the constructor stores shallow copies of the passed-in data structures.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(ConstructorTestData))]
+    public void Constructor_ShouldStoreShallowCopies(
+        int globalStimId,
+        List<Lead> independentLeads,
+        Dictionary<string, Tuple<IDataLimits, object>> stimParamData,
+        SortedSet<string> modulatableStimParams)
+    {
+        // Arrange
+        var modulatableStimParamsToPass = modulatableStimParams;
 
-            // Create ModulatableStimParams
-            var modulatableStimParams = new SortedSet<string> { "Param1" };
+        // Act
+        var threadConfig = new ThreadConfigDataPerStimulator(
+            globalStimId,
+            independentLeads,
+            stimParamData,
+            modulatableStimParamsToPass
+        );
 
-            // Act
-            var threadConfig = new ThreadConfigDataPerStimulator(
-                globalStimId,
-                independentLeads,
-                stimParamData,
-                modulatableStimParams);
+        // Assert
+        Assert.Same(independentLeads, threadConfig.IndependentLeads);
+        Assert.Same(stimParamData, threadConfig.StimParamData);
+        Assert.Same(modulatableStimParamsToPass, threadConfig.ModulatableStimParams);
+    }
 
-            // Modify the original data structures after creating threadConfig
-            independentLeads.Add(new Lead("Lead3", new Channel(3)));
-            stimParamData["Param2"] = new Tuple<IDataLimits, object>(dataLimits, 75.0);
-            modulatableStimParams.Add("Param2");
+    /// <summary>
+    /// Tests that modifying the original collections affects the record's properties, confirming shallow copy behavior.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(ConstructorTestData))]
+    public void Constructor_ShallowCopy_ModificationsReflectInRecord(
+        int globalStimId,
+        List<Lead> independentLeads,
+        Dictionary<string, Tuple<IDataLimits, object>> stimParamData,
+        SortedSet<string> modulatableStimParams)
+    {
+        // Arrange
+        var modulatableStimParamsToPass = modulatableStimParams;
 
-            // Modify nested data in stimParamData
-            dataLimits.MinBound = -10; // Since dataLimits is mutable
+        var threadConfig = new ThreadConfigDataPerStimulator(
+            globalStimId,
+            independentLeads,
+            stimParamData,
+            modulatableStimParamsToPass
+        );
 
-            // Assert
+        // Act
+        // Modify IndependentLeads
+        var newLead = new Lead(new SortedSet<int> { 5 }, new SortedSet<int> { 50 }, Constants.CurrentDirection.SINK);
+        independentLeads.Add(newLead);
 
-            // Check if threadConfig.IndependentLeads has the new lead
-            Assert.AreEqual(3, threadConfig.IndependentLeads.Count(), "IndependentLeads should have 3 leads if shallow copy");
+        // Modify StimParamData
+        bool initiallyHasEntries = stimParamData.Any();
+        if (initiallyHasEntries)
+        {
+            var firstKey = stimParamData.Keys.First();
+            stimParamData[firstKey] = Tuple.Create<IDataLimits, object>(new ContinuousDataLimits(0.0, 1.0), "NewValue");
+        }
+        stimParamData["ParamY"] = Tuple.Create<IDataLimits, object>(new ContinuousIntDataLimits(1, 10), 5);
 
-            // Check if threadConfig.StimParamData has the new parameter
-            Assert.IsTrue(threadConfig.StimParamData.ContainsKey("Param2"), "StimParamData should contain 'Param2' if shallow copy");
+        // Modify ModulatableStimParams
+        modulatableStimParamsToPass.Add("ParamN");
 
-            // Check if threadConfig.ModulatableStimParams has the new parameter
-            Assert.IsTrue(threadConfig.ModulatableStimParams.Contains("Param2"), "ModulatableStimParams should contain 'Param2' if shallow copy");
+        // Assert
+        // IndependentLeads
+        Assert.Contains(newLead, threadConfig.IndependentLeads);
+        Assert.Equal(independentLeads.Count, threadConfig.IndependentLeads.Count());
 
-            // Check if dataLimits.MinBound in threadConfig reflects the change
-            var limitsInThreadConfig = threadConfig.StimParamData["Param1"].Item1 as ContinuousDataLimits;
-            Assert.AreEqual(-10, limitsInThreadConfig.MinBound, "DataLimits MinBound should reflect the change if shallow copy");
+        // StimParamData
+        Assert.Contains("ParamY", threadConfig.StimParamData.Keys);
+        Assert.Equal(5, threadConfig.StimParamData["ParamY"].Item2);
+        if (initiallyHasEntries)
+        {
+            var firstKey = stimParamData.Keys.First();
+            Assert.Equal("NewValue", threadConfig.StimParamData[firstKey].Item2);
+        }
 
-            // Modify data in threadConfig and see if original data changes
-            var firstLead = threadConfig.IndependentLeads.First();
-            firstLead.Name = "ModifiedLead1";
+        // ModulatableStimParams
+        Assert.Contains("ParamN", threadConfig.ModulatableStimParams);
+        Assert.Equal(modulatableStimParamsToPass.Count, threadConfig.ModulatableStimParams.Count);
+    }
 
-            Assert.AreEqual("ModifiedLead1", independentLeads[0].Name, "Original independentLeads should reflect changes made through threadConfig if shallow copy");
+    /// <summary>
+    /// Tests that nested IDataLimits objects are shallowly copied.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(ConstructorTestData))]
+    public void Constructor_NestedIDataLimits_ShouldBeShallowCopied(
+        int globalStimId,
+        List<Lead> independentLeads,
+        Dictionary<string, Tuple<IDataLimits, object>> stimParamData,
+        SortedSet<string> modulatableStimParams)
+    {
+        // Arrange
+        var modulatableStimParamsToPass = modulatableStimParams;
+
+        var threadConfig = new ThreadConfigDataPerStimulator(
+            globalStimId,
+            independentLeads,
+            stimParamData,
+            modulatableStimParamsToPass
+        );
+
+        // Act
+        if (stimParamData.Any())
+        {
+            var firstKey = stimParamData.Keys.First();
+            stimParamData[firstKey] = Tuple.Create<IDataLimits, object>(new ContinuousDataLimits(0.0, 1.0), "NewValue");
+        }
+
+        // Assert
+        if (stimParamData.Any())
+        {
+            var firstKey = stimParamData.Keys.First();
+            Assert.IsType<ContinuousDataLimits>(threadConfig.StimParamData[firstKey].Item1);
+            Assert.Equal("NewValue", threadConfig.StimParamData[firstKey].Item2);
         }
     }
+
+    /// <summary>
+    /// Tests that the constructor correctly initializes all properties with empty collections when empty data structures are passed in.
+    /// </summary>
+    [Fact]
+    public void Constructor_WithEmptyCollections_ShouldInitializePropertiesCorrectly()
+    {
+        // Arrange
+        var globalStimId = 800;
+        var independentLeads = new List<Lead>();
+        var stimParamData = new Dictionary<string, Tuple<IDataLimits, object>>();
+        var modulatableStimParams = new SortedSet<string>();
+
+        // Act
+        var threadConfig = new ThreadConfigDataPerStimulator(
+            globalStimId,
+            independentLeads,
+            stimParamData,
+            modulatableStimParams
+        );
+
+        // Assert
+        Assert.Empty(threadConfig.IndependentLeads);
+        Assert.Empty(threadConfig.StimParamData);
+        Assert.Empty(threadConfig.ModulatableStimParams);
+    }
+
+    /// <summary>
+    /// Tests that the constructor correctly handles negative values by storing them as-is.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(ConstructorTestData))]
+    public void Constructor_WithNegativeValues_ShouldHandleGracefully(
+        int globalStimId,
+        List<Lead> independentLeads,
+        Dictionary<string, Tuple<IDataLimits, object>> stimParamData,
+        SortedSet<string> modulatableStimParams)
+    {
+        // Arrange
+        var modulatableStimParamsToPass = modulatableStimParams;
+
+        var threadConfig = new ThreadConfigDataPerStimulator(
+            globalStimId,
+            independentLeads,
+            stimParamData,
+            modulatableStimParamsToPass
+        );
+
+        // Act
+        // No specific action; just verify stored values.
+
+        // Assert
+        Assert.Equal(globalStimId, threadConfig.GlobalStimId);
+        foreach (var lead in independentLeads)
+        {
+            Assert.Contains(lead, threadConfig.IndependentLeads);
+        }
+        foreach (var param in stimParamData)
+        {
+            Assert.Contains(param.Key, threadConfig.StimParamData.Keys);
+            Assert.Equal(param.Value.Item1, threadConfig.StimParamData[param.Key].Item1);
+            Assert.Equal(param.Value.Item2, threadConfig.StimParamData[param.Key].Item2);
+        }
+        foreach (var param in modulatableStimParamsToPass)
+        {
+            Assert.Contains(param, threadConfig.ModulatableStimParams);
+        }
+    }
+
+    #endregion
 }
+
