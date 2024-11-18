@@ -22,6 +22,7 @@ public class ContactGroupTests
     {
         var contactGroup = new ContactGroup(numContacts);
 
+        Assert.Equal(-1, contactGroup.Id);
         Assert.Equal(numContacts, contactGroup.NumContacts);
     }
 
