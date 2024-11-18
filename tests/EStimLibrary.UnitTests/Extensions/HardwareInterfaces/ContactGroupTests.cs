@@ -15,6 +15,8 @@ public class ContactGroupTests
     /// interface object should initialize with correct NumContact and Id
     /// values.
     /// </summary>
+    /// <param name="numContacts">The number of contacts to test ContactGroup
+    /// construction with.</param>
     [Theory]
     [InlineData(1)]     // Valid single contact.
     [InlineData(10)]    // Valid multiple contacts.
@@ -31,6 +33,8 @@ public class ContactGroupTests
     /// i.e., 0 or negative integer values for number of contacts.
     /// Constructioin should fail and throw an argument exception.
     /// </summary>
+    /// <param name="numContacts">The number of contacts to test ContactGroup
+    /// construction with.</param>
     [Theory]
     [InlineData(0)]     // Invalid 0 contacts.
     [InlineData(-1)]    // Invalid single negative contact number.
