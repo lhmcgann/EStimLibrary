@@ -206,7 +206,8 @@ public static class Utils
                     Type testParamType = testParamTypes[i];
                     // Fail if a test param is not derived from the base param
                     // type.
-                    if (!Utils.IsAssignableFromType(baseParamType, testParamType))
+                    if (!Utils.IsAssignableFromType(baseParamType,
+                        testParamType))
                     {
                         return false;
                     }
