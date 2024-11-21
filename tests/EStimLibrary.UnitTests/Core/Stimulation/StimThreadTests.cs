@@ -31,7 +31,7 @@ public class StimThreadTests
         Assert.Equal(originalDataShallow, stimThread.PerStimulatorConfigs);
         Assert.Empty(stimThread.PulseTrainsPerStimulator);
         Assert.Empty(stimThread.TrainParamsPerStimulator);
-        Assert.True(compareConfigDataPerStimulator(originalDataDeep, 
+        Assert.True(CompareConfigDataPerStimulator(originalDataDeep, 
             stimThread.PerStimulatorConfigs));
     }
 
@@ -72,8 +72,11 @@ public class StimThreadTests
         }
         ;
     }
+    
+    
+    
 
-    private static bool compareConfigDataPerStimulator(Dictionary<int, ThreadConfigDataPerStimulator> x, 
+    private static bool CompareConfigDataPerStimulator(Dictionary<int, ThreadConfigDataPerStimulator> x, 
         Dictionary<int, ThreadConfigDataPerStimulator> y)
     {
         foreach (var kvp in x)
@@ -190,9 +193,9 @@ public class StimThreadTests
                 case ContinuousDataLimits continuousLimits:
                     return new ContinuousDataLimits(continuousLimits.MinBound, continuousLimits.MaxBound);
                 case FixedOptionDataLimits<Type> fixedOptionLimits:
-                    return new FixedOptionDataLimits<Type>(new SortedSet<Type>(fixedOptionLimits.DataOptions));
+                    return new FixedOptionDataLimits<Type>(fixedOptionLimits.DataOptions);
                 case FixedOptionDataLimits<int> fixedOptionLimitsInt:
-                    return new FixedOptionDataLimits<int>(new SortedSet<int>(fixedOptionLimitsInt.DataOptions));
+                    return new FixedOptionDataLimits<int>(fixedOptionLimitsInt.DataOptions);
                 case ContinuousIntDataLimits continuousIntLimits:
                     return new ContinuousIntDataLimits(continuousIntLimits.MinBound, continuousIntLimits.MaxBound);
                 default:
