@@ -1,7 +1,4 @@
-﻿using EStimLibrary.Core;
-
-
-namespace EStimLibrary.Core.HardwareInterfaces;
+﻿namespace EStimLibrary.Core.HardwareInterfaces;
 
 
 /// <summary>
@@ -21,9 +18,18 @@ public record Lead(SortedSet<int> ContactSet, SortedSet<int> OutputSet,
     Constants.CurrentDirection CurrentDirection) :
     IIdentifiable
 {
-    // Manager-given ID of the lead, -1 if unset.
-    public int Id => this._Id;      // IIdentifiable
-    internal int _Id = -1;          // to be set by the manager.
+
+    /// <summary>
+    /// The manager-given ID of the lead.
+    /// </summary>
+    /// <value>The ID of the lead, or -1 if unset.</value>
+    public int Id => this._Id;  // IIdentifiable
+
+    /// <summary>
+    /// Internal storage for the lead ID, to be set by the manager.
+    /// </summary>
+    /// <value>The ID of the lead, default is -1.</value>
+    internal int _Id = -1; // to be set by the manager.
 
     /// <summary>
     /// Get which outputs are connected to a given output or contact by this
@@ -44,11 +50,12 @@ public record Lead(SortedSet<int> ContactSet, SortedSet<int> OutputSet,
         // Output the set of outputs even if the requested ID is invalid.
         connectedOutputs = new(this.OutputSet);
 
-        var validId = false;
+        bool validId;
         // Search by output or contact ID, respectively.
-        if (searchIsAnOutput && (validId = this.OutputSet.Contains(id)))
+        if (searchIsAnOutput)
         {
             // Exclude the search output ID from the returned set.
+            validId = this.OutputSet.Contains(id);
             connectedOutputs.ExceptWith(new int[] { id });
         }
         else
@@ -71,7 +78,7 @@ public record Lead(SortedSet<int> ContactSet, SortedSet<int> OutputSet,
     /// contact, False if the given search ID is of an output.</param>
     /// <param name="connectedContacts">An output parameter: the set of
     /// contacts connected to the searched contact or output. If a contact was
-    /// searched, the set will exclude that contact. If the method returns False,
+    /// searched, the set will exclude that contact. If the method returns False
     /// this will just be the set of all contacts in this Lead.</param>
     /// <returns>True if the given search ID was found in this Lead and the
     /// returned contact ID set is valid, False if not.</returns>
@@ -81,10 +88,11 @@ public record Lead(SortedSet<int> ContactSet, SortedSet<int> OutputSet,
         // Output the set of contacts even if the requested ID is invalid.
         connectedContacts = new(this.ContactSet);
 
-        var validId = false;
+        bool validId;
         // Search by contact or output ID, respectively.
-        if (searchIsAContact && (validId = this.ContactSet.Contains(id)))
+        if (searchIsAContact)
         {
+            validId = this.ContactSet.Contains(id);
             // Exclude the search contact ID from the returned set.
             connectedContacts.ExceptWith(new int[] { id });
         }
