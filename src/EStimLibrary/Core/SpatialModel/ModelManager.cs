@@ -8,7 +8,7 @@ public class ModelManager : ResourceManager<IBodyModel>
     public int NumModels => this.NumTotalResources;
     //public List<string> BodyModelKeys => this._BodyModels.Keys.ToList();
 
-    public Dictionary<string, int> _NameToIDs;
+    public Dictionary<string, int> _NameToIDs; 
 
     protected ReusableIdPool _GlobalLocationIdPool;
     protected Dictionary<int, SpatialId> _GlobalToLocalLocationIds;
@@ -76,7 +76,7 @@ public class ModelManager : ResourceManager<IBodyModel>
     public bool _TryGetBodyModel(string modelKey, out IBodyModel bodyModel)
     {
         _NameToIDs.TryGetValue(modelKey, out int id);
-        return this.Resources.TryGetValue(id, out bodyModel).Equals(bodyModel);
+        return TryGetResource(id, out bodyModel);
         //return this._BodyModels.TryGetValue(modelKey, out bodyModel);
     }
 
