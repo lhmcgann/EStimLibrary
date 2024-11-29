@@ -176,18 +176,20 @@ public class ReusableIdPool
     /// <returns>The resulting NumIds value.</returns>
     public int ResetNumIds(int newMax)
     {
-        if (newMax < 0)
-        {
-            this.NumIds = 0;
-        }
-        else
-        {
-            this.NumIds = newMax;
-        }
+        //if (newMax < 0)
+        //{
+        //    this.NumIds = 0;
+        //}
+        //else
+        //{
+        //    this.NumIds = newMax;
+        //}
 
-        // Remove the used ID.
-        this.UsedIds.RemoveWhere(id => !this.IsValidId(id));
+        //// Remove the used ID.
+        //this.UsedIds.RemoveWhere(id => !this.IsValidId(id));
 
+        //return this.NumIds;
+        this.NumIds = newMax;
         return this.NumIds;
     }
 
