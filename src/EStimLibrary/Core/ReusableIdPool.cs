@@ -1,4 +1,6 @@
-﻿namespace EStimLibrary.Core;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace EStimLibrary.Core;
 
 
 /// <summary>
@@ -46,7 +48,24 @@ public class ReusableIdPool
     public int NumIds
     {
         get => this._numIds;
-        protected set => this._numIds = Math.Max(MIN_NUM_IDS, value);
+        //protected set => this._numIds = Math.Max(MIN_NUM_IDS, value);
+        protected set
+        {
+            long maxAllowableNumIds = (long)int.MaxValue - (long)this.BaseId + 1;
+            int minAllowableNumIds = MIN_NUM_IDS;
+
+            if (this.UsedIds != null)
+            {
+                if (this.UsedIds.Count > 0)
+                {
+                    minAllowableNumIds = this.UsedIds.Max - this.BaseId + 1;
+                }
+            }
+
+            if (value < minAllowableNumIds) { this._numIds = minAllowableNumIds; }
+            else if (value > maxAllowableNumIds) { this._numIds = (int)maxAllowableNumIds; }
+            else this._numIds = value;
+        }
     }
 
     /// <summary>
@@ -114,18 +133,7 @@ public class ReusableIdPool
         // Ensure BaseId is not negative
         this.BaseId = Math.Max(baseId, MIN_BASE_ID);
 
-        // Calculate the maximum allowable NumIds
-        long maxAllowableNumIds = (long)int.MaxValue - this.BaseId + 1;
-
-        // Adjust NumIds if necessary
-        if ((long)numIds > maxAllowableNumIds)
-        {
-            this.NumIds = (int)maxAllowableNumIds;
-        }
-        else
-        {
-            this.NumIds = Math.Max(numIds, MIN_NUM_IDS);
-        }
+        this.NumIds = numIds;
 
         // Initialize UsedIds
         this.UsedIds = new SortedSet<int>();
@@ -155,12 +163,8 @@ public class ReusableIdPool
     /// <returns>The resulting NumIds value.</returns>
     public int IncrementNumIds(int increment)
     {
-        if (this.NumIds + increment <= int.MaxValue)
-        {
-            this.NumIds += increment;
-            return this.NumIds;
-        }
-        return -1;
+        this.NumIds += increment;
+        return this.NumIds;
     }
 
     /// <summary>

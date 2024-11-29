@@ -107,6 +107,70 @@ public class ReusableIdPoolTests
         Assert.Equal(expectedNumIds, reusableIdPool.Ids.Count);
         Assert.Contains(baseId + expectedNumIds - 1, reusableIdPool.Ids); // Should contain int.MaxValue
     }
+    /// <summary>
+    /// Test IncrementNumIds does not allow negative increments.
+    /// </summary>
+    [Fact]
+    public void IncrementNumIds_MaxNegativeIncrement_ShouldReturn()
+    {
+        // Arrange
+        var reusableIdPool = new ReusableIdPool(5, 5);
+
+        // Act & Assert
+        Assert.Equal(2, reusableIdPool.IncrementNumIds(-3));
+    }
+    /// <summary>
+    /// Setting NumIds Below Highest Used ID.
+    /// </summary>
+    [Fact]
+    public void NumIds_SetBelowHighestUsedId_ShouldAdjustToIncludeHighestUsedId()
+    {
+        // Arrange
+        var reusableIdPool = new ReusableIdPool(5, 10);
+        reusableIdPool.UseId(12); // Highest used ID is 12
+        int expectedNumIds = 8;   // 12 - 5 + 1 = 8
+        // Act
+        reusableIdPool.ResetNumIds(5); // Attempt to set NumIds below highest used ID
+        int actualNumIds = reusableIdPool.NumIds;
+
+        // Assert
+        Assert.Equal(expectedNumIds, actualNumIds);
+    }
+    /// <summary>
+    /// Decrementing NumIds Below MIN_NUM_IDS.
+    /// </summary>
+    [Fact]
+    public void NumIds_DecrementBelowMinNumIds_ShouldAdjustToMinNumIds()
+    {
+        // Arrange
+        var reusableIdPool = new ReusableIdPool(0, 5);
+        int expectedNumIds = 0;
+
+        // Act
+        reusableIdPool.ResetNumIds(-10); // Attempt to set NumIds below MIN_NUM_IDS
+        int actualNumIds = reusableIdPool.NumIds;
+
+        // Assert
+        Assert.Equal(expectedNumIds, actualNumIds);
+    }
+    /// <summary>
+    /// Setting NumIds Above Maximum Allowable Value
+    /// </summary>
+    [Fact]
+    public void NumIds_SetAboveMaxAllowable_ShouldAdjustToMaxAllowable()
+    {
+        // Arrange
+        int baseId = int.MaxValue - 5;
+        var reusableIdPool = new ReusableIdPool(baseId, 5);
+        int expectedNumIds = int.MaxValue - baseId + 1; // Should be 6
+
+        // Act
+        reusableIdPool.ResetNumIds(10); // Attempt to set NumIds above max allowable
+        int actualNumIds = reusableIdPool.NumIds;
+
+        // Assert
+        Assert.Equal(expectedNumIds, actualNumIds);
+    }
 
     #endregion
 
@@ -134,18 +198,23 @@ public class ReusableIdPoolTests
         var expectedIds = new SortedSet<int>(Enumerable.Range(Math.Max(baseId, 0), expectedNumIds));
         Assert.Equal(expectedIds, reusableIdPool.Ids);
     }
-
     /// <summary>
-    /// Test IncrementNumIds does not allow negative increments.
+    /// Decreasing NumIds Below Highest Used ID via IncrementNumIds
     /// </summary>
     [Fact]
-    public void IncrementNumIds_MaxNegativeIncrement_ShouldReturn()
+    public void IncrementNumIds_DecreaseBelowHighestUsedId_ShouldAdjustToIncludeHighestUsedId()
     {
         // Arrange
-        var reusableIdPool = new ReusableIdPool(5, 5);
+        var reusableIdPool = new ReusableIdPool(0, 10);
+        reusableIdPool.UseId(8); // Highest used ID is 8
+        int expectedNumIds = 9;  // Cannot reduce NumIds below 9 (8 - 0 + 1)
 
-        // Act & Assert
-        Assert.Equal(2, reusableIdPool.IncrementNumIds(-3));
+        // Act
+        int newNumIds = reusableIdPool.IncrementNumIds(-5); // Attempt to reduce NumIds to 5
+
+        // Assert
+        Assert.Equal(expectedNumIds, newNumIds);
+        Assert.Equal(expectedNumIds, reusableIdPool.NumIds);
     }
 
     #endregion

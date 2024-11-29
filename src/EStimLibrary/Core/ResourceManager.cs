@@ -66,7 +66,7 @@ public class ResourceManager<ResourceType>
         this.Resources.Add(globalId, resource);
         // small TODO: the Use method calls IsValidId again --> any way to
         // refactor to make more efficient?
-        this.IdPool.UsedIds.Add(globalId);
+        this.IdPool.UseId(globalId);
         return true;
     }
 
