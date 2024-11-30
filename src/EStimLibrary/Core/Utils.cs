@@ -29,7 +29,7 @@ public static class Utils
         bool inclusive = true)
     {
         return upperBound == Constants.POS_INFINITY ||
-            (inclusive) ? value <= upperBound : value < upperBound;
+            (inclusive ? value <= upperBound : value < upperBound);
     }
 
     /// <summary>

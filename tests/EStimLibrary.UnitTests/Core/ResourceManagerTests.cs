@@ -136,7 +136,7 @@ public class ResourceManagerTests
         int id = 6;
         // Mark ID as used without adding a resource (this should not happen in normal usage)
         resourceManager.IdPool.UseId(id);
-
+        Console.WriteLine(resourceManager.IdPool.UsedIds);
         // Act
         bool isValid = resourceManager.IsValidResourceId(id);
 
@@ -488,4 +488,190 @@ public class ResourceManagerTests
     }
 
     #endregion
+
+    #region Checks if IdPool.NumUsedIds and Resources.Count are the same
+    [Fact]
+    public void AddResource_ShouldIncrementNumUsedIdsAndResourcesCount()
+    {
+        // Arrange
+        var resourceManager = new ResourceManager<string>(baseId: 0, initialNumResourceIds: 1);
+        string resource = "Resource0";
+
+        // Act
+        bool addResult = resourceManager.TryAddResource(0, resource);
+
+        // Assert
+        Assert.True(addResult);
+        Assert.Equal(1, resourceManager.IdPool.NumUsedIds);
+        Assert.Equal(1, resourceManager.Resources.Count);
+        Assert.Equal(resourceManager.IdPool.NumUsedIds, resourceManager.Resources.Count);
+    }
+
+    [Fact]
+    public void AddMultipleResources_ShouldKeepNumUsedIdsAndResourcesCountEqual()
+    {
+        // Arrange
+        var resourceManager = new ResourceManager<string>(baseId: 0, initialNumResourceIds: 3);
+        var resources = new Dictionary<int, string>
+    {
+        { 0, "Resource0" },
+        { 1, "Resource1" },
+        { 2, "Resource2" }
+    };
+
+        // Act
+        foreach (var kvp in resources)
+        {
+            bool addResult = resourceManager.TryAddResource(kvp.Key, kvp.Value);
+            Assert.True(addResult);
+        }
+
+        // Assert
+        Assert.Equal(3, resourceManager.IdPool.NumUsedIds);
+        Assert.Equal(3, resourceManager.Resources.Count);
+        Assert.Equal(resourceManager.IdPool.NumUsedIds, resourceManager.Resources.Count);
+    }
+
+    [Fact]
+    public void RemoveResource_ShouldDecrementNumUsedIdsAndResourcesCount()
+    {
+        // Arrange
+        var resourceManager = new ResourceManager<string>(baseId: 0, initialNumResourceIds: 1);
+        string resource = "Resource0";
+        resourceManager.TryAddResource(0, resource);
+
+        // Act
+        bool removeResult = resourceManager.TryRemoveResource(0, out string removedResource);
+
+        // Assert
+        Assert.True(removeResult);
+        Assert.Equal(resource, removedResource);
+        Assert.Equal(0, resourceManager.IdPool.NumUsedIds);
+        Assert.Equal(0, resourceManager.Resources.Count);
+        Assert.Equal(resourceManager.IdPool.NumUsedIds, resourceManager.Resources.Count);
+    }
+
+    [Fact]
+    public void RemoveMultipleResources_ShouldKeepNumUsedIdsAndResourcesCountEqual()
+    {
+        // Arrange
+        var resourceManager = new ResourceManager<string>(baseId: 0, initialNumResourceIds: 3);
+        var resources = new Dictionary<int, string>
+    {
+        { 0, "Resource0" },
+        { 1, "Resource1" },
+        { 2, "Resource2" }
+    };
+
+        foreach (var kvp in resources)
+        {
+            resourceManager.TryAddResource(kvp.Key, kvp.Value);
+        }
+
+        // Act
+        foreach (var id in resources.Keys)
+        {
+            bool removeResult = resourceManager.TryRemoveResource(id, out string removedResource);
+            Assert.True(removeResult);
+            Assert.Equal(resources[id], removedResource);
+        }
+
+        // Assert
+        Assert.Equal(0, resourceManager.IdPool.NumUsedIds);
+        Assert.Equal(0, resourceManager.Resources.Count);
+        Assert.Equal(resourceManager.IdPool.NumUsedIds, resourceManager.Resources.Count);
+    }
+
+    [Fact]
+    public void AddResource_InvalidId_ShouldNotChangeNumUsedIdsOrResourcesCount()
+    {
+        // Arrange
+        var resourceManager = new ResourceManager<string>(baseId: 0, initialNumResourceIds: 1);
+        string resource = "InvalidResource";
+
+        // Act
+        bool addResult = resourceManager.TryAddResource(5, resource); // ID 5 is invalid
+
+        // Assert
+        Assert.False(addResult);
+        Assert.Equal(0, resourceManager.IdPool.NumUsedIds);
+        Assert.Equal(0, resourceManager.Resources.Count);
+        Assert.Equal(resourceManager.IdPool.NumUsedIds, resourceManager.Resources.Count);
+    }
+
+    [Fact]
+    public void RemoveResource_NonExistent_ShouldNotChangeNumUsedIdsOrResourcesCount()
+    {
+        // Arrange
+        var resourceManager = new ResourceManager<string>(baseId: 0, initialNumResourceIds: 1);
+
+        // Act
+        bool removeResult = resourceManager.TryRemoveResource(0, out string removedResource);
+
+        // Assert
+        Assert.False(removeResult);
+        Assert.Null(removedResource);
+        Assert.Equal(0, resourceManager.IdPool.NumUsedIds);
+        Assert.Equal(0, resourceManager.Resources.Count);
+        Assert.Equal(resourceManager.IdPool.NumUsedIds, resourceManager.Resources.Count);
+    }
+
+    [Fact]
+    public void RandomAddRemoveOperations_ShouldKeepNumUsedIdsAndResourcesCountEqual()
+    {
+        // Arrange
+        var resourceManager = new ResourceManager<string>(baseId: 0, initialNumResourceIds: 5);
+        var random = new Random();
+        var ids = new List<int> { 0, 1, 2, 3, 4 };
+
+        // Act
+        // Randomly add resources
+        foreach (int id in ids)
+        {
+            if (random.NextDouble() > 0.5)
+            {
+                resourceManager.TryAddResource(id, $"Resource{id}");
+            }
+        }
+
+        int midNumUsedIds = resourceManager.IdPool.NumUsedIds;
+        int midResourcesCount = resourceManager.Resources.Count;
+        Assert.Equal(midNumUsedIds, midResourcesCount);
+
+        // Randomly remove resources
+        foreach (int id in ids)
+        {
+            if (random.NextDouble() > 0.5)
+            {
+                resourceManager.TryRemoveResource(id, out _);
+            }
+        }
+
+        // Assert
+        Assert.Equal(resourceManager.IdPool.NumUsedIds, resourceManager.Resources.Count);
+    }
+
+    [Fact]
+    public void RemoveAllResources_ShouldSetNumUsedIdsAndResourcesCountToZero()
+    {
+        // Arrange
+        var resourceManager = new ResourceManager<string>(baseId: 0, initialNumResourceIds: 3);
+        resourceManager.TryAddResource(0, "Resource0");
+        resourceManager.TryAddResource(1, "Resource1");
+        resourceManager.TryAddResource(2, "Resource2");
+
+        // Act
+        resourceManager.TryRemoveResource(0, out _);
+        resourceManager.TryRemoveResource(1, out _);
+        resourceManager.TryRemoveResource(2, out _);
+
+        // Assert
+        Assert.Equal(0, resourceManager.IdPool.NumUsedIds);
+        Assert.Equal(0, resourceManager.Resources.Count);
+        Assert.Equal(resourceManager.IdPool.NumUsedIds, resourceManager.Resources.Count);
+    }
+
+
+    #endregion
+
 }

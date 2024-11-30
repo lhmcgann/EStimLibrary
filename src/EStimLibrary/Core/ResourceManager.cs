@@ -33,6 +33,8 @@ public class ResourceManager<ResourceType>
         return this.IdPool.IsValidId(globalId) &&
             this.IdPool.IsUsed(globalId) &&
             this.Resources.ContainsKey(globalId);
+        //return this.IdPool.IsValidId(globalId) &&
+        //    this.IdPool.IsUsed(globalId);
     }
 
     public bool TryGetNextAvailableId(out int globalId)
@@ -43,7 +45,9 @@ public class ResourceManager<ResourceType>
         while (!this.IdPool.TryGetNextFreeId(out globalId))
         {
             // If max capacity already used, return failure.
-            if (this.IdPool.NumUsedIds >= this.MaxNumResources)
+            //if (this.IdPool.NumUsedIds >= this.MaxNumResources)
+            if (!Utils.IsWithinUpperBound(this.IdPool.NumUsedIds,
+                this.MaxNumResources, inclusive: false))
             {
                 globalId = default;
                 return false;

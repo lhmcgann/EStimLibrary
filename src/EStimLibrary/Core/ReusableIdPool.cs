@@ -51,7 +51,7 @@ public class ReusableIdPool
         //protected set => this._numIds = Math.Max(MIN_NUM_IDS, value);
         protected set
         {
-            long maxAllowableNumIds = (long)int.MaxValue - (long)this.BaseId + 1;
+            long maxAllowableNumIds = (long)Constants.POS_INFINITY - (long)this.BaseId + 1;
             int minAllowableNumIds = MIN_NUM_IDS;
 
             if (this.UsedIds != null)
@@ -83,8 +83,8 @@ public class ReusableIdPool
                 return new SortedSet<int>();
             }
 
-            // Ensure that baseId + numIds - 1 does not exceed int.MaxValue
-            if ((long)this.BaseId + (long)this.NumIds - 1 > int.MaxValue)
+            // Ensure that baseId + numIds - 1 does not exceed Constants.POS_INFINITY
+            if ((long)this.BaseId + (long)this.NumIds - 1 > Constants.POS_INFINITY)
             {
                 this.NumIds = Math.Min(NumIds - BaseId, NumIds);
             }
@@ -131,7 +131,7 @@ public class ReusableIdPool
     public ReusableIdPool(int baseId, int numIds)
     {
         // Ensure BaseId is not negative
-        this.BaseId = Math.Max(baseId, MIN_BASE_ID);
+        this.BaseId = baseId;
 
         this.NumIds = numIds;
 
@@ -176,19 +176,6 @@ public class ReusableIdPool
     /// <returns>The resulting NumIds value.</returns>
     public int ResetNumIds(int newMax)
     {
-        //if (newMax < 0)
-        //{
-        //    this.NumIds = 0;
-        //}
-        //else
-        //{
-        //    this.NumIds = newMax;
-        //}
-
-        //// Remove the used ID.
-        //this.UsedIds.RemoveWhere(id => !this.IsValidId(id));
-
-        //return this.NumIds;
         this.NumIds = newMax;
         return this.NumIds;
     }
