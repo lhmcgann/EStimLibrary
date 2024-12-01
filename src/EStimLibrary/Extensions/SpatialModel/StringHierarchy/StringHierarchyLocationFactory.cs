@@ -22,7 +22,8 @@ public class StringHierarchyLocationFactory :
 
         this.HelpMsg = $"A StringHierarchyLocation can be built from one of " +
             $"the following path specs, selecting one option from any list " +
-            $"in [] and excluding the []:\n{baseModelRegion.ToString()}";
+            $"in [] and excluding the []:\n{baseModelRegion?.ToString() ??
+            "null"}";
 
         this.ParamLimits = new() {
             {"fullSpec",
@@ -36,12 +37,12 @@ public class StringHierarchyLocationFactory :
         var parts = fullSpec.Split(
             StringHierarchySpec.REGIONS_MODIFIERS_DELIMITER);
 
-        return parts.Length > 0 &&
+        return parts.Length < 3 &&
             // First try to navigate this model to the specified region.
             this._baseRegion.TryGetSubregion(parts[0], out var subregion) &&
             // Then - if any given - check if the modifiers valid in the model.
-            (parts.Length > 1) ?
-            subregion.IsValidModifierSpec(parts[1]) : true;
+            ((parts.Length > 1) ?
+            subregion.IsValidModifierSpec(parts[1]) : true);
     }
 
     public bool TryCreate(Dictionary<string, object> paramValues,
