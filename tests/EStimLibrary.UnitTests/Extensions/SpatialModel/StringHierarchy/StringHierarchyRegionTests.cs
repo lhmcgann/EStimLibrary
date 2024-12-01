@@ -1,11 +1,12 @@
 ﻿using EStimLibrary.Extensions.SpatialModel.StringHierarchy;
-using System.Runtime.InteropServices;
-using Xunit.Sdk;
+
 
 namespace EStimLibrary.UnitTests.Extensions.SpatialModel.StringHierarchy;
 
 
-// Test class naming convention: LibClassTests
+/// <summary>
+/// Test class for StringHierarchyRegion.
+/// </summary>
 public class StringHierarchyRegionTests
 {
     private readonly ITestOutputHelper _output;

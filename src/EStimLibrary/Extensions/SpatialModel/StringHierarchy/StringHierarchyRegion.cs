@@ -34,8 +34,9 @@ public class StringHierarchyRegion
             if (this.HasOptions)
             {
                 return this.Options.Select(
-                    option => $"{option}{StringHierarchySpec.OPTION_REGION_DELIMITER}" +
-                    $"{this.BaseName}").ToList();
+                    option => $"{option}" +
+                        $"{StringHierarchySpec.OPTION_REGION_DELIMITER}" +
+                        $"{this.BaseName}").ToList();
             }
             // Else, add include the base name.
             else
@@ -117,12 +118,15 @@ public class StringHierarchyRegion
     /// Parent reference set.</param>
     /// <param name="existingSubregion">An output parameter: the replaced but
     /// unaltered existing subregion if any, else null.</param>
+    /// <exception cref = "ArgumentNullException"> The provided 
+    /// subregion argument is null.</exception>
     public void AddSubregion(StringHierarchyRegion subregion,
         out StringHierarchyRegion? existingSubregion)
     {
-        /// <exception cref = "ArgumentNullException"> The provided 
-        /// subregion argument is null.</exception>
-        if (subregion == null) throw new ArgumentNullException();
+        if (subregion == null)
+        {
+            throw new ArgumentNullException();
+        }
 
         // Fill the out parameter with the existing subregion if exists.
         if (this.Subregions.TryGetValue(subregion.BaseName,
