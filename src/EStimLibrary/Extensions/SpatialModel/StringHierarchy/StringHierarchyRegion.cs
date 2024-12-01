@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace EStimLibrary.Extensions.SpatialModel.StringHierarchy;
+﻿namespace EStimLibrary.Extensions.SpatialModel.StringHierarchy;
 
 
 /// <summary>
