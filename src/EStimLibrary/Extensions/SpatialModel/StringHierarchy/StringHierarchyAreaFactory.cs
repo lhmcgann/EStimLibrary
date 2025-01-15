@@ -24,12 +24,12 @@ public class StringHierarchyAreaFactory : IFactory<IArea>
 
         this.ParamLimits = new() {
             {"fullSpec",
-                new DynamicDataLimits<string>(this.AreaSpecCheckFunction,
+                new DynamicDataLimits<string>(this._AreaSpecCheckFunction,
                 this.HelpMsg) } };
 
     }
 
-    private bool AreaSpecCheckFunction(string fullSpec)
+    private bool _AreaSpecCheckFunction(string fullSpec)
     {
         var parts = fullSpec.Split(
             StringHierarchySpec.REGIONS_MODIFIERS_DELIMITER);
@@ -39,18 +39,27 @@ public class StringHierarchyAreaFactory : IFactory<IArea>
             this._baseRegion.TryGetSubregion(parts[0], out var subregion) &&
             // Then - if any given - check if the modifiers valid in the model.
             ((parts.Length > 1) ?
-            subregion.IsValidModifierSpec(parts[1]) : true);
+                subregion.IsValidModifierSpec(parts[1]) : true);
     }
 
     public bool TryCreate(Dictionary<string, object> paramValues,
         out IArea product, bool skipValueValidation = false)
     {
+        // Get the params provided for product creation. This factory only
+        // requires one parameter value for "fullSpec" which must follow the
+        // DynamicDataLimits in this factory's ParamLimits
         bool valid = paramValues.TryGetValue("fullSpec", out object value);
+
+        // Init the product to null in case of failed creation.
         product = null;
+
+        // Skip param value valudation if requested
         if (!skipValueValidation)
         {
             valid = this.ParamLimits["fullSpec"].IsValidDataValue(value);
         }
+
+        // Create and return the product if param values valid
         if (valid)
         {
             product = new StringHierarchyArea((string)value);
