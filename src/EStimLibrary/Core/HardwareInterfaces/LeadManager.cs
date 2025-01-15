@@ -25,11 +25,22 @@ public class LeadManager : ResourceManager<Lead>
     /// </summary>
     internal SortedSet<int> _WiredOutputs { get; private set; }
 
+    /// <summary>
+    /// A map of global contact IDs to the set of global lead IDs they are
+    /// involved in.
+    /// </summary>
     protected Dictionary<int, SortedSet<int>> _ContactLeadIdMap;
+    /// <summary>
+    /// A map of global output IDs to the set of global lead IDs they are
+    /// involved in.
+    /// </summary>
     protected Dictionary<int, SortedSet<int>> _OutputLeadIdMap;
 
     //TODO? public Dictionary<int, int> ContactOutputMap { get; protected set; }
 
+    /// <summary>
+    /// Initialize an empty lead manager with no values initially stored.
+    /// </summary>
     public LeadManager()
     {
         // Initialize wired ID sets.
@@ -90,7 +101,7 @@ public class LeadManager : ResourceManager<Lead>
             leadId = lead.Id;
             return true;
         }
-        if(!(this.TryGetNextAvailableId(out leadId) && 
+        if (!(this.TryGetNextAvailableId(out leadId) &&
              this.TryAddResource(leadId, lead)))
         {
             // We return early if this fails
@@ -246,7 +257,7 @@ public class LeadManager : ResourceManager<Lead>
     {
         // Check if this Id is in the resources pool.
         int? id = null;
-        if(this.Resources.ContainsKey(lead.Id))
+        if (this.Resources.ContainsKey(lead.Id))
         {
             // Set the Id of the lead to be removed. 
             id = lead.Id;
@@ -274,7 +285,7 @@ public class LeadManager : ResourceManager<Lead>
     // so I/O calls can be handled by another class
     public static void SaveMapToCSV(string outfile)
     {
-        
+
     }
 
     public static LeadManager LoadMapFromCSV(string infile)

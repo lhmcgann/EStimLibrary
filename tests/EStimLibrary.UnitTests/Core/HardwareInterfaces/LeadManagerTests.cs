@@ -1,32 +1,42 @@
 using EStimLibrary.Core;
 using EStimLibrary.Core.HardwareInterfaces;
 
+
 namespace EStimLibrary.UnitTests.Core.HardwareInterfaces;
 
 
+/// <summary>
+/// Tests for the LeadManager class.
+/// </summary>
 public class LeadManagerTests
 {
     /// <summary>
-    /// Test the empty constructor. There is nothing to test since all fields that get
-    /// initialized are protected or internal with no public get methods so they cannot be checked
+    /// Test the empty constructor. There is nothing to test since all fields
+    /// that get initialized are protected or internal with no public get
+    /// methods so they cannot be checked.
     /// </summary>
     [Fact]
     public void EmptyConstuctor_ShouldInitEmpty()
     {
         var leadManager = new LeadManager();
-        // No assertions are needed since we are only ensuring the object initializes correctly
+        // No assertions are needed since we are only ensuring the object
+        // initializes without error.
     }
-    
+
     /// <summary>
-    /// Test the behavior of the TryAddLead method when adding a lead to an empty LeadManager.
-    /// Verifies that the method returns the correct ID and updates the wiring state of the contacts and outputs.
-    /// <param name="leadManager">The LeadManager instance to test the TryAddLead method on.</param>
+    /// Test the behavior of the TryAddLead method when adding a lead to an
+    /// empty LeadManager. Verifies that the method returns the correct ID and
+    /// updates the wiring state of the contacts and outputs.
+    /// <param name="leadManager">The LeadManager instance to test the
+    /// TryAddLead method on.</param>
     /// <param name="lead">The Lead object to add to the LeadManager.</param>
-    /// <param name="expectedId">The expected ID that should be assigned to the lead after it is added.</param>
+    /// <param name="expectedId">The expected ID that should be assigned to the
+    /// lead after it is added.</param>
     /// </summary>
     [Theory]
     [MemberData(nameof(TryAddLeadEmptyData))]
-    public void TryAddLead_ShouldReturnCorrectIdWhenLeadMangerIsEmpty(LeadManager leadManager, Lead lead,
+    public void TryAddLead_ShouldReturnCorrectIdWhenLeadMangerIsEmpty(
+        LeadManager leadManager, Lead lead,
         int expectedId)
     {
 
@@ -34,12 +44,12 @@ public class LeadManagerTests
         // Assert that the operation is successful and returns the expected ID
         Assert.True(results);
         Assert.Equal(expectedId, id);
-        // Assert that all contacts in the lead are correctly wired in the lead manager
+        // Assert all contacts in the lead are correctly wired in the lead mgr
         foreach (var contact in lead.ContactSet)
         {
             Assert.True(leadManager.IsWiredContact(contact));
         }
-        // Assert that all outputs in the lead are correctly wired in the lead manager
+        // Assert all outputs in the lead are correctly wired in the lead mgr
         foreach (var output in lead.OutputSet)
         {
             Assert.True(leadManager.IsWiredOutput(output));
@@ -59,7 +69,7 @@ public class LeadManagerTests
         var leadManager = new LeadManager();
         var lead = new Lead(new SortedSet<int> { 2, 3, 4, 8 },
             new SortedSet<int> { 3 }, Constants.CurrentDirection.SINK);
-        
+
         return new List<object[]>
         {
             // Testing adding a lead when the manager is empty
@@ -67,10 +77,11 @@ public class LeadManagerTests
             {
                 leadManager,
                 new Lead(new SortedSet<int> { 1, 2, 3 },
-                    new SortedSet<int> { 3, 4, 5 }, Constants.CurrentDirection.SINK),
+                    new SortedSet<int> { 3, 4, 5 },
+                    Constants.CurrentDirection.SINK),
                 0
             },
-            // Testing  adding a second lead when the manager now has one thing in it
+            // Testing adding a second lead when the mgr now has one thing in it
             new object[]
             {
                 leadManager,
@@ -86,36 +97,42 @@ public class LeadManagerTests
             }
         };
     }
-    
+
     /// <summary>
-    /// Tests the TryAddLead method when some IDs in the LeadManager are freed up.
+    /// Tests the TryAddLead method when some IDs in the LeadManager are freed.
     /// Verifies that the correct ID is returned when adding a lead and ensures
     /// that the lead is wired correctly.
     /// </summary>
-    /// <param name="leadManager">The LeadManager instance to test the TryAddLead method on.</param>
+    /// <param name="leadManager">The LeadManager instance to test the
+    /// TryAddLead method on.</param>
     /// <param name="lead">The Lead object to add to the LeadManager.</param>
-    /// <param name="expectedId">The expected ID to be returned when the lead is added to the manager.</param>
+    /// <param name="expectedId">The expected ID to be returned when the lead is
+    /// added to the manager.</param>
     [Theory]
     [MemberData(nameof(TryAddLeadFirstIdMissingData))]
-    public void TryAddLead_ShouldReturnCorrectId_WhenSomeIdFreesUp(LeadManager leadManager, Lead lead, int expectedId)
+    public void TryAddLead_ShouldReturnCorrectId_WhenSomeIdFreesUp(
+        LeadManager leadManager, Lead lead, int expectedId)
     {
         // Add some initial leads to the manager
         leadManager.TryAddLead(new Lead(new SortedSet<int> { 1, 2, 3 },
-            new SortedSet<int> { 3, 4, 5 }, Constants.CurrentDirection.SINK), out _);
+            new SortedSet<int> { 3, 4, 5 }, Constants.CurrentDirection.SINK),
+            out _);
         leadManager.TryAddLead(new Lead(new SortedSet<int> { 3, 4, 5 },
-            new SortedSet<int> { 1, 2, 3 }, Constants.CurrentDirection.SINK), out _);
+            new SortedSet<int> { 1, 2, 3 }, Constants.CurrentDirection.SINK),
+            out _);
         leadManager.TryAddLead(new Lead(new SortedSet<int> { 97 },
-            new SortedSet<int> { 0, 43, 76 }, Constants.CurrentDirection.SINK), out _);
-        
+            new SortedSet<int> { 0, 43, 76 }, Constants.CurrentDirection.SINK),
+            out _);
+
         // Remove a lead to free up an ID
         leadManager.TryRemoveLead(expectedId, out _);
 
         var results = leadManager.TryAddLead(lead, out var id);
-        
-        // Assert that the operation is successful and the correct ID is returned
+
+        // Assert the operation is successful and the correct ID is returned
         Assert.True(results);
         Assert.Equal(expectedId, id);
-        
+
         // Ensure the lead is wired correctly
         foreach (var contact in lead.ContactSet)
         {
@@ -126,11 +143,10 @@ public class LeadManagerTests
         {
             Assert.True(leadManager.IsWiredOutput(output));
         }
-
     }
 
     /// <summary>
-    /// Data for testing TryAddLead when some lead IDs are freed up in the form
+    /// Data for testing TryAddLead when some lead IDs are freed up in the form:
     ///    leadManager (Instance to be used),
     ///    lead (to be added),
     ///    expectedId
@@ -147,7 +163,8 @@ public class LeadManagerTests
                 // Testing when the first lead in the manager is freed up
                 leadManager,
                 new Lead(new SortedSet<int> { 2, 3, 4 },
-                    new SortedSet<int> { 3, 2 }, Constants.CurrentDirection.SINK),
+                    new SortedSet<int> { 3, 2 },
+                    Constants.CurrentDirection.SINK),
                 0
             },
             new object[]
@@ -155,7 +172,8 @@ public class LeadManagerTests
                 // Testing when a lead in the middle of the manager is freed up
                 leadManager,
                 new Lead(new SortedSet<int> { 3, 4, 5 },
-                    new SortedSet<int> { 1, 2, 3 }, Constants.CurrentDirection.SINK),
+                    new SortedSet<int> { 1, 2, 3 },
+                    Constants.CurrentDirection.SINK),
                 1
             },
             new object[]
@@ -163,27 +181,30 @@ public class LeadManagerTests
                 // Testing when the last lead in the manager is freed up
                 leadManager,
                 new Lead(new SortedSet<int> { 97 },
-                    new SortedSet<int> { 0, 43, 76 }, Constants.CurrentDirection.SINK),
+                    new SortedSet<int> { 0, 43, 76 },
+                    Constants.CurrentDirection.SINK),
                 2
             },
         };
     }
     /// <summary>
-    /// Method to check that GetLeadsOfOutput returns the corrected list of leads
+    /// Method to check GetLeadsOfOutput returns the corrected list of leads.
     /// </summary>
-    /// <param name="leadManager">The lead manager instance to perform the tests on</param>
+    /// <param name="leadManager">The lead manager instance to perform the tests
+    /// on.</param>
     /// <param name="outputId">The Id of the output we want to search</param>
     /// <param name="expectedLeads">A list of the leads we expect to be returned
-    ///  from the search </param>
+    /// from the search </param>
     [Theory]
     [MemberData(nameof(GetLeadsWiredToOutputData))]
-    public void GetLeadsWiredToOutput_ShouldReturnCorrectLeads_WhenOutputIsWired(LeadManager leadManager, int outputId, List<Lead> expectedLeads)
+    public void GetLeadsWiredToOutput_ShouldReturnCorrectLeads_WhenOutputIsWired(
+        LeadManager leadManager, int outputId, List<Lead> expectedLeads)
     {
         var results = leadManager.GetLeadsOfOutput(outputId);
-        
+
         // Check that we got the right about of leads
         Assert.Equal(expectedLeads.Count, results.Count);
-        // Check to make sure our results are exactly the same as the expected results
+        // Check the results are exactly the same as the expected results
         foreach (var lead in expectedLeads)
         {
             Assert.Contains(lead, results);
@@ -191,7 +212,7 @@ public class LeadManagerTests
     }
 
     /// <summary>
-    /// Data for testing GetLeadsOfOutput
+    /// Data for testing GetLeadsOfOutput:
     ///    leadManager (Instance to be used),
     ///    outputId (The Id of the output to be searched for)
     ///    expectedLeads (The list of leads we expect to be returned)
@@ -200,12 +221,15 @@ public class LeadManagerTests
     public static IEnumerable<object[]> GetLeadsWiredToOutputData()
     {
         var leadManager = new LeadManager();
-        
+
         // Setting up the LeadManager with some leads
-        var lead1 = new Lead(new SortedSet<int> { 1, 2, 3 }, new SortedSet<int> { 4 }, Constants.CurrentDirection.SINK);
-        var lead2 = new Lead(new SortedSet<int> { 4, 5 }, new SortedSet<int> { 6 }, Constants.CurrentDirection.SINK);
-        var lead3 = new Lead(new SortedSet<int> { 7, 8 }, new SortedSet<int> { 4 }, Constants.CurrentDirection.SINK);
-        
+        var lead1 = new Lead(new SortedSet<int> { 1, 2, 3 },
+            new SortedSet<int> { 4 }, Constants.CurrentDirection.SINK);
+        var lead2 = new Lead(new SortedSet<int> { 4, 5 },
+            new SortedSet<int> { 6 }, Constants.CurrentDirection.SINK);
+        var lead3 = new Lead(new SortedSet<int> { 7, 8 },
+            new SortedSet<int> { 4 }, Constants.CurrentDirection.SINK);
+
         leadManager.TryAddLead(lead1, out _);
         leadManager.TryAddLead(lead2, out _);
         leadManager.TryAddLead(lead3, out _);
@@ -230,14 +254,14 @@ public class LeadManagerTests
             new object[]
             {
                 leadManager,
-                10, 
-                new List<Lead>() 
+                10,
+                new List<Lead>()
             },
             // Testing with an invalid ID
             new object[]
             {
                 leadManager,
-                -1, 
+                -1,
                 new List<Lead>()
             }
         };
@@ -246,20 +270,25 @@ public class LeadManagerTests
     /// <summary>
     /// A method to test TryRemoveLead when the input lead exists.
     /// </summary>
-    /// <param name="leadManager">The lead manager instance to perform the tests on.</param>
+    /// <param name="leadManager">The lead manager instance to perform the tests
+    /// on.</param>
     /// <param name="leadId"> The Id of the lead to be removed.</param>
-    /// <param name="expectedLead">The lead we expected to be removed and returned.</param>
+    /// <param name="expectedLead">The lead we expected to be removed and
+    /// returned.</param>
     [Theory]
     [MemberData(nameof(RemoveLeadData))]
-    public void RemoveLead_ShouldReturnTrueAndRemoveLead_WhenLeadExists(LeadManager leadManager, int leadId, Lead expectedLead)
+    public void RemoveLead_ShouldReturnTrueAndRemoveLead_WhenLeadExists(
+        LeadManager leadManager, int leadId, Lead expectedLead)
     {
         var result = leadManager.TryRemoveLead(leadId, out var removedLead);
-        
+
         // We expect that the method will always succeed 
         Assert.True(result);
         // We check removed lead vs the expected lead
         Assert.Equal(expectedLead, removedLead);
-        var outputs = leadManager.GetLeadsOfOutput(expectedLead.OutputSet.First()); // Assuming at least one output
+        // Assuming at least one output
+        var outputs = leadManager.GetLeadsOfOutput(
+            expectedLead.OutputSet.First());
         // Make sure the outputs don't contain the lead we removed
         Assert.DoesNotContain(expectedLead, outputs);
     }
@@ -276,8 +305,10 @@ public class LeadManagerTests
         var leadManager = new LeadManager();
 
         // Setting up the LeadManager with some leads
-        var lead1 = new Lead(new SortedSet<int> { 1, 2 }, new SortedSet<int> { 3 }, Constants.CurrentDirection.SINK);
-        var lead2 = new Lead(new SortedSet<int> { 4, 5 }, new SortedSet<int> { 6 }, Constants.CurrentDirection.SINK);
+        var lead1 = new Lead(new SortedSet<int> { 1, 2 },
+            new SortedSet<int> { 3 }, Constants.CurrentDirection.SINK);
+        var lead2 = new Lead(new SortedSet<int> { 4, 5 },
+            new SortedSet<int> { 6 }, Constants.CurrentDirection.SINK);
         leadManager.TryAddLead(lead1, out var id1);
         leadManager.TryAddLead(lead2, out var id2);
 
@@ -301,17 +332,20 @@ public class LeadManagerTests
     }
 
     /// <summary>
-    /// Method to check that GetLeadsOfOutput returns the corrected list of leads when the
-    /// data is invalid
+    /// Method to check that GetLeadsOfOutput returns the corrected list of
+    /// leads when the data is invalid.
     /// </summary>
-    /// <param name="leadManager">The lead manager instance to perform the tests on</param>
-    /// <param name="leadId">The Id of the output we want to remove. (Should be invalid)</param>
+    /// <param name="leadManager">The lead manager instance to perform the tests
+    /// on.</param>
+    /// <param name="leadId">The Id of the output we want to remove (should be
+    /// invalid).</param>
     [Theory]
     [MemberData(nameof(RemoveLeadWithInvalidIdData))]
-    public void RemoveLead_ShouldReturnFalse_WhenLeadDoesNotExist(LeadManager leadManager, int leadId)
+    public void RemoveLead_ShouldReturnFalse_WhenLeadDoesNotExist(
+        LeadManager leadManager, int leadId)
     {
         var result = leadManager.TryRemoveLead(leadId, out var removedLead);
-        
+
         // The input should be invalid so we expect the method to fail
         Assert.False(result);
         // We expect no lead to be removed
@@ -319,17 +353,18 @@ public class LeadManagerTests
     }
 
     /// <summary>
-    /// Data for testing RemoveLead when the input data is invalid
+    /// Data for testing RemoveLead when the input data is invalid:
     ///    leadManager (Instance to be used),
-    ///    leadId (The Id of the lead to be removed, will be invalid),
+    ///    leadId (The Id of the lead to be removed, will be invalid)
     /// </summary>
     public static IEnumerable<object[]> RemoveLeadWithInvalidIdData()
     {
         var leadManager = new LeadManager();
 
         // Setting up with some leads
-        leadManager.TryAddLead(new Lead(new SortedSet<int> { 1, 2 }, new SortedSet<int> { 3 }, Constants.CurrentDirection.SINK), out _);
-        
+        leadManager.TryAddLead(new Lead(new SortedSet<int> { 1, 2 },
+            new SortedSet<int> { 3 }, Constants.CurrentDirection.SINK), out _);
+
         return new List<object[]>
         {
             new object[] { leadManager, -1 }, // Negative ID
@@ -337,7 +372,7 @@ public class LeadManagerTests
             new object[] { leadManager, 100 } // High invalid ID
         };
     }
-    
+
     /// <summary>
     /// Testing removing a lead by the value not Id, when the lead to remove is
     /// valid. 
@@ -345,22 +380,24 @@ public class LeadManagerTests
     /// <param name="leadManager">The instance of lead manager the tests will be
     /// performed on.</param>
     /// <param name="leadToRemove"> The lead that will be removed from the lead
-    /// manager </param>
-    /// <param name="expectedLeadId"> The Id of the lead that is expected to be removed
-    /// </param>
+    /// manager.</param>
+    /// <param name="expectedLeadId"> The Id of the lead that is expected to be 
+    /// removed.</param>
     [Theory]
     [MemberData(nameof(RemoveLeadByValueData))]
-    public void RemoveLeadByValue_ShouldReturnTrueAndRemoveLead_WhenLeadExists(LeadManager leadManager, 
-        Lead leadToRemove, int expectedLeadId)
+    public void RemoveLeadByValue_ShouldReturnTrueAndRemoveLead_WhenLeadExists(
+        LeadManager leadManager, Lead leadToRemove, int expectedLeadId)
     {
-        var result = leadManager.TryRemoveLead(leadToRemove, out var removedLeadId, out var removedLead);
+        var result = leadManager.TryRemoveLead(leadToRemove,
+            out var removedLeadId, out var removedLead);
 
         Assert.True(result);
         Assert.Equal(expectedLeadId, removedLeadId);
         Assert.Equal(removedLead, leadToRemove);
 
         // Verify the lead is not returned in any output
-        var outputs = leadManager.GetLeadsOfOutput(leadToRemove.OutputSet.First());
+        var outputs = leadManager.GetLeadsOfOutput(
+            leadToRemove.OutputSet.First());
         Assert.DoesNotContain(removedLead, outputs);
     }
 
@@ -375,8 +412,10 @@ public class LeadManagerTests
         var leadManager = new LeadManager();
 
         // Setting up the LeadManager with some leads
-        var lead1 = new Lead(new SortedSet<int> { 1, 2 }, new SortedSet<int> { 3 }, Constants.CurrentDirection.SINK);
-        var lead2 = new Lead(new SortedSet<int> { 4, 5 }, new SortedSet<int> { 6 }, Constants.CurrentDirection.SINK);
+        var lead1 = new Lead(new SortedSet<int> { 1, 2 },
+            new SortedSet<int> { 3 }, Constants.CurrentDirection.SINK);
+        var lead2 = new Lead(new SortedSet<int> { 4, 5 },
+            new SortedSet<int> { 6 }, Constants.CurrentDirection.SINK);
         leadManager.TryAddLead(lead1, out var id1);
         leadManager.TryAddLead(lead2, out var id2);
 
@@ -400,15 +439,20 @@ public class LeadManagerTests
     }
 
     /// <summary>
-    /// Method to check that RemoveLeadByValue returns false when the inputs are invalid
+    /// Method to check that RemoveLeadByValue returns false when the inputs
+    /// are invalid.
     /// </summary>
-    /// <param name="leadManager">The lead manager instance to perform the tests on</param>
-    /// <param name="leadToRemove">The lead that we will attempt to remove (Should be invalid)</param>
+    /// <param name="leadManager">The lead manager instance to perform the tests
+    /// on.</param>
+    /// <param name="leadToRemove">The lead that we will attempt to remove
+    /// (should be invalid).</param>
     [Theory]
     [MemberData(nameof(RemoveLeadByValueWithInvalidData))]
-    public void RemoveLeadByValue_ShouldReturnFalse_WhenLeadDoesNotExist(LeadManager leadManager, Lead leadToRemove)
+    public void RemoveLeadByValue_ShouldReturnFalse_WhenLeadDoesNotExist(
+        LeadManager leadManager, Lead leadToRemove)
     {
-        var result = leadManager.TryRemoveLead(leadToRemove, out var removedLeadId, out var removedLead);
+        var result = leadManager.TryRemoveLead(leadToRemove,
+            out var removedLeadId, out var removedLead);
 
         Assert.False(result);
         Assert.Equal(-1, removedLeadId);
@@ -416,25 +460,30 @@ public class LeadManagerTests
     }
 
     /// <summary>
-    /// Data for testing RemoveLead by value when the input data is invalid
+    /// Data for testing RemoveLead by value when the input data is invalid:
     ///    leadManager (Instance to be used),
-    ///    leadToRemove (The lead to be removed, will be invalid),
+    ///    leadToRemove (The lead to be removed, will be invalid)
     /// </summary>
     public static IEnumerable<object[]> RemoveLeadByValueWithInvalidData()
     {
         var leadManager = new LeadManager();
 
         // Setting up with some leads
-        leadManager.TryAddLead(new Lead(new SortedSet<int> { 1, 2 }, new SortedSet<int> { 3 }, Constants.CurrentDirection.SINK), out _);
-        
+        leadManager.TryAddLead(new Lead(new SortedSet<int> { 1, 2 },
+            new SortedSet<int> { 3 }, Constants.CurrentDirection.SINK), out _);
+
         return new List<object[]>
         {
-            new object[] { leadManager, new Lead(new SortedSet<int> { 4, 5 },
-                new SortedSet<int> { 6 }, Constants.CurrentDirection.SINK) }, // Non-existing lead
-            new object[] { leadManager, new Lead(new SortedSet<int> { 10, 11 },
-                new SortedSet<int> { 12 }, Constants.CurrentDirection.SINK) } // Another non-existing lead
+            // Non-existing lead
+            new object[] { leadManager,
+                new Lead(new SortedSet<int> { 4, 5 },
+                    new SortedSet<int> { 6 },
+                    Constants.CurrentDirection.SINK) },
+            // Another non-existing lead
+            new object[] { leadManager,
+                new Lead(new SortedSet<int> { 10, 11 },
+                    new SortedSet<int> { 12 },
+                    Constants.CurrentDirection.SINK) }
         };
     }
-
-
 }
