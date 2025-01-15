@@ -44,7 +44,7 @@ public class HapticSession
     /// <summary>
     /// The global contact IDs that are currently wired to one or more leads.
     /// </summary>
-    public SortedSet<int> WiredContacts => this._leadManager._WiredContacts;
+    public SortedSet<int> WiredContacts => this._leadManager.WiredContacts;
     /// <summary>
     /// The global contact IDs that are currently not wired to any leads.
     /// </summary>
@@ -60,7 +60,7 @@ public class HapticSession
     /// <summary>
     /// The global output IDs that are currently wired to one or more leads.
     /// </summary>
-    public SortedSet<int> WiredOutputs => this._leadManager._WiredOutputs;
+    public SortedSet<int> WiredOutputs => this._leadManager.WiredOutputs;
     /// <summary>
     /// The global output IDs that are currently not wired to any leads.
     /// </summary>

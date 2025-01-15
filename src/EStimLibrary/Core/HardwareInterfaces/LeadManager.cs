@@ -18,13 +18,12 @@ public class LeadManager : ResourceManager<Lead>
     /// The global contact IDs that are currently wired to one or more leads.
     /// Only valid IDs are added.
     /// </summary>
-    internal SortedSet<int> _WiredContacts { get; private set; }
+    public SortedSet<int> WiredContacts => new(this._ContactLeadIdMap.Keys);
     /// <summary>
     /// The global output IDs that are currently wired to one or more leads.
     /// Only valid IDs are added.
     /// </summary>
-    internal SortedSet<int> _WiredOutputs { get; private set; }
-
+    public SortedSet<int> WiredOutputs => new(this._OutputLeadIdMap.Keys);
     /// <summary>
     /// A map of global contact IDs to the set of global lead IDs they are
     /// involved in.
@@ -43,10 +42,6 @@ public class LeadManager : ResourceManager<Lead>
     /// </summary>
     public LeadManager()
     {
-        // Initialize wired ID sets.
-        this._WiredContacts = new();
-        this._WiredOutputs = new();
-
         // Initialize empty dictionaries and a zero total count of contacts.
         this._ContactLeadIdMap = new();
         this._OutputLeadIdMap = new();
@@ -63,9 +58,8 @@ public class LeadManager : ResourceManager<Lead>
     /// False if invalid or not wired.</returns>
     public bool IsWiredContact(int contactId)
     {
-        // Inherent ID validation bc only valid IDs will be added to
-        // WiredContacts.
-        return this._WiredContacts.Contains(contactId);
+        // Inherent ID validation bc only valid IDs will be in WiredContacts.
+        return this.WiredContacts.Contains(contactId);
     }
 
     /// <summary>
@@ -77,7 +71,8 @@ public class LeadManager : ResourceManager<Lead>
     /// False if invalid or not wired.</returns>
     public bool IsWiredOutput(int outputId)
     {
-        return this._WiredOutputs.Contains(outputId);
+        // Inherent ID validation bc only valid IDs will be in WiredOutputs.
+        return this.WiredOutputs.Contains(outputId);
     }
 
     /// <summary>
@@ -109,11 +104,8 @@ public class LeadManager : ResourceManager<Lead>
         }
         // Update the lead Id
         lead._Id = leadId;
-        // Update extra internal structs. For all contacts and outputs:
-        // a) Mark as wired.
-        this._WiredContacts.UnionWith(lead.ContactSet);
-        this._WiredOutputs.UnionWith(lead.OutputSet);
-        // b) Add the lead ID to their list of leads.
+        // Update extra internal structs. For all contacts and outputs, add the
+        // lead ID to their list of leads.
         // TODO: why need to make a copy to avoid collection mod? no mod tho...
         //  AND only an issue during debug
         foreach (var contactId in lead.ContactSet.ToList())
@@ -219,10 +211,11 @@ public class LeadManager : ResourceManager<Lead>
             // Remove the lead ID from the contact's lead set.
             var leadSet = this._ContactLeadIdMap[contactId];
             leadSet.Remove(leadId);
-            // Remove the contact from the "wired" set if no leads left on it.
+            // If the contact is no longer connected to any leads, remove the
+            // contact entry entirely.
             if (leadSet.Count == 0)
             {
-                this._WiredContacts.Remove(contactId);
+                this._ContactLeadIdMap.Remove(contactId);
             }
         }
         foreach (var outputId in removedLead.OutputSet)
@@ -230,10 +223,11 @@ public class LeadManager : ResourceManager<Lead>
             // Remove the lead ID from the output's lead set.
             var leadSet = this._OutputLeadIdMap[outputId];
             leadSet.Remove(leadId);
-            // Remove the output from the "wired" set if no leads left on it.
+            // If the output is no longer connected to any leads, remove the
+            // output entry entirely.
             if (leadSet.Count == 0)
             {
-                this._WiredOutputs.Remove(outputId);
+                this._OutputLeadIdMap.Remove(outputId);
             }
         }
 
