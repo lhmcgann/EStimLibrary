@@ -44,20 +44,12 @@ public class StringHierarchyAreaFactory : IFactory<IArea>
 
         this.ParamLimits = new() {
             {"fullSpec",
-                new DynamicDataLimits<string>(this.AreaSpecCheckFunction,
+                new DynamicDataLimits<string>(this._AreaSpecCheckFunction,
                 this.HelpMsg) } };
 
     }
 
-    /// <summary>
-    /// The validation function used by the factory create method to ensure
-    /// the supplied area spec is valid for the provided base region. The
-    /// fullspec must provide a single region spec which is a subregion
-    /// of the base region, including at most one set of modifiers.
-    /// </summary>
-    /// <param name="fullSpec">The area spec to validate.</param>
-    /// <returns></returns>
-    private bool AreaSpecCheckFunction(string fullSpec)
+    private bool _AreaSpecCheckFunction(string fullSpec)
     {
         var parts = fullSpec.Split(
             StringHierarchySpec.REGIONS_MODIFIERS_DELIMITER);
@@ -67,7 +59,7 @@ public class StringHierarchyAreaFactory : IFactory<IArea>
             this._baseRegion.TryGetSubregion(parts[0], out var subregion) &&
             // Then - if any given - check if the modifiers valid in the model.
             ((parts.Length > 1) ?
-            subregion.IsValidModifierSpec(parts[1]) : true);
+                subregion.IsValidModifierSpec(parts[1]) : true);
     }
 
     /// <summary>
@@ -84,12 +76,21 @@ public class StringHierarchyAreaFactory : IFactory<IArea>
     public bool TryCreate(Dictionary<string, object> paramValues,
         out IArea product, bool skipValueValidation = false)
     {
+        // Get the params provided for product creation. This factory only
+        // requires one parameter value for "fullSpec" which must follow the
+        // DynamicDataLimits in this factory's ParamLimits
         bool valid = paramValues.TryGetValue("fullSpec", out object value);
+
+        // Init the product to null in case of failed creation.
         product = null;
+
+        // Skip param value valudation if requested
         if (!skipValueValidation)
         {
             valid = this.ParamLimits["fullSpec"].IsValidDataValue(value);
         }
+
+        // Create and return the product if param values valid
         if (valid)
         {
             product = new StringHierarchyArea((string)value);
