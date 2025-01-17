@@ -18,12 +18,6 @@ public record StringHierarchyLocation : StringHierarchySpec, ILocation
     #region ILocation Implementation
     public string Name => "StringHierarchyLocation";   // ISelectable
 
-    public bool IsLocationCompatible(ILocation location)
-    {
-        return typeof(StringHierarchyLocation).IsAssignableFrom(
-            location.GetType());
-    }
-
     // the Equals method is overridden by the inherent StringHierarchySpec
     // Equals method; a method inherent to any class/object --> just make sure
     // it's value-based! e.g., implementation type is a record, or overrides the

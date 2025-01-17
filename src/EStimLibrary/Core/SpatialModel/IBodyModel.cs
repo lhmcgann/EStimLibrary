@@ -22,14 +22,33 @@ public interface IBodyModel : ISelectable//, IFactory<ILocation>, IFactory<IArea
     // value objects.
     public IDataLimits LocationLimits { get; }
     public IDataLimits AreaLimits { get; }
-    // Methods for derived type checks ONLY!
-    bool IsLocationTypeCompatible(Type locationType);
-    bool IsAreaTypeCompatible(Type areaType);
-    // Methods for actual object value checks. Should return true if the value
-    // is not null, of a compatible type (per methods above), and within the
-    // data limits.
+    // Validation methods. Should return true if the value is not null, is of a
+    // compatible type (per methods above), and within the data limits.
     bool IsLocationInModel(ILocation location);
     bool IsAreaInModel(IArea area);
+
+    /// <summary>
+    /// Determine if a location is contained in an area.
+    /// </summary>
+    /// <param name="location">The location to check.</param>
+    /// <param name="area">The area to check within.</param>
+    /// <returns>True if the location is contained within the area. False if not
+    /// or if either the location or area is not valid in this body model.
+    /// </returns>
+    bool IsLocationInArea(ILocation location, IArea area);
+
+    /// <summary>
+    /// Try to find the overlap between two areas.
+    /// </summary>
+    /// <param name="areaA">One area.</param>
+    /// <param name="areaB">Another area.</param>
+    /// <param name="overlappingArea">An output area representing the area of
+    /// overlap if found. Null if no overlap found.</param>
+    /// <param name="aFullyContainsB">An output boolean indicating if areaA
+    /// fully contains areaB.</param>
+    /// <returns>T/F if area A and B overlap at all.</returns>
+    bool TryGetOverlap(IArea areaA, IArea areaB,
+        out IArea? overlappingArea, out bool aFullyContainsB);
     #endregion
 
     #region Localization-Related Methods

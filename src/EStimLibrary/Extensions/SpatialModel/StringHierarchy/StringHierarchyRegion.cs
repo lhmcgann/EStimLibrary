@@ -213,8 +213,19 @@ public class StringHierarchyRegion
         return true;
     }
 
-    public bool IsValidModifierSpec(string modifierSpec)
+    /// <summary>
+    /// Check if a modifier spec is valid within this region.
+    /// </summary>
+    /// <param name="modifierSpec">The modifier spec to check.</param>
+    /// <param name="modifierAxisValuePairs">Modifier values matched to their
+    /// respective 'axes': { axis1: value1, axis2: value2, ...} </param>
+    /// <returns>T/F if the modifier spec is given.</returns>
+    public bool IsValidModifierSpec(string modifierSpec,
+        out Dictionary<string, string> modifierAxisValuePairs)
     {
+        // Init empty output variable.
+        modifierAxisValuePairs = new();
+
         // Split into modifier set.
         var modifierSet = StringHierarchySpec.ParseModifierSpec(modifierSpec);
         // Sort modifiers by their frequency across axis option sets, ascending
@@ -241,8 +252,13 @@ public class StringHierarchyRegion
                 // found and the axis as used.
                 if (this.Modifiers[usedAxis].Contains(modifier))
                 {
+                    // Mark that matched this modifier to an axis.
                     found = true;
+                    // Mark the matched axis as used.
                     unusedAxes.Remove(usedAxis);
+                    // Store the match in the output variable.
+                    modifierAxisValuePairs.Add(usedAxis, modifier);
+                    // Stop trying to find a match for this modifier.
                     break;
                 }
             }

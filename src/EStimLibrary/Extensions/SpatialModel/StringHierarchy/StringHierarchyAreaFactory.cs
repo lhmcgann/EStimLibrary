@@ -39,7 +39,7 @@ public class StringHierarchyAreaFactory : IFactory<IArea>
             this._baseRegion.TryGetSubregion(parts[0], out var subregion) &&
             // Then - if any given - check if the modifiers valid in the model.
             (parts.Length > 1) ?
-            subregion.IsValidModifierSpec(parts[1]) : true;
+            subregion.IsValidModifierSpec(parts[1], out _) : true;
     }
 
     public bool TryCreate(Dictionary<string, object> paramValues,

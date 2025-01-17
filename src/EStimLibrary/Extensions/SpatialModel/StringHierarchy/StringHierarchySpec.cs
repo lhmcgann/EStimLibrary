@@ -127,36 +127,7 @@ public record StringHierarchySpec(string[] RegionSet, string[] ModifierSet)
         return true;
     }
 
-    /// <summary>
-    /// Check if another spec's region spatially overlaps with this spec's
-    /// region and determine the region of overlap.
-    /// </summary>
-    /// <param name="other">The other StringHierarchySpec with which to check
-    /// for overlap.</param>
-    /// <param name="regionSetOfOverlap">The region of overlap specification as
-    /// an ordered array of string region names. Ignore if no overlap found.
-    /// </param>
-    /// <returns>T/F if an overlapping region was found.</returns>
-    public bool RegionSetOverlaps(StringHierarchySpec other,
-        out string[] regionSetOfOverlap)
-    {
-        // Overlaps if all elements of shortest sequence match longer sequence.
-        var minLength = Math.Min(this.RegionSet.Length,
-            other.RegionSet.Length);
-
-        // Get the index of the first differing element.
-        var endIndex = Enumerable.Range(0, minLength).FirstOrDefault(
-            i => !this.RegionSet[i].Equals(other.RegionSet[i]),
-            minLength); // Idx = min length if no differences found.
-
-        // DIFFERENT: Get spatial region of overlap (smaller region).
-        regionSetOfOverlap = (this.RegionSet.Length <= other.RegionSet.Length) ?
-            this.RegionSet : other.RegionSet;
-
-        // Return T/F that any similar elements were found.
-        return endIndex > 0;
-    }
-
+    // TODO: decide to delete or not once new implementation tested
     /// <summary>
     /// Check if another spec's region shares any parent path spec.
     /// </summary>
@@ -186,58 +157,28 @@ public record StringHierarchySpec(string[] RegionSet, string[] ModifierSet)
         return endIndex > 0;
     }
 
-    public bool ModifiersAllowOverlap(StringHierarchySpec other,
-        out string[] commonModifiers)
-    {
-        // Overlaps if all modifiers in shorter set are in longer set.
-        string[] lessSpecificModSet; // Temp variables to store mod set references.
-        string[] moreSpecificModSet;
-        if (this.ModifierSet.Length < other.ModifierSet.Length)
-        {
-            lessSpecificModSet = this.ModifierSet;
-            moreSpecificModSet = other.ModifierSet;
-        }
-        else
-        {
-            lessSpecificModSet = other.ModifierSet;
-            moreSpecificModSet = this.ModifierSet;
-        }
-        commonModifiers = lessSpecificModSet.Intersect(moreSpecificModSet)
-            .ToArray();
-        //bool modifiersOverlap = shorterModSet.All(m => longerModSet.Contains(m));
-        return commonModifiers.Length == lessSpecificModSet.Length;
-    }
-
-    public bool TryGetOverlap(StringHierarchySpec other,
-        out string overlappingRegion, out bool contains)
-    {
-        // Check if the region specs actually have a common sequence.
-        bool RegionSetsOverlap = this.RegionSetOverlaps(other,
-            out var overlappingRegionSet);
-        // This contains other if all this's elements in other.
-        bool containsRegionSet = RegionSetsOverlap &&
-            overlappingRegionSet.Length == this.RegionSet.Length;
-
-        // Overlaps if all modifiers in shorter set are in longer set.
-        bool modifiersOverlap = this.ModifiersAllowOverlap(other,
-            out var commonModifiers);
-        // Contains if all this's modifiers shared.
-        bool contiansModifiers = commonModifiers.Length ==
-            this.ModifierSet.Length;
-
-        // Determine overall overlap and containment.
-        bool overlaps = RegionSetsOverlap && modifiersOverlap;
-        contains = containsRegionSet && contiansModifiers;
-
-        // Determine overlapping region: take most specific region and mods.
-        overlappingRegion = overlaps ?
-            // Region spec: other if contained (more specific), else this.
-            JoinFullSpec(containsRegionSet ? other.RegionSet : this.RegionSet,
-                this.ModifierSet.Union(other.ModifierSet).ToArray())
-            : string.Empty;     // Empty if no overlap.
-
-        return overlaps;
-    }
+    // TODO: delete or rename once new implementation tested
+    //public bool ModifiersAllowOverlap_OLD(StringHierarchySpec other,
+    //    out string[] commonModifiers)
+    //{
+    //    // Overlaps if all modifiers in shorter set are in longer set.
+    //    string[] lessSpecificModSet; // Temp variables to store mod set references.
+    //    string[] moreSpecificModSet;
+    //    if (this.ModifierSet.Length < other.ModifierSet.Length)
+    //    {
+    //        lessSpecificModSet = this.ModifierSet;
+    //        moreSpecificModSet = other.ModifierSet;
+    //    }
+    //    else
+    //    {
+    //        lessSpecificModSet = other.ModifierSet;
+    //        moreSpecificModSet = this.ModifierSet;
+    //    }
+    //    commonModifiers = lessSpecificModSet.Intersect(moreSpecificModSet)
+    //        .ToArray();
+    //    //bool modifiersOverlap = shorterModSet.All(m => longerModSet.Contains(m));
+    //    return commonModifiers.Length == lessSpecificModSet.Length;
+    //}
 
     public virtual bool Equals(StringHierarchySpec? other)
     {
