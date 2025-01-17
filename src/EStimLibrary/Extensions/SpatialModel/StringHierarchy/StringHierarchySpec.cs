@@ -127,8 +127,18 @@ public record StringHierarchySpec(string[] RegionSet, string[] ModifierSet)
         return true;
     }
 
+    /// <summary>
+    /// Check if another spec's region spatially overlaps with this spec's
+    /// region and determine the region of overlap.
+    /// </summary>
+    /// <param name="other">The other StringHierarchySpec with which to check
+    /// for overlap.</param>
+    /// <param name="regionSetOfOverlap">The region of overlap specification as
+    /// an ordered array of string region names. Ignore if no overlap found.
+    /// </param>
+    /// <returns>T/F if an overlapping region was found.</returns>
     public bool RegionSetOverlaps(StringHierarchySpec other,
-        out string[] sharedRegionSet)
+        out string[] regionSetOfOverlap)
     {
         // Overlaps if all elements of shortest sequence match longer sequence.
         var minLength = Math.Min(this.RegionSet.Length,
@@ -139,7 +149,38 @@ public record StringHierarchySpec(string[] RegionSet, string[] ModifierSet)
             i => !this.RegionSet[i].Equals(other.RegionSet[i]),
             minLength); // Idx = min length if no differences found.
 
-        // Get the shared path spec (up to first differing idx).
+        // DIFFERENT: Get spatial region of overlap (smaller region).
+        regionSetOfOverlap = (this.RegionSet.Length <= other.RegionSet.Length) ?
+            this.RegionSet : other.RegionSet;
+
+        // Return T/F that any similar elements were found.
+        return endIndex > 0;
+    }
+
+    /// <summary>
+    /// Check if another spec's region shares any parent path spec.
+    /// </summary>
+    /// <param name="other">The other StringHierarchySpec with which to check
+    /// for a shared path.</param>
+    /// <param name="regionSetOfOverlap">The shared parent region path spec.
+    /// Ignore if no shared path hierarchy is found.
+    /// </param>
+    /// <returns>T/F if a shared parent path is found.</returns>
+    public bool RegionSetSharesPath(StringHierarchySpec other,
+        out string[] sharedRegionSet)
+    {
+        // Shares path if first differing element is not the first one.
+
+        // Only search up to the length of the shorter path.
+        var minLength = Math.Min(this.RegionSet.Length,
+            other.RegionSet.Length);
+
+        // Get the index of the first differing element.
+        var endIndex = Enumerable.Range(0, minLength).FirstOrDefault(
+            i => !this.RegionSet[i].Equals(other.RegionSet[i]),
+            minLength); // Idx = min length if no differences found.
+
+        // DIFFERENT: Get the shared path spec (up to first differing idx).
         sharedRegionSet = this.RegionSet.Take(endIndex).ToArray();
         // Return T/F that any similar elements were found.
         return endIndex > 0;
