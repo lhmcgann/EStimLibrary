@@ -368,6 +368,7 @@ public class StimulatorManager : ResourceManager<Stimulator>
                 // the value of Tuple(trains, globalToLocalOutputIds).
                 //ThreadPool.QueueUserWorkItem(state => stim.UpdateStim(state),
                 //    (trains, globalToLocalOutputIds));
+                // TODO: try-catch exception here; make error user-accessible but continue on safely
                 stim.UpdateStim((trainsParams, localOutputAssignments));
             }
             // Do nothing if invalid stim ID. TODO: how best to indicate this

@@ -56,10 +56,13 @@ public static class BaseStimParams
         {AnodeRatio, 4 },
         {AnodeFirst, 5 },
         {Period, 6 },
+        // TODO; delete this param
         {FixedRepeats, 7 }
     };
 
     // TODO: put in the actual limits for each param; rn just semi-dummy values
+    // TODO: write doc comments for this and other things in this class
+    // TODO: put this in EchoStimulator directly bc it's just an example!
     public static Dictionary<string, Tuple<IDataLimits, object>>
         ExampleParamData => new()
     {

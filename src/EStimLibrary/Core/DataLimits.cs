@@ -27,6 +27,10 @@ public interface IDataLimits : ISelectable
     bool IsValidDataValue(object value);
 }
 
+
+// TODO: move these "example" implementations to Extensions
+
+
 public record StringDataLimits : IDataLimits
 {
     public string Name => "String Data Limits";
@@ -69,6 +73,7 @@ public record FixedOptionDataLimits<DataType>(
 /// </summary>
 /// <param name="MinBound">The lower bound, inclusive.</param>
 /// <param name="MaxBound">The upper bound, inclusive.</param>
+/// TODO: add resolution and rounding scheme param
 public record ContinuousDataLimits(double MinBound, double MaxBound) :
     IDataLimits
 {

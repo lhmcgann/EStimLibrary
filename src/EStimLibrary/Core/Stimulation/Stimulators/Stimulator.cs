@@ -51,6 +51,7 @@ public abstract class Stimulator : ISelectable, IIdentifiable
         BaseStimParams.ParamOrderIndices.Keys.All(
             this.StimParamData.Keys.Contains) &&
         // b) all available parameters are from the same enum
+        // TODO: delete? not an enum anymore...
         this.StimParamData.Keys.Select(param => param.GetType())
             .Distinct().Count() == 1;
 
@@ -116,14 +117,21 @@ public abstract class Stimulator : ISelectable, IIdentifiable
     /// <returns></returns>
     public abstract bool IsValidOutputWiring(IEnumerable<int> localOutputIds);
 
+    // TODO: use this somewhere!!! e.g., UpdateStim()
     public bool IsValidParamValue(string stimParam, object paramValue)
     {
         var (paramLims, defaultVal) = this.StimParamData[stimParam];
         return paramLims.IsValidDataValue(paramValue);
     }
 
+
+    // TODO: calibration/comfort safety check function, then also call that
+    // somewhere like IsValidParamValue, e.g., in UpdateStim
+
+
     // MAIN UPDATE STIM METHOD PASSED TO EACH THREAD DURING CONFIG AND CALLED
     // BY TRANSDUCER ON UPDATE
+    // TODO; propogate exception
     public bool UpdateStim(object state)
     {
         // TODO: there is probably a better way to do this global-local output
@@ -135,10 +143,13 @@ public abstract class Stimulator : ISelectable, IIdentifiable
             Dictionary<int, Constants.OutputAssignment>))state;
         var trainsParams = data.Item1;
         var localOutputAssignments = data.Item2;
+        // TODO: apply check functions
         return this.HW_UpdateStim(trainsParams, localOutputAssignments);
     }
     //protected abstract bool HW_UpdateStim(IEnumerable<Train> stimTrains,
     //    Dictionary<int, int> globalToLocalOutputIds);
+    // TODO @Rachel: implement for WSS! NOT UpdateStim
+    // TODO: throw exception upon failure
     protected abstract bool HW_UpdateStim(
         IEnumerable<Dictionary<string, object>> trainsParams,
         Dictionary<int, Constants.OutputAssignment> localOutputAssignments);
@@ -234,6 +245,4 @@ public abstract class Stimulator : ISelectable, IIdentifiable
     /// </summary>
     /// <param name="data">The full byte array of data to send.</param>
     protected abstract void HW_SendMessage(byte[] data);
-
 }
-
