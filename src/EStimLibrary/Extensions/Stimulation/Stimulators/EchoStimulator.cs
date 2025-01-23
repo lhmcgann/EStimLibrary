@@ -2,9 +2,7 @@
 using EStimLibrary.Core.Stimulation.Data;
 using EStimLibrary.Core;
 using EStimLibrary.Core.Stimulation.Functions;
-using EStimLibrary.Core.Stimulation.Trains;
-using EStimLibrary.Extensions.Stimulation.Phases;
-using Newtonsoft.Json.Linq;
+using EStimLibrary.Core.Data;
 
 
 namespace EStimLibrary.Extensions.Stimulation.Stimulators;

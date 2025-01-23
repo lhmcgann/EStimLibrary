@@ -1,6 +1,6 @@
 ﻿using EStimLibrary.Core.Stimulation.Data;
 using EStimLibrary.Core.Stimulation.Functions;
-using EStimLibrary.Core.Stimulation.Trains;
+using EStimLibrary.Core.Data;
 
 
 namespace EStimLibrary.Core.Stimulation.Stimulators;

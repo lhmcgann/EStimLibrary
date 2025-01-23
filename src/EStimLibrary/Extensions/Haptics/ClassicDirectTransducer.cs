@@ -3,6 +3,7 @@ using EStimLibrary.Core.Stimulation.Data;
 using EStimLibrary.Core.Haptics;
 using EStimLibrary.Core.SpatialModel;
 using EStimLibrary.Core;
+using EStimLibrary.Extensions.Data;
 
 
 namespace EStimLibrary.Extensions.Haptics;

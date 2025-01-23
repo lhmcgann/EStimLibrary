@@ -1,4 +1,7 @@
-﻿namespace EStimLibrary.Core;
+﻿using EStimLibrary.Core.Data;
+
+
+namespace EStimLibrary.Core;
 
 
 public interface IFactory<ProductType>

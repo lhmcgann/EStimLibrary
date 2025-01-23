@@ -1,5 +1,6 @@
 ﻿using EStimLibrary.Extensions.Stimulation.Phases;
-using EStimLibrary.Core;
+using EStimLibrary.Core.Data;
+using EStimLibrary.Extensions.Data;
 
 
 namespace EStimLibrary.Core.Stimulation.Data;
