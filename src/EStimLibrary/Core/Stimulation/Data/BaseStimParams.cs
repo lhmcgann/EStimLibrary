@@ -46,7 +46,6 @@ public static class BaseStimParams
     public const string AnodeRatio = "AnodeRatio";
     public const string AnodeFirst = "AnodeFirst";
     public const string Period = "Period";
-    public const string FixedRepeats = "FixedRepeats";
 
     public static Dictionary<string, int> ParamOrderIndices = new()
     {
@@ -56,9 +55,7 @@ public static class BaseStimParams
         {IPD, 3 },
         {AnodeRatio, 4 },
         {AnodeFirst, 5 },
-        {Period, 6 },
-        // TODO; delete this param
-        {FixedRepeats, 7 }
+        {Period, 6 }
     };
 
     // TODO: put in the actual limits for each param; rn just semi-dummy values
@@ -99,10 +96,7 @@ public static class BaseStimParams
         // Pulse period in s (1/Hz)
         { Period, new(
             new ContinuousDataLimits(0.0, 1/250.0),
-            1/60.0)},
-        { FixedRepeats, new(
-            new ContinuousIntDataLimits(0, Constants.POS_INFINITY),
-            10)}
+            1/60.0)}
     };
 
     //public const int FirstPhaseParamIdx = (int)BaseStimParam.PA;
@@ -150,17 +144,7 @@ public static class BaseStimParams
         }
     }
 
-    public static bool IsTrainParam(string param)
-    {
-        switch (param)
-        {
-            case BaseStimParams.FixedRepeats:
-                return true;
-
-            default:
-                return false;
-        }
-    }
+    // Could have similar IsTrainParam() function if add any in future.
 
     /// <summary>
     /// Sort parameter string keys by paired integer value.
