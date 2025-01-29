@@ -35,6 +35,12 @@ public abstract class Stimulator : ISelectable, IIdentifiable
     // Derived classes must implement the get() of the abstract properties.
     // e.g., SpecificStimulator.NumOutputs get { return constNumOutputs; }.
 
+    // TODO: rename to StimParamBounds or StimParamSpecification or something
+    // like that
+    // TODO: define (in Extensions) a type that is a NestedParam; maybe it's a
+    // nested param DataLimits, idk, but a tool ppl who are running into the
+    // "trainMods: List<TrainModSpecs>" case can use; maybe it's just an example
+    // implementation, but something
     public abstract Dictionary<string, Tuple<IDataLimits, object>> StimParamData
     { get; }
     public abstract SortedSet<string> ModulatableStimParams
@@ -46,7 +52,9 @@ public abstract class Stimulator : ISelectable, IIdentifiable
     //{ get; }
     // Essentially a validation check on stim param specification after
     // Stimulator construction.
+    // TODO: check that all the default/fixed values are within the IDataLimits
     public bool ValidStimParamSpecification =>
+        // TODO: remove this check; e.g., bc voltage sitmulator doesn't have these! just leave as an example
         // a) at least the base stim params are included in the enum.
         BaseStimParams.ParamOrderIndices.Keys.All(
             this.StimParamData.Keys.Contains) &&
