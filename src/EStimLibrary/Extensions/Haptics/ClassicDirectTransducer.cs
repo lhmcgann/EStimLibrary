@@ -20,15 +20,11 @@ public class ClassicDirectTransducer : HapticTransducer
     public ClassicDirectTransducer(string modParam)
     {
         // TODO: adjust this validation to be flexible to user-input param
-        // lists.
+        // lists? or just relegate validation to session config??
         // TODO: how to also factor in stimulator-specific modulation abilities?
         // e.g., even if valid param name, the stimulator used for a given event
         // may not be able to mod it...
-        if (!BaseStimParams.ParamOrderIndices.Keys.Contains(modParam))
-        {
-            throw new ArgumentException($"{this.Name} Constructor Error: " +
-                $"{modParam} is not a valid stim param.");
-        }
+
         this.ModulatedParam = modParam;
     }
 

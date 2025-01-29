@@ -1,8 +1,8 @@
 ﻿using EStimLibrary.Core.Stimulation.Stimulators;
-using EStimLibrary.Core.Stimulation.Data;
 using EStimLibrary.Core;
 using EStimLibrary.Core.Stimulation.Functions;
 using EStimLibrary.Core.Data;
+using EStimLibrary.Extensions.Data;
 
 
 namespace EStimLibrary.Extensions.Stimulation.Stimulators;
@@ -26,14 +26,77 @@ public class EchoStimulator : Stimulator
     // Only allow half as many configs as there are outputs.
     public override int MaxNumOutputConfigs => this._NumOutputs / 2;
 
-    // Use example limits and defaults for all base stim params.
+    #region Convenience StimParam String Name Defines
+    protected const string PA = "PA";
+    protected const string PW = "PW";
+    protected const string StimPhaseShape = "StimPhaseShape";
+    protected const string RechargePhaseShape = "RechargePhaseShape";
+    protected const string IPD = "IPD";
+    protected const string AnodeRatio = "AnodeRatio";
+    protected const string AnodeFirst = "AnodeFirst";
+    protected const string Period = "Period";
+    #endregion
+
+    /// <summary>
+    /// Example stimulation parameter specification.
+    /// {"paramNameOrKey": (dataLimitsObject, defaultOrFixedValue), ...}
+    /// </summary>
     public override Dictionary<string, Tuple<IDataLimits, object>>
-        StimParamData => BaseStimParams.ExampleParamData;
-    // Params that can be dynamically modulated
+        StimParamSpecs => new()
+    {
+        // Phase amplitude in mA
+        { PA, new(
+            new ContinuousDataLimits(0.0, 10.0),
+            0.0)},
+        // Phase width in us
+        { PW, new(
+            new ContinuousDataLimits(0.0, 250.0),
+            0.0)},
+        // Activation/stimulation phase shape
+        { StimPhaseShape, new(
+            new FixedOptionDataLimits<string>(new()
+            {
+                "square",
+                "sine",
+                "triangle"
+            }),
+            "sine")},
+        // Recharge phase shape
+        { RechargePhaseShape, new(
+            new FixedOptionDataLimits<string>(new()
+            {
+                "square",
+                "sine",
+                "triangle"
+            }),
+            "sine")},
+        // Inter-phase delay in us
+        { IPD, new(
+            new ContinuousDataLimits(0.0, 150.0),
+            100.0)},
+        { AnodeRatio, new(
+            new ContinuousDataLimits(0.0, 12.0),
+            12.0)},
+        { AnodeFirst, new(
+            new FixedOptionDataLimits<int>(new()
+            {
+                Constants.ANODE_FIRST,
+                Constants.ANODE_SECOND
+            }),
+            Constants.ANODE_SECOND)},
+        // Pulse period in s (1/Hz)
+        { Period, new(
+            new ContinuousDataLimits(0.0, 1/250.0),
+            1/100.0)}
+    };
+
+    /// <summary>
+    /// Example set of specified parameters that can be dynamically modulated.
+    /// </summary>
     public override SortedSet<string> ModulatableStimParams => new()
     {
-        BaseStimParams.PA,
-        BaseStimParams.PW
+        PA,
+        PW
     };
 
     #region TODO
