@@ -1,4 +1,6 @@
 ﻿using EStimLibrary.Core;
+using EStimLibrary.Core.Data;
+using EStimLibrary.Extensions.Data;
 using EStimLibrary.Core.SpatialModel;
 
 

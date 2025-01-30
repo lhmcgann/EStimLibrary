@@ -1,4 +1,5 @@
 ﻿using EStimLibrary.Core.HardwareInterfaces;
+using EStimLibrary.Core.Data;
 
 
 namespace EStimLibrary.Core.Stimulation;

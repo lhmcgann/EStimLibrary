@@ -55,12 +55,6 @@ public class StimulatorManager : ResourceManager<Stimulator>
         this._OutputIdPool = new();
         this._OutputStimulatorIdMap = new();
         this._OutputsPerStimulatorUsage = new();
-
-        // Create stimulator ability dict with empty sets for all stim params.
-        foreach (string p in BaseStimParams.ParamOrderIndices.Keys)
-        {
-            this._stimulatorsWithAbilities.Add(p, new());
-        }
     }
 
     /// <summary>
@@ -113,6 +107,13 @@ public class StimulatorManager : ResourceManager<Stimulator>
         // 4) Add the new stim ID to the set of each pulse param it supports.
         foreach (string p in stim.ModulatableStimParams)
         {
+            // If new param, add an empty set entry for it in the dictionary
+            if (!this._stimulatorsWithAbilities.ContainsKey(p))
+            {
+                this._stimulatorsWithAbilities[p] = new();
+            }
+
+            // Add the global stimulator ID
             this._stimulatorsWithAbilities[p].Add(globalStimId);
         }
 
@@ -368,6 +369,7 @@ public class StimulatorManager : ResourceManager<Stimulator>
                 // the value of Tuple(trains, globalToLocalOutputIds).
                 //ThreadPool.QueueUserWorkItem(state => stim.UpdateStim(state),
                 //    (trains, globalToLocalOutputIds));
+                // TODO: try-catch exception here; make error user-accessible but continue on safely
                 stim.UpdateStim((trainsParams, localOutputAssignments));
             }
             // Do nothing if invalid stim ID. TODO: how best to indicate this
