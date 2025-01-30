@@ -1,4 +1,8 @@
-﻿namespace EStimLibrary.Core.SpatialModel;
+﻿using EStimLibrary.Core.Data;
+using EStimLibrary.Extensions.Data;
+
+
+namespace EStimLibrary.Core.SpatialModel;
 
 
 public abstract class BodyModelBuilderBase : ISelectable, IFactory<IBodyModel>
