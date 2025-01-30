@@ -119,8 +119,8 @@ public class StringHierarchyRegionTests
         var regionOptions = new HashSet<string>() { "right", "left" };
         var regionModifiers = new Dictionary<string, HashSet<string>>
         {
-            { "right", new HashSet<string>() { "mod1", "mod2" } },
-            { "left", new HashSet<string>() { "mod3", "mod4" } }
+            { "right", new HashSet<string>() { "mod1", "mod2", "mod2" } },
+            { "left", new HashSet<string>() { "mod2", "mod3", "mod4" } }
         };
         var regionSubregions = new Dictionary<string, StringHierarchyRegion>
         {
@@ -260,6 +260,11 @@ public class StringHierarchyRegionTests
             out foundSubregion);
         Assert.False(output);
         Assert.Null(foundSubregion);
+        // Test with empty base region
+        output = stringHierarchyRegion.TryGetSubregion(", left base",
+            out foundSubregion);
+        Assert.False(output);
+        Assert.Null(foundSubregion);
         // Test with invalid base region
         output = stringHierarchyRegion.TryGetSubregion("base2",
             out foundSubregion);
@@ -285,8 +290,8 @@ public class StringHierarchyRegionTests
             out foundSubregion);
         Assert.False(output);
         Assert.Null(foundSubregion);
-        // Test with additional comma delimiters
-        output = stringHierarchyRegion.TryGetSubregion("left base, , child1",
+        // Test with invalid subregion
+        output = stringHierarchyRegion.TryGetSubregion("left base, ",
             out foundSubregion);
         Assert.False(output);
         Assert.Null(foundSubregion);
