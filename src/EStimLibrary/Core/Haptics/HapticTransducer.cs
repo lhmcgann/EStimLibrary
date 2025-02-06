@@ -9,6 +9,8 @@ public abstract class HapticTransducer : ISelectable
 {
     public abstract string Name { get; }    // ISelectable
 
+    // TODO: property that says which parameters are modulated
+
     /// <summary>
     /// Transduce a haptic event into stimulation data and push the data changes
     /// to stimulator hardware. A new programmatic thread is created for each
