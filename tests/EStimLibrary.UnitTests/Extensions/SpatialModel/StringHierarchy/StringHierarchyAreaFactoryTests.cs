@@ -1,7 +1,9 @@
 ﻿using EStimLibrary.Core.SpatialModel;
 using EStimLibrary.Extensions.SpatialModel.StringHierarchy;
 
+
 namespace EStimLibrary.UnitTests.Extensions.SpatialModel.StringHierarchy;
+
 
 /// <summary>
 /// Test class for StringHierarchyAreaFactory.
@@ -81,7 +83,8 @@ public class StringHierarchyAreaFactoryTests
         IArea product;
 
         // Check TryCreate return and product
-        bool valid = factory.TryCreate(paramValues, out product, true);
+        bool valid = factory.TryCreate(paramValues, out product,
+            skipValueValidation: true);
         Assert.False(valid);
         Assert.Null(product);
     }
@@ -127,14 +130,16 @@ public class StringHierarchyAreaFactoryTests
         IArea product;
 
         // Check TryCreate return and product for valid spec
-        bool valid = factory.TryCreate(paramValues1, out product, true);
+        bool valid = factory.TryCreate(paramValues1, out product,
+            skipValueValidation: true);
         Assert.True(valid);
         Assert.NotNull(product);
         Assert.Equal((IArea)new StringHierarchyArea("left base, child1"),
             product);
 
         // Check TryCreate return and product for invalid spec
-        valid = factory.TryCreate(paramValues2, out product, true);
+        valid = factory.TryCreate(paramValues2, out product,
+            skipValueValidation: true);
         Assert.True(valid);
         Assert.NotNull(product);
         Assert.Equal((IArea)new StringHierarchyArea(""), product);
@@ -193,37 +198,44 @@ public class StringHierarchyAreaFactoryTests
         IArea product;
 
         // Test no value
-        bool valid = factory.TryCreate(paramValues1, out product, false);
+        bool valid = factory.TryCreate(paramValues1, out product,
+            skipValueValidation: false);
         Assert.False(valid);
         Assert.Null(product);
 
         // Test null value
-        valid = factory.TryCreate(paramValues2, out product, false);
+        valid = factory.TryCreate(paramValues2, out product,
+            skipValueValidation: false);
         Assert.False(valid);
         Assert.Null(product);
 
         // Test non-string value
-        valid = factory.TryCreate(paramValues3, out product, false);
+        valid = factory.TryCreate(paramValues3, out product,
+            skipValueValidation: false);
         Assert.False(valid);
         Assert.Null(product);
 
         // Test empty string
-        valid = factory.TryCreate(paramValues4, out product, false);
+        valid = factory.TryCreate(paramValues4, out product,
+            skipValueValidation: false);
         Assert.False(valid);
         Assert.Null(product);
 
         // Test invalid subregion
-        valid = factory.TryCreate(paramValues5, out product, false);
+        valid = factory.TryCreate(paramValues5, out product,
+            skipValueValidation: false);
         Assert.False(valid);
         Assert.Null(product);
 
         // Test invalid modifiers
-        valid = factory.TryCreate(paramValues6, out product, false);
+        valid = factory.TryCreate(paramValues6, out product,
+            skipValueValidation: false);
         Assert.False(valid);
         Assert.Null(product);
 
         // Test incorrect modifier syntax
-        valid = factory.TryCreate(paramValues7, out product, false);
+        valid = factory.TryCreate(paramValues7, out product,
+            skipValueValidation: false);
         Assert.False(valid);
         Assert.Null(product);
     }
@@ -268,14 +280,16 @@ public class StringHierarchyAreaFactoryTests
         IArea product;
 
         // Test valid spec without modifiers
-        bool valid = factory.TryCreate(paramValues1, out product, false);
+        bool valid = factory.TryCreate(paramValues1, out product,
+            skipValueValidation: false);
         Assert.True(valid);
         Assert.NotNull(product);
         Assert.Equal((IArea)new StringHierarchyArea("left base, child1"),
             product);
 
         // Test valid spec with modifiers
-        valid = factory.TryCreate(paramValues2, out product, false);
+        valid = factory.TryCreate(paramValues2, out product,
+            skipValueValidation: false);
         Assert.True(valid);
         Assert.NotNull(product);
         Assert.Equal((IArea)new StringHierarchyArea("left base, child1 | mod1"),

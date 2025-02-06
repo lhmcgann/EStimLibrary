@@ -2,7 +2,7 @@
 using System.IO.Ports;
 using System.Reflection;
 
-using EStimLibrary.Core.Haptics;
+using EStimLibrary.Core.Data;
 using EStimLibrary.Core.Stimulation.Stimulators;
 
 
