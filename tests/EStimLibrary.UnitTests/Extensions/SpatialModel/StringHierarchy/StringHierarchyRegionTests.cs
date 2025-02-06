@@ -397,15 +397,6 @@ public class StringHierarchyRegionTests
         // Create variable to store old region output
         StringHierarchyRegion oldRegion;
 
-        // Check error output for null subregion parameter
-        var errorSuccess = false;
-        try
-        {
-            stringHierarchyRegion.AddSubregion(null, out oldRegion);
-        }
-        catch (ArgumentNullException ex) { errorSuccess = true; }
-        Assert.True(errorSuccess);
-
         // Create new region with different name to existing subregions
         var newChildRegion = new StringHierarchyRegion("child3", null);
 

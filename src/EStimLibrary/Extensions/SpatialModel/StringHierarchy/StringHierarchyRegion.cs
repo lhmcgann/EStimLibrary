@@ -123,11 +123,6 @@ public class StringHierarchyRegion
     public void AddSubregion(StringHierarchyRegion subregion,
         out StringHierarchyRegion? existingSubregion)
     {
-        if (subregion == null)
-        {
-            throw new ArgumentNullException();
-        }
-
         // Fill the out parameter with the existing subregion if exists.
         if (this.Subregions.TryGetValue(subregion.BaseName,
             out existingSubregion))
