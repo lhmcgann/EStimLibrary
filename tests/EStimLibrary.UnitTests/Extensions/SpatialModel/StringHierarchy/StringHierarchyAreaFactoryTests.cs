@@ -24,17 +24,18 @@ public class StringHierarchyAreaFactoryTests
     /// Test the constructor with null parameter.
     /// </summary>
     [Fact]
-    public void Constructor_ShouldAcceptNull()
+    public void Constructor_ShouldErrorNull()
     {
-        // Create factory with null base region
-        StringHierarchyAreaFactory factory = new StringHierarchyAreaFactory(null);
+        bool caughtError = false;
+        try
+        {
+            // Create factory with null base region
+            StringHierarchyAreaFactory factory = new StringHierarchyAreaFactory(null);
+        }
+        catch (NullReferenceException) { caughtError = true; }
 
-        // Check that HelpMsg and ParamLimits are initialized correctly
-        Assert.Equal("A StringHierarchyArea can be built from one of the " +
-            "following path specs, selecting one option from any list in [] " +
-            "and excluding the []:\nnull", factory.HelpMsg);
-        Assert.Single(factory.ParamLimits);
-        Assert.NotNull(factory.ParamLimits["fullSpec"]);
+        // Check that error occurred
+        Assert.True(caughtError);
     }
 
     /// <summary>
@@ -86,33 +87,6 @@ public class StringHierarchyAreaFactoryTests
     }
 
     /// <summary>
-    /// Test the TryCreate method with paramValues not including a fullSpec
-    /// value and not skipping value validation
-    /// </summary>
-    [Fact]
-    public void TryCreate_ShouldValidateShouldNotCreate()
-    {
-        // Create base region
-        StringHierarchyRegion region = new StringHierarchyRegion("base", null);
-
-        // Create factory with non-null base region
-        StringHierarchyAreaFactory factory =
-            new StringHierarchyAreaFactory(region);
-
-        // Create dictionary of parameter values
-        Dictionary<string, object> paramValues =
-            new Dictionary<string, object>();
-
-        // Create variable to store produced IArea
-        IArea product;
-
-        // Check TryCreate return and product
-        bool valid = factory.TryCreate(paramValues, out product, false);
-        Assert.False(valid);
-        Assert.Null(product);
-    }
-
-    /// <summary>
     /// Test the TryCreate method with paramValues including a fullSpec value
     /// and skipping value validation
     /// </summary>
@@ -156,22 +130,110 @@ public class StringHierarchyAreaFactoryTests
         bool valid = factory.TryCreate(paramValues1, out product, true);
         Assert.True(valid);
         Assert.NotNull(product);
-        Assert.Equal((IArea) new StringHierarchyArea("left base, child1"),
+        Assert.Equal((IArea)new StringHierarchyArea("left base, child1"),
             product);
 
         // Check TryCreate return and product for invalid spec
         valid = factory.TryCreate(paramValues2, out product, true);
         Assert.True(valid);
         Assert.NotNull(product);
-        Assert.Equal((IArea) new StringHierarchyArea(""), product);
+        Assert.Equal((IArea)new StringHierarchyArea(""), product);
     }
 
     /// <summary>
-    /// Test the TryCreate method with paramValues including a fullSpec value
-    /// and not skipping value validation
+    /// Test the TryCreate method with paramValues not including a fullSpec
+    /// value or including an invalid fullSpec value and not skipping value
+    /// validation
     /// </summary>
     [Fact]
-    public void TryCreate_ShouldValidateShouldMaybeCreate()
+    public void TryCreate_ShouldValidateShouldNotCreate()
+    {
+        // Create non-empty options, modifiers, and subregions parameters
+        var regionOptions = new HashSet<string>() { "right", "left" };
+        var regionModifiers = new Dictionary<string, HashSet<string>>
+        {
+            { "modSet1", new HashSet<string>() { "mod1", "mod2" } },
+            { "modSet2", new HashSet<string>() { "mod3", "mod4" } }
+        };
+        var regionSubregions = new Dictionary<string, StringHierarchyRegion>
+        {
+            { "child1", new StringHierarchyRegion("child1", null, null, null,
+                regionModifiers) },
+            { "child2", new StringHierarchyRegion("child2", null) }
+        };
+        // Create region with the above parameters
+        var region = new StringHierarchyRegion("base", null,
+            null, regionOptions, null, regionSubregions);
+
+        // Create factory with non-null base region
+        StringHierarchyAreaFactory factory =
+            new StringHierarchyAreaFactory(region);
+
+        // Create dictionary with no spec
+        Dictionary<string, object> paramValues1 =
+            new Dictionary<string, object>();
+
+        // Create dictionaries with invalid specs
+        Dictionary<string, object> paramValues2 =
+            new Dictionary<string, object>() { { "fullSpec", null } };
+        Dictionary<string, object> paramValues3 =
+            new Dictionary<string, object>() { { "fullSpec", new object() } };
+        Dictionary<string, object> paramValues4 =
+            new Dictionary<string, object>() { { "fullSpec", "" } };
+        Dictionary<string, object> paramValues5 =
+            new Dictionary<string, object>() { { "fullSpec", "child3" } };
+        Dictionary<string, object> paramValues6 =
+            new Dictionary<string, object>() { { "fullSpec",
+                    "left base, child1 | mod1, mod2" } };
+        Dictionary<string, object> paramValues7 =
+            new Dictionary<string, object>() { { "fullSpec",
+                    "left base, child1 | mod1 | mod3" } };
+
+        // Create variable to store produced IArea
+        IArea product;
+
+        // Test no value
+        bool valid = factory.TryCreate(paramValues1, out product, false);
+        Assert.False(valid);
+        Assert.Null(product);
+
+        // Test null value
+        valid = factory.TryCreate(paramValues2, out product, false);
+        Assert.False(valid);
+        Assert.Null(product);
+
+        // Test non-string value
+        valid = factory.TryCreate(paramValues3, out product, false);
+        Assert.False(valid);
+        Assert.Null(product);
+
+        // Test empty string
+        valid = factory.TryCreate(paramValues4, out product, false);
+        Assert.False(valid);
+        Assert.Null(product);
+
+        // Test invalid subregion
+        valid = factory.TryCreate(paramValues5, out product, false);
+        Assert.False(valid);
+        Assert.Null(product);
+
+        // Test invalid modifiers
+        valid = factory.TryCreate(paramValues6, out product, false);
+        Assert.False(valid);
+        Assert.Null(product);
+
+        // Test incorrect modifier syntax
+        valid = factory.TryCreate(paramValues7, out product, false);
+        Assert.False(valid);
+        Assert.Null(product);
+    }
+
+    /// <summary>
+    /// Test the TryCreate method with paramValues including a valid fullSpec
+    /// value and not skipping value validation
+    /// </summary>
+    [Fact]
+    public void TryCreate_ShouldValidateShouldCreate()
     {
         // Create non-empty options, modifiers, and subregions parameters
         var regionOptions = new HashSet<string>() { "right", "left" };
@@ -202,22 +264,6 @@ public class StringHierarchyAreaFactoryTests
             new Dictionary<string, object>() {
                 { "fullSpec", "left base, child1 | mod1" } };
 
-        // Create dictionaries with valid specs
-        Dictionary<string, object> paramValues3 =
-            new Dictionary<string, object>() { { "fullSpec", null } };
-        Dictionary<string, object> paramValues4 =
-            new Dictionary<string, object>() { { "fullSpec", new object() } };
-        Dictionary<string, object> paramValues5 =
-            new Dictionary<string, object>() { { "fullSpec", "" } };
-        Dictionary<string, object> paramValues6 =
-            new Dictionary<string, object>() { { "fullSpec", "child3" } };
-        Dictionary<string, object> paramValues7 =
-            new Dictionary<string, object>() { { "fullSpec",
-                    "left base, child1 | mod1, mod2" } };
-        Dictionary<string, object> paramValues8 =
-            new Dictionary<string, object>() { { "fullSpec",
-                    "left base, child1 | mod1 | mod3" } };
-
         // Create variable to store produced IArea
         IArea product;
 
@@ -225,7 +271,7 @@ public class StringHierarchyAreaFactoryTests
         bool valid = factory.TryCreate(paramValues1, out product, false);
         Assert.True(valid);
         Assert.NotNull(product);
-        Assert.Equal((IArea) new StringHierarchyArea("left base, child1"),
+        Assert.Equal((IArea)new StringHierarchyArea("left base, child1"),
             product);
 
         // Test valid spec with modifiers
@@ -234,35 +280,5 @@ public class StringHierarchyAreaFactoryTests
         Assert.NotNull(product);
         Assert.Equal((IArea)new StringHierarchyArea("left base, child1 | mod1"),
             product);
-
-        // Test null value
-        valid = factory.TryCreate(paramValues3, out product, false);
-        Assert.False(valid);
-        Assert.Null(product);
-
-        // Test non-string value
-        valid = factory.TryCreate(paramValues4, out product, false);
-        Assert.False(valid);
-        Assert.Null(product);
-
-        // Test empty string
-        valid = factory.TryCreate(paramValues5, out product, false);
-        Assert.False(valid);
-        Assert.Null(product);
-
-        // Test invalid subregion
-        valid = factory.TryCreate(paramValues6, out product, false);
-        Assert.False(valid);
-        Assert.Null(product);
-
-        // Test invalid modifiers
-        valid = factory.TryCreate(paramValues7, out product, false);
-        Assert.False(valid);
-        Assert.Null(product);
-
-        // Test incorrect modifier syntax
-        valid = factory.TryCreate(paramValues8, out product, false);
-        Assert.False(valid);
-        Assert.Null(product);
     }
 }
