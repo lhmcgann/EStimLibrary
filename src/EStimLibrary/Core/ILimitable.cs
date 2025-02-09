@@ -1,4 +1,4 @@
-﻿using EStimLibrary.Core;
+﻿using EStimLibrary.Core.Data;
 
 
 namespace EStimLibrary;

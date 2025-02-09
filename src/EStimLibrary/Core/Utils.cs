@@ -2,7 +2,7 @@
 using System.IO.Ports;
 using System.Reflection;
 
-using EStimLibrary.Core.Haptics;
+using EStimLibrary.Core.Data;
 using EStimLibrary.Core.Stimulation.Stimulators;
 
 
@@ -274,28 +274,6 @@ public static class Utils
         }
 
         return false;
-    }
-
-    // TODO: can delete once the above is tested for Stimulator
-    /// <summary>
-    /// Get all specific Stimulator derived class Types available in this
-    /// AppDomain.
-    /// </summary>
-    /// <returns>A dictionary of derived stimulator class (string name, Type)
-    /// pairs.</returns>
-    public static Dictionary<string, Type> GetAvailableStimulatorTypes()
-    {
-        // Get a list of all the derived classes (Types) of Stimulator.
-        List<Type> stimTypes = AppDomain.CurrentDomain.GetAssemblies()
-            .SelectMany(x => x.GetTypes())
-            .Where(x => typeof(Stimulator).IsAssignableFrom(x) &&
-                !x.IsInterface && !x.IsAbstract)
-            .ToList();
-        // Return a dictionary of string names of derived classes to the class
-        // Type.
-        return stimTypes
-            .Select(t => (t.Name, t))
-            .ToDictionary(tuple => tuple.Name, tuple => tuple.t);
     }
 
     /// <summary>
