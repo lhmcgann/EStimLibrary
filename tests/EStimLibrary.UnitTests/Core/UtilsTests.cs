@@ -140,10 +140,11 @@ namespace EStimLibrary.UnitTests.Core
         [Fact]
         public void GetAvailableGenericTypes_WhenGivenGenericParameters_ShouldReturnTypes()
         {
-            var result = Utils.GetAvailableGenericTypes(typeof(ITestFactory<>), new Type[] { typeof(TestProduct) });
+            // Use the production IFactory<> interface and our test product.
+            var result = Utils.GetAvailableGenericTypes(typeof(IFactory<>), new Type[] { typeof(TestProduct) });
             Assert.NotNull(result);
             Assert.All(result.Values, type =>
-                Assert.True(typeof(ITestFactory<TestProduct>).IsAssignableFrom(type)));
+                Assert.True(typeof(IFactory<TestProduct>).IsAssignableFrom(type)));
         }
 
         /// <summary>
@@ -224,27 +225,6 @@ namespace EStimLibrary.UnitTests.Core
 
         #region Additional Reflection and Object Creation Coverage Tests
 
-        ///// <summary>
-        ///// Tests that <see cref="Utils.CreateObjectOfType(Type, List{string}, Dictionary{string, object})"/> throws an <see cref="ArgumentException"/> when no matching constructor is found.
-        ///// </summary>
-        //[Fact]
-        //public void CreateObjectOfType_WhenNoMatchingConstructorExists_ShouldThrowArgumentException()
-        //{
-        //    Assert.Throws<ArgumentException>(() =>
-        //        Utils.CreateObjectOfType(typeof(NoMatchingConstructorClass), new List<string> { "param1" },
-        //            new Dictionary<string, object> { { "param1", 5 } }));
-        //}
-
-        ///// <summary>
-        ///// Tests that <see cref="Utils.GetConstructorParamInfo(Type)"/> throws an <see cref="ArgumentException"/> when no public constructor exists.
-        ///// </summary>
-        //[Fact]
-        //public void GetConstructorParamInfo_WhenNoPublicConstructorExists_ShouldThrowArgumentException()
-        //{
-        //    Assert.Throws<ArgumentException>(() =>
-        //        Utils.GetConstructorParamInfo(typeof(NoPublicConstructor)));
-        //}
-
         /// <summary>
         /// Helper method that calls CreateObjectOfType with a type that has no matching constructor.
         /// </summary>
@@ -282,9 +262,8 @@ namespace EStimLibrary.UnitTests.Core
             Assert.Throws<ArgumentException>(CallGetConstructorParamInfo_NoPublicConstructor);
         }
 
-
         /// <summary>
-        /// Tests that <see cref="Utils.GetObjectProperty(object, Type, string, out object)"/> returns false and null when the property does not exist.
+        /// Tests that GetObjectProperty returns false and null when the property does not exist.
         /// </summary>
         [Fact]
         public void GetObjectProperty_WhenPropertyDoesNotExist_ShouldReturnFalseAndNull()
@@ -296,7 +275,7 @@ namespace EStimLibrary.UnitTests.Core
         }
 
         /// <summary>
-        /// Tests that <see cref="Utils.CallObjectMethod(object, Type, string, object[], out object)"/> returns false and null when the method is not found.
+        /// Tests that CallObjectMethod returns false and null when the method is not found.
         /// </summary>
         [Fact]
         public void CallObjectMethod_WhenMethodDoesNotExist_ShouldReturnFalseAndNull()
@@ -308,23 +287,25 @@ namespace EStimLibrary.UnitTests.Core
         }
 
         /// <summary>
-        /// Tests that <see cref="Utils.TryFactoryCreate(dynamic, out dynamic, Action{string}, Func{string})"/> returns false when the factory fails to create a product.
+        /// Tests that TryFactoryCreate returns false when the factory fails to create a product.
         /// </summary>
         [Fact]
         public void TryFactoryCreate_WhenInvalidParametersProvided_ShouldReturnFalse()
         {
             // Use a factory that always fails.
-            var factory = new FailingDummyFactory();
-            Func<string> readInput = () => "5";
+            //var factory = new FailingDummyFactory();
+            IFactory<TestProduct> factory = new FailingDummyFactory();
+            Func<string> readInput = () => "5"; // valid input according to the limits
             var outputs = new List<string>();
             Action<string> displayOutput = s => outputs.Add(s);
 
-            bool success = Utils.TryFactoryCreate(factory, out dynamic product, displayOutput, readInput);
+            bool success = Utils.TryFactoryCreate(factory, out TestProduct product, displayOutput, readInput);
             Assert.False(success);
+            Assert.Null(product);
         }
 
         /// <summary>
-        /// Tests that <see cref="Utils.RequestUserInput{T}(string, string, string, Action{string}, Func{string}, Utils.ParseAndValidateFunc{T})"/> loops on invalid input before returning a valid parsed value.
+        /// Tests that RequestUserInput loops on invalid input before returning a valid parsed value.
         /// </summary>
         [Fact]
         public void RequestUserInput_WhenFirstInputInvalidThenValid_ShouldReturnParsedValue()
@@ -346,18 +327,6 @@ namespace EStimLibrary.UnitTests.Core
                 (string input, out int parsed) => int.TryParse(input, out parsed));
             Assert.Equal(42, result);
         }
-
-        #endregion
-
-        #region Additional File I/O Coverage Tests
-
-        // (No additional tests needed here if all branches are already covered.)
-
-        #endregion
-
-        #region Interactive Input Helper Functions Tests
-
-        // (All interactive tests are already covered above.)
 
         #endregion
 
@@ -406,15 +375,10 @@ namespace EStimLibrary.UnitTests.Core
             public int SampleMethod(int a, int b) => a + b;
         }
 
-        #region Temporary Factory Types
+        #region Test Product
 
         /// <summary>
-        /// Temporary factory interface used for testing in this file.
-        /// </summary>
-        public interface ITestFactory<T> { }
-
-        /// <summary>
-        /// Temporary product class used for testing in this file.
+        /// A simple test product type used in factory tests.
         /// </summary>
         public class TestProduct { }
 
@@ -450,37 +414,9 @@ namespace EStimLibrary.UnitTests.Core
         #region Factory Creation Dummy Types
 
         /// <summary>
-        /// Dummy implementation of <see cref="IDataLimits"/> from the Core library, used for testing.
-        /// Implements <see cref="ISelectable"/> by providing the <c>Name</c> property.
+        /// Dummy factory implementation of <see cref="IFactory{TestProduct}"/> for testing factory creation.
         /// </summary>
-        public class DummyDataLimits : IDataLimits
-        {
-            /// <summary>
-            /// Gets or sets the name of the selectable item.
-            /// </summary>
-            public string Name { get; set; }
-
-            /// <inheritdoc />
-            public Type ValidDataType { get; set; }
-
-            /// <inheritdoc />
-            public string Description { get; set; }
-
-            /// <inheritdoc />
-            public bool IsValidDataValue(object value)
-            {
-                if (ValidDataType == typeof(int) && value is int i)
-                {
-                    return i > 0;
-                }
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Dummy factory implementing <see cref="ITestFactory{TestProduct}"/> for testing factory creation.
-        /// </summary>
-        public class DummyFactory : ITestFactory<TestProduct>
+        public class DummyFactory : IFactory<TestProduct>
         {
             /// <summary>
             /// Gets a help message for the factory.
@@ -497,9 +433,10 @@ namespace EStimLibrary.UnitTests.Core
             /// </summary>
             public DummyFactory()
             {
+                // Using production data limits: ContinuousIntDataLimits requires a value between 1 and 100.
                 ParamLimits = new Dictionary<string, IDataLimits>
                 {
-                    { "value", new DummyDataLimits { ValidDataType = typeof(int), Description = "Enter a positive integer", Name = "Value" } }
+                    { "value", new ContinuousIntDataLimits(1, 100) }
                 };
             }
 
@@ -507,14 +444,13 @@ namespace EStimLibrary.UnitTests.Core
             /// Attempts to create a product using the provided parameter values.
             /// </summary>
             /// <param name="paramValues">The parameter values for product creation.</param>
-            /// <param name="product">
-            /// When this method returns, contains the created product if successful; otherwise, null.
-            /// </param>
+            /// <param name="product">When this method returns, contains the created product if successful; otherwise, null.</param>
+            /// <param name="skipValueValidation">Optional parameter to skip deeper validation.</param>
             /// <returns>True if the product was created successfully; otherwise, false.</returns>
-            public bool TryCreate(Dictionary<string, object> paramValues, out object product)
+            public bool TryCreate(Dictionary<string, object> paramValues, out TestProduct product, bool skipValueValidation = false)
             {
                 if (paramValues.ContainsKey("value") &&
-                    paramValues["value"] is int val && val > 0)
+                    paramValues["value"] is int val && val >= 1 && val <= 100)
                 {
                     product = new TestProduct();
                     return true;
@@ -525,10 +461,10 @@ namespace EStimLibrary.UnitTests.Core
         }
 
         /// <summary>
-        /// Dummy factory that always fails to create a product.
-        /// Used to simulate factory creation failure.
+        /// Dummy factory implementation of <see cref="IFactory{TestProduct}"/> that always fails to create a product.
+        /// Used to simulate a failure in factory creation.
         /// </summary>
-        public class FailingDummyFactory : ITestFactory<TestProduct>
+        public class FailingDummyFactory : IFactory<TestProduct>
         {
             /// <summary>
             /// Gets a help message for the factory.
@@ -547,7 +483,7 @@ namespace EStimLibrary.UnitTests.Core
             {
                 ParamLimits = new Dictionary<string, IDataLimits>
                 {
-                    { "value", new DummyDataLimits { ValidDataType = typeof(int), Description = "Enter a positive integer", Name = "Value" } }
+                    { "value", new ContinuousIntDataLimits(1, 100) }
                 };
             }
 
@@ -556,8 +492,9 @@ namespace EStimLibrary.UnitTests.Core
             /// </summary>
             /// <param name="paramValues">The parameter values for product creation.</param>
             /// <param name="product">Always null.</param>
+            /// <param name="skipValueValidation">Optional parameter to skip deeper validation.</param>
             /// <returns>False.</returns>
-            public bool TryCreate(Dictionary<string, object> paramValues, out object product)
+            public bool TryCreate(Dictionary<string, object> paramValues, out TestProduct product, bool skipValueValidation = false)
             {
                 product = null;
                 return false;

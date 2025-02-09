@@ -386,7 +386,7 @@ public static class Utils
     /// <param name="readInput">A function to capture information from the
     /// user.</param>
     /// <returns></returns>
-    public static bool TryFactoryCreate(dynamic factory, out dynamic product,
+    public static bool TryFactoryCreate<TProduct>(IFactory<TProduct> factory, out TProduct product,
         Action<string> displayOutput, Func<string> readInput)
     {
         // Get the parameter values.
@@ -397,7 +397,7 @@ public static class Utils
         // TODO: got an error saying invalid params given for the best
         // overloaded method found for this definition, but nothing incorrect...
         // Maybe issue w/ having an optional param?
-        return factory.TryCreate(paramValues, out product);
+        return factory.TryCreate(paramValues, out product, false);
     }
 
     //public static bool TryFactoryCreate(Type productType, out dynamic product,
