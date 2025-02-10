@@ -41,7 +41,7 @@ jobs:
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '7.x' # Adjust to your target .NET version
+          dotnet-version: '9.x' # Adjust to your target .NET version
 
       # Uncomment this process if you want the windows build to take 3mins extra but get rid of the 'Workload updates are available. Run `dotnet workload list` for more information' msg after building
       #- name: Update dotnet workloads (Windows)

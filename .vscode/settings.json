@@ -1,0 +1,7 @@
+{
+    "_comment1": "specify which solution to load for C# Dev Kit tooling. Switch if working on a different sln",
+    "_comment2": "examples/EStimLibrary.ConsoleAppDemo/EStimLibrary.ConsoleAppDemo.sln",
+    "dotrush.roslyn.projectOrSolutionFiles": [
+        "tests/EStimLibrary.UnitTests/EStimLibrary.UnitTests.sln"
+    ]
+}
