@@ -11,11 +11,20 @@ public class StringHierarchyRegionTests
 {
     private readonly ITestOutputHelper _output;
 
+    /// <summary>
+    /// Construct an empty root region. Test helper.
+    /// </summary>
+    /// <returns>An empty root region.</returns>
     private static StringHierarchyRegion ConstructEmptyRoot()
     {
         return new StringHierarchyRegion("rootEmpty");
     }
 
+    /// <summary>
+    /// Construct a two-level root region. Test helper.
+    /// </summary>
+    /// <returns>The root region of a two-level tree constructed manually 
+    /// without method use.</returns>
     private static StringHierarchyRegion ConstructTwoLevelRoot()
     {
         StringHierarchyRegion rootTwoLevel;

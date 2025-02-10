@@ -207,8 +207,9 @@ public class StringHierarchyRegion
     /// <summary>
     /// Try to get a given subregion of this region.
     /// </summary>
-    /// <param name="regionSpec">The specified region to search for, given as a
-    /// string sequence of appropriately delimited option-region names.</param>
+    /// <param name="regionSpec">The string specification of the region to 
+    /// search for, given as a string sequence of appropriately delimited 
+    /// option-region names.</param>
     /// <param name="foundSubregion">An output parameter: the searched
     /// subregion if found, null if not.</param>
     /// <returns>True if the subregion could be found, False if not.</returns>
@@ -343,6 +344,10 @@ public class StringHierarchyRegion
         return true;
     }
 
+    /// <summary>
+    /// Update the frequency dictionary of modifier values across all axes
+    /// based on current Modifiers.
+    /// </summary>
     private void _UpdateFrequencyDict()
     {
         // Clear the frequency dictionary
@@ -393,13 +398,32 @@ public class StringHierarchyRegion
         return newRegion;
     }
 
+    /// <summary>
+    /// Create a string representation of this region and all subregions.
+    /// Override default behavior to provide a more detailed string output.
+    /// </summary>
+    /// <returns>A string representation of this region.</returns>
     public override string ToString()
     {
-        return s_BuildSpecOptionsString("", 0, this);
+        return s_BuildSpecOptionsString(this);
     }
 
-    private static string s_BuildSpecOptionsString(string parentRegionSpec,
-        int indentLevel, StringHierarchyRegion region)
+    /// <summary>
+    /// Create a string representation of the given region, recursing to contain
+    /// all subregions.
+    /// </summary>
+    /// <param name="region">The region to build a string representation of.
+    /// </param>
+    /// <param name="parentRegionSpec">The string specification of the parent 
+    /// region (default: empty string, assuming given region is a root).
+    /// </param>
+    /// <param name="indentLevel">Depth in the tree and thus number of indents
+    /// to included in the string output (default: 0, assuming given region is 
+    /// a root).</param>
+    /// <returns>A printable string representation of the given region.
+    /// </returns>
+    private static string s_BuildSpecOptionsString(StringHierarchyRegion region,
+        string parentRegionSpec = "", int indentLevel = 0)
     {
         // Output: [prev regionSpec], [options] baseName | [mod1Options], ...
 
@@ -434,8 +458,9 @@ public class StringHierarchyRegion
         List<string> subregionStrings = new() { fullSpec };
         foreach (var (_, subregion) in region.Subregions)
         {
-            subregionStrings.Add(s_BuildSpecOptionsString(regionSpec,
-                indentLevel + 1, subregion));
+            subregionStrings.Add(s_BuildSpecOptionsString(subregion, 
+                parentRegionSpec: regionSpec,
+                indentLevel: indentLevel + 1));
         }
 
         // Return the single string.
