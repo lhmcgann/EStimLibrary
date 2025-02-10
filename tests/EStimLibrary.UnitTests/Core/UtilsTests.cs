@@ -10,6 +10,8 @@ using Xunit;
 using EStimLibrary.Core;
 using EStimLibrary.Core.Haptics;
 using EStimLibrary.Core.Stimulation.Stimulators;
+using EStimLibrary.Core.Data;
+using EStimLibrary.Extensions.Data;
 
 namespace EStimLibrary.UnitTests.Core
 {
