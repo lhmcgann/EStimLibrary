@@ -35,7 +35,7 @@ public class StringHierarchyRegionTests
 
         //          root: arm
         //          /        \
-        //      midA: hand    midB: random
+        //      midA: hand    midB: middleTwoLevelB
         //     /           \
         // leafAa: finger  leafAb: handbody
         // Leaf regions
@@ -48,16 +48,14 @@ public class StringHierarchyRegionTests
                 { "z", new HashSet<string> { "palmar", "dorsal" } } }
             );
         leafTwoLevelAb = new StringHierarchyRegion("handbody",
-            parentOptions: new(),
-            options: new HashSet<string> { "left", "right" },
+            parentOptions: new HashSet<string> { "left", "right" },
             modifiers: new Dictionary<string, HashSet<string>> {
                 { "x", new HashSet<string> { "lateral", "medial" } },
                 { "y", new HashSet<string> { "proximal", "middle", "distal" } },
                 { "z", new HashSet<string> { "palmar", "dorsal" } } }
             );
-        // Middle regions
+        // Middle regions: one data-full, one minimal
         middleTwoLevelA = new StringHierarchyRegion("hand",
-            parentOptions: new HashSet<string> { "upper", "lower" },
             options: new HashSet<string> { "left", "right" },
             modifiers: new Dictionary<string, HashSet<string>> {
                 { "x", new HashSet<string> { "lateral", "medial" } },
@@ -68,11 +66,9 @@ public class StringHierarchyRegionTests
                 { "handbody", leafTwoLevelAb } }
             );
         middleTwoLevelB = new StringHierarchyRegion("middleTwoLevelB",
-            parentOptions: new HashSet<string> { "upper", "lower" },
             options: new HashSet<string> { "ulnar", "radial" });
-        // Root region
+        // Root region: minimal data; just subregions
         rootTwoLevel = new StringHierarchyRegion("rootTwoLevel", 
-            options: new(),
             subregions: new Dictionary<string, StringHierarchyRegion> {
                 { "hand", middleTwoLevelA }, 
                 { "middleTwoLevelB", middleTwoLevelB } }
@@ -277,7 +273,7 @@ public class StringHierarchyRegionTests
             new Dictionary<string, StringHierarchyRegion>());
         // Create non-empty options, modifiers, and subregions parameters
         // to cover all components of string representation
-        var regionOptions = new HashSet<string>() { "right", "left" };
+        var regionOptions = new HashSet<string>() { "right", "left", "center" };
         var regionModifiers = new Dictionary<string, HashSet<string>>
         {
             { "modSet1", new HashSet<string>() { "mod1", "mod2" } },
@@ -302,13 +298,72 @@ public class StringHierarchyRegionTests
         // Check string outputs for correctness
         Assert.Equal("base", nullRegion.ToString());
         Assert.Equal("root", emptyRegion.ToString());
-        Assert.Equal("[right,left] base | [mod1,mod2], [mod3,mod4]\n" +
-            "    [right,left] base, [opt1,opt2] child1\n" +
-            "        [right,left] base, [opt1,opt2] child1, grandchild\n" +
-            "    [right,left] base, child2", stringHierarchyRegion.ToString());
+        Assert.Equal("[right,left,center] base | [mod1,mod2], [mod3,mod4]\n" +
+            "    [right,left,center] base, [opt1,opt2] child1\n" +
+            "        [right,left,center] base, [opt1,opt2] child1, grandchild\n" +
+            "    [right,left,center] base, child2", stringHierarchyRegion.ToString());
     }
 
     #region TryGetSubregion
+    /// <summary>
+    /// Test the TryGetSubregion method with invalid region specifications.
+    /// </summary>
+    /// <param name="rootRegion">The root region to search within.</param>
+    /// <param name="regionSpec">The invalid region spec.</param>
+    [Theory]
+    [MemberData(nameof(TryGetSubregion_InvalidOR_Fail_TestData))]
+    public void TryGetSubregion_InvalidOptionRegionName_ShouldFail(
+        StringHierarchyRegion rootRegion, string regionSpec)
+    {
+        // Call the method.
+        bool res = rootRegion.TryGetSubregion(regionSpec, out var foundRegion);
+
+        // Check failed: return is false, output is null.
+        Assert.False(res);
+        Assert.Null(foundRegion);
+    }
+
+    /// <summary>
+    /// Test data for TryGetSubregion method that tries to get a subregion via
+    /// and invalid option-region combo in the region specification and should
+    /// return failure.
+    /// </summary>
+    /// <returns></returns>
+    public static IEnumerable<object[]> TryGetSubregion_InvalidOR_Fail_TestData()
+    {
+        return new List<object[]>
+        {
+            // { rootRegion, searchRegionSpec }
+            new object[] { ConstructEmptyRoot(), ""},
+            new object[] { ConstructEmptyRoot(), "left foot"},
+            new object[] { ConstructEmptyRoot(), "anythingThatsNotRootEmpty"},
+            // Correct would be from:
+            //  rootTwoLevel
+            //      [left right] hand
+            //          [thumb index middle ring pinky] finger
+            //          handbody
+            //      [ulnar radial] middleTwoLevelB
+            new object[] { ConstructTwoLevelRoot(), 
+                // Fail on empty region spec
+                "" },
+            new object[] { ConstructTwoLevelRoot(), 
+                // Fail on root level: would need "rootTwoLevel" first!
+                "left hand" },
+            new object[] { ConstructTwoLevelRoot(),
+                // Fail on second level: incorrect region name
+                "rootTwoLevel, left hands" },
+            new object[] { ConstructTwoLevelRoot(),
+                // Fail on second level: incorrect option name
+                "rootTwoLevel, my hand" },
+            new object[] { ConstructTwoLevelRoot(),
+                // Fail on second level: missing option
+                "rootTwoLevel, hand" },
+            new object[] { ConstructTwoLevelRoot(),
+                // Fail on thirs level: extra option
+                "rootTwoLevel, left hand, right handbody" }
+        };
+    }
+
     /// <summary>
     /// Test the TryGetSubregion method with various malformed or otherwise
     /// incorrect regions.
@@ -336,7 +391,6 @@ public class StringHierarchyRegionTests
         var stringHierarchyRegion = new StringHierarchyRegion("base", parent,
             parent.Options, regionOptions, regionModifiers, regionSubregions);
 
-        // TODO: make comment on PR abt using InlineData[] tags in future for cleaner code
         // Test with empty string representation
         StringHierarchyRegion? foundSubregion;
         var output = stringHierarchyRegion.TryGetSubregion("",
@@ -545,25 +599,34 @@ public class StringHierarchyRegionTests
     /// <summary>
     /// Test the DeepCopy method with various root region structures.
     /// </summary>
-    /// <param name="root"></param>
+    /// <param name="root">The root region of the tree to deep copy.</param>
+    /// <param name="retainParentReference">Whether to retain the parent 
+    /// reference(s) in the deep copy or not.</param>
     [Theory]
     [MemberData(nameof(DeepCopy_TestData))]
-    public void DeepCopy_ShouldSucceed(StringHierarchyRegion root)
+    public void DeepCopy_ShouldSucceed(StringHierarchyRegion root, 
+        bool retainParentReference)
     {
         // Create the deep copy
         var deepCopy = root.DeepCopy();
 
         // Recursive check.
-        DeepCopy_ShouldSucceed_Helper(root, deepCopy);
+        DeepCopy_ShouldSucceed_Helper(root, deepCopy, retainParentReference,
+            isRoot: true);
     }
 
     /// <summary>
     /// Recursive helper method for DeepCopy_ShouldSucceed.
     /// </summary>
-    /// <param name="original"></param>
-    /// <param name="deepCopy"></param>
+    /// <param name="original">An original region of the tree that was deep 
+    /// copied.</param>
+    /// <param name="deepCopy">The supposed deep copy of the original region.
+    /// </param>
+    /// <param name="retainParentReference">Whether to the parent reference(s)
+    /// were supposed to be retained or not in the deep copy.</param>
     private void DeepCopy_ShouldSucceed_Helper(StringHierarchyRegion original, 
-        StringHierarchyRegion deepCopy)
+        StringHierarchyRegion deepCopy, bool retainParentReference, 
+        bool isRoot = false)
     {
         // Check root object is different address.
         Assert.NotSame(original, deepCopy);
@@ -571,11 +634,18 @@ public class StringHierarchyRegionTests
         // Check basename is same value.
         Assert.Equal(original.BaseName, deepCopy.BaseName);
 
-        // Check parent region is different address.
+        // Check parent region is correct.
         if (original.ParentRegion is null)
         {
             Assert.Null(deepCopy.ParentRegion);
         }
+        // Check parent region is same address if rot and retention specified.
+        else if (isRoot && retainParentReference)
+        {
+            Assert.Same(original.ParentRegion, deepCopy.ParentRegion);
+        }
+        // Check parent region is different address if non-root or no retention
+        // specified.
         else
         {
             Assert.NotSame(original.ParentRegion, deepCopy.ParentRegion);
@@ -623,7 +693,8 @@ public class StringHierarchyRegionTests
             Assert.NotSame(originalSubregion, copiedSubregion);
 
             // Recurse into subregion.
-            DeepCopy_ShouldSucceed_Helper(originalSubregion, copiedSubregion);
+            DeepCopy_ShouldSucceed_Helper(originalSubregion, copiedSubregion,
+                retainParentReference);
         }
     }
 
@@ -635,8 +706,11 @@ public class StringHierarchyRegionTests
     {
         return new List<object[]>
         {
-            new object[] { ConstructEmptyRoot() },
-            new object[] { ConstructTwoLevelRoot() }
+            // { rootRegion, retainParentReference }
+            new object[] { ConstructEmptyRoot(), true },
+            new object[] { ConstructEmptyRoot(), false },
+            new object[] { ConstructTwoLevelRoot(), true },
+            new object[] { ConstructTwoLevelRoot(), false }
         };
     }
 
