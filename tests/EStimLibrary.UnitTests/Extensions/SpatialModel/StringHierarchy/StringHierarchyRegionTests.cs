@@ -11,23 +11,94 @@ public class StringHierarchyRegionTests
 {
     private readonly ITestOutputHelper _output;
 
-    // Test class constructor creates an output helper so it can write console
-    // output.
+    private static StringHierarchyRegion ConstructEmptyRoot()
+    {
+        return new StringHierarchyRegion("rootEmpty");
+    }
+
+    private static StringHierarchyRegion ConstructTwoLevelRoot()
+    {
+        StringHierarchyRegion rootTwoLevel;
+        StringHierarchyRegion middleTwoLevelA;
+        StringHierarchyRegion middleTwoLevelB;
+        StringHierarchyRegion leafTwoLevelAa;
+        StringHierarchyRegion leafTwoLevelAb;
+
+        //          root: arm
+        //          /        \
+        //      midA: hand    midB: random
+        //     /           \
+        // leafAa: finger  leafAb: handbody
+        // Leaf regions
+        leafTwoLevelAa = new StringHierarchyRegion("finger",
+            parentOptions: new HashSet<string> { "left", "right" },
+            options: new HashSet<string> { "thumb", "index", "middle", "ring", "pinky" },
+            modifiers: new Dictionary<string, HashSet<string>> {
+                { "x", new HashSet<string> { "lateral", "medial" } },
+                { "y", new HashSet<string> { "proximal", "middle", "distal" } },
+                { "z", new HashSet<string> { "palmar", "dorsal" } } }
+            );
+        leafTwoLevelAb = new StringHierarchyRegion("handbody",
+            parentOptions: new(),
+            options: new HashSet<string> { "left", "right" },
+            modifiers: new Dictionary<string, HashSet<string>> {
+                { "x", new HashSet<string> { "lateral", "medial" } },
+                { "y", new HashSet<string> { "proximal", "middle", "distal" } },
+                { "z", new HashSet<string> { "palmar", "dorsal" } } }
+            );
+        // Middle regions
+        middleTwoLevelA = new StringHierarchyRegion("hand",
+            parentOptions: new HashSet<string> { "upper", "lower" },
+            options: new HashSet<string> { "left", "right" },
+            modifiers: new Dictionary<string, HashSet<string>> {
+                { "x", new HashSet<string> { "lateral", "medial" } },
+                { "y", new HashSet<string> { "proximal", "middle", "distal" } },
+                { "z", new HashSet<string> { "palmar", "dorsal" } } },
+            subregions: new Dictionary<string, StringHierarchyRegion> {
+                { "finger", leafTwoLevelAa },
+                { "handbody", leafTwoLevelAb } }
+            );
+        middleTwoLevelB = new StringHierarchyRegion("middleTwoLevelB",
+            parentOptions: new HashSet<string> { "upper", "lower" },
+            options: new HashSet<string> { "ulnar", "radial" });
+        // Root region
+        rootTwoLevel = new StringHierarchyRegion("rootTwoLevel", 
+            options: new(),
+            subregions: new Dictionary<string, StringHierarchyRegion> {
+                { "hand", middleTwoLevelA }, 
+                { "middleTwoLevelB", middleTwoLevelB } }
+            );
+        
+        // Set parent references for all regions.
+        leafTwoLevelAa.ParentRegion = middleTwoLevelA;
+        leafTwoLevelAb.ParentRegion = middleTwoLevelA;
+        middleTwoLevelA.ParentRegion = rootTwoLevel;
+        middleTwoLevelB.ParentRegion = rootTwoLevel;
+
+        return rootTwoLevel;
+    }
+
+    /// <summary>
+    /// Test class constructor creates an output helper so it can write console
+    /// output.
+    /// </summary>
+    /// <param name="testOutputHelper"></param>
     public StringHierarchyRegionTests(ITestOutputHelper testOutputHelper)
     {
         this._output = testOutputHelper;
     }
 
-    // Test method naming convention: LibClassMethodName_ScenarioShouldExpect
-
+    #region Constructor
     /// <summary>
-    /// Test the constructor with null parameter values.
+    /// Test the constructor with null parameter values: 
+    ///     no parent region,
+    ///     optional params passed null.
     /// </summary>
     [Fact]
     public void Constructor_ShouldAcceptNull()
     {
-        var stringHierarchyRegion = new StringHierarchyRegion("base", null,
-            null, null, null, null);
+        var stringHierarchyRegion = new StringHierarchyRegion("base", null!,
+            null!, null!, null!, null!);
 
         // Check that all fields correctly instantiate
         Assert.Equal("base", stringHierarchyRegion.BaseName);
@@ -53,7 +124,7 @@ public class StringHierarchyRegionTests
     public void Constructor_ShouldDefaultNull()
     {
         // Create region with all default parameters unspecified
-        var stringHierarchyRegion = new StringHierarchyRegion("base", null);
+        var stringHierarchyRegion = new StringHierarchyRegion("base", null!);
 
         // Check that all fields correctly instantiate
         Assert.Equal("base", stringHierarchyRegion.BaseName);
@@ -79,7 +150,7 @@ public class StringHierarchyRegionTests
     public void Constructor_ShouldAcceptEmpty()
     {
         // Create simple parent region
-        var parent = new StringHierarchyRegion("root", null);
+        var parent = new StringHierarchyRegion("root", null!);
 
         // Create region with all parameters non-null
         var stringHierarchyRegion = new StringHierarchyRegion("base", parent,
@@ -112,7 +183,7 @@ public class StringHierarchyRegionTests
     {
         // Create parent region with non-null object parameters for deep copy
         // testing
-        var parent = new StringHierarchyRegion("root", null, null,
+        var parent = new StringHierarchyRegion("root", null!, null!,
             new HashSet<string>(), new Dictionary<string, HashSet<string>>(),
             new Dictionary<string, StringHierarchyRegion>());
         // Create non-empty options, modifiers, and subregions parameters
@@ -124,8 +195,8 @@ public class StringHierarchyRegionTests
         };
         var regionSubregions = new Dictionary<string, StringHierarchyRegion>
         {
-            { "child1", new StringHierarchyRegion("child1", null) },
-            { "child2", new StringHierarchyRegion("child2", null) }
+            { "child1", new StringHierarchyRegion("child1", null!) },
+            { "child2", new StringHierarchyRegion("child2", null!) }
         };
         // Create region with the above parameters for deep copy testing
         var stringHierarchyRegion = new StringHierarchyRegion("base", parent,
@@ -180,6 +251,7 @@ public class StringHierarchyRegionTests
         Assert.Equal(stringHierarchyRegion.Options, child.ParentOptions);
         Assert.NotSame(stringHierarchyRegion.Options, child.ParentOptions);
     }
+    #endregion Constructor
 
     /// <summary>
     /// Test the ToString method.
@@ -188,10 +260,10 @@ public class StringHierarchyRegionTests
     public void ToString_ShouldOutputStringRep()
     {
         // Create region with null parameter values
-        var nullRegion = new StringHierarchyRegion("base", null);
+        var nullRegion = new StringHierarchyRegion("base", null!);
         // Create region with non-null but empty options, modifiers, and
         // subregions
-        var emptyRegion = new StringHierarchyRegion("root", null, null,
+        var emptyRegion = new StringHierarchyRegion("root", null!, null!,
             new HashSet<string>(), new Dictionary<string, HashSet<string>>(),
             new Dictionary<string, StringHierarchyRegion>());
         // Create non-empty options, modifiers, and subregions parameters
@@ -204,14 +276,14 @@ public class StringHierarchyRegionTests
         };
         var subregionSubregions = new Dictionary<string, StringHierarchyRegion>
         {
-            { "grandchild", new StringHierarchyRegion("grandchild", null) }
+            { "grandchild", new StringHierarchyRegion("grandchild", null!) }
         };
         var regionSubregions = new Dictionary<string, StringHierarchyRegion>
         {
-            { "child1", new StringHierarchyRegion("child1", null, null,
-                new HashSet<string> { "opt1", "opt2" }, null,
+            { "child1", new StringHierarchyRegion("child1", null!, null!,
+                new HashSet<string> { "opt1", "opt2" }, null!,
                 subregionSubregions) },
-            { "child2", new StringHierarchyRegion("child2", null) }
+            { "child2", new StringHierarchyRegion("child2", null!) }
         };
         // Create region with the above parameters
         var stringHierarchyRegion = new StringHierarchyRegion("base",
@@ -227,6 +299,7 @@ public class StringHierarchyRegionTests
             "    [right,left] base, child2", stringHierarchyRegion.ToString());
     }
 
+    #region TryGetSubregion
     /// <summary>
     /// Test the TryGetSubregion method with various malformed or otherwise
     /// incorrect regions.
@@ -235,7 +308,7 @@ public class StringHierarchyRegionTests
     public void TryGetSubregion_ShouldOutputNull()
     {
         // Create simple parent region
-        var parent = new StringHierarchyRegion("root", null, null,
+        var parent = new StringHierarchyRegion("root", null!, null!,
             new HashSet<string>(), new Dictionary<string, HashSet<string>>(),
             new Dictionary<string, StringHierarchyRegion>());
         // Create non-empty options, modifiers, and subregions parameters
@@ -247,15 +320,16 @@ public class StringHierarchyRegionTests
         };
         var regionSubregions = new Dictionary<string, StringHierarchyRegion>
         {
-            { "child1", new StringHierarchyRegion("child1", null) },
-            { "child2", new StringHierarchyRegion("child2", null) }
+            { "child1", new StringHierarchyRegion("child1", null!) },
+            { "child2", new StringHierarchyRegion("child2", null!) }
         };
         // Create region with the above parameters
         var stringHierarchyRegion = new StringHierarchyRegion("base", parent,
             parent.Options, regionOptions, regionModifiers, regionSubregions);
 
+        // TODO: make comment on PR abt using InlineData[] tags in future for cleaner code
         // Test with empty string representation
-        StringHierarchyRegion foundSubregion;
+        StringHierarchyRegion? foundSubregion;
         var output = stringHierarchyRegion.TryGetSubregion("",
             out foundSubregion);
         Assert.False(output);
@@ -315,7 +389,7 @@ public class StringHierarchyRegionTests
     public void TryGetSubregion_ShouldOutputRegion()
     {
         // Create simple parent region
-        var parent = new StringHierarchyRegion("root", null, null,
+        var parent = new StringHierarchyRegion("root", null!, null!,
             new HashSet<string>(), new Dictionary<string, HashSet<string>>(),
             new Dictionary<string, StringHierarchyRegion>());
         // Create non-empty options, modifiers, and subregions parameters
@@ -327,21 +401,21 @@ public class StringHierarchyRegionTests
         };
         var subregionSubregions = new Dictionary<string, StringHierarchyRegion>
         {
-            { "grandchild", new StringHierarchyRegion("grandchild", null) }
+            { "grandchild", new StringHierarchyRegion("grandchild", null!) }
         };
         var regionSubregions = new Dictionary<string, StringHierarchyRegion>
         {
-            { "child1", new StringHierarchyRegion("child1", null, null,
-                new HashSet<string> { "opt1", "opt2" }, null,
+            { "child1", new StringHierarchyRegion("child1", null!, null!,
+                new HashSet<string> { "opt1", "opt2" }, null!,
                 subregionSubregions) },
-            { "child2", new StringHierarchyRegion("child2", null) }
+            { "child2", new StringHierarchyRegion("child2", null!) }
         };
         // Create region with the above parameters
         var stringHierarchyRegion = new StringHierarchyRegion("base", parent,
             parent.Options, regionOptions, regionModifiers, regionSubregions);
 
         // Test with valid option and base region
-        StringHierarchyRegion foundSubregion;
+        StringHierarchyRegion? foundSubregion;
         var output = stringHierarchyRegion.TryGetSubregion("right base",
             out foundSubregion);
         Assert.True(output);
@@ -367,7 +441,9 @@ public class StringHierarchyRegionTests
         Assert.True(output);
         Assert.Equal(regionSubregions["child1"], foundSubregion);
     }
+    #endregion TryGetSubregion
 
+    #region AddSubregion
     /// <summary>
     /// Test the AddSubregion method with new subregions.
     /// </summary>
@@ -375,7 +451,7 @@ public class StringHierarchyRegionTests
     public void AddSubregion_ShouldAddSubregion()
     {
         // Create simple parent region
-        var parent = new StringHierarchyRegion("root", null, null,
+        var parent = new StringHierarchyRegion("root", null!, null!,
             new HashSet<string>(), new Dictionary<string, HashSet<string>>(),
             new Dictionary<string, StringHierarchyRegion>());
         // Create non-empty options, modifiers, and subregions parameters
@@ -387,18 +463,18 @@ public class StringHierarchyRegionTests
         };
         var regionSubregions = new Dictionary<string, StringHierarchyRegion>
         {
-            { "child1", new StringHierarchyRegion("child1", null) },
-            { "child2", new StringHierarchyRegion("child2", null) }
+            { "child1", new StringHierarchyRegion("child1", null!) },
+            { "child2", new StringHierarchyRegion("child2", null!) }
         };
         // Create region with the above parameters
         var stringHierarchyRegion = new StringHierarchyRegion("base", parent,
             parent.Options, regionOptions, regionModifiers, regionSubregions);
 
         // Create variable to store old region output
-        StringHierarchyRegion oldRegion;
+        StringHierarchyRegion? oldRegion;
 
         // Create new region with different name to existing subregions
-        var newChildRegion = new StringHierarchyRegion("child3", null);
+        var newChildRegion = new StringHierarchyRegion("child3", null!);
 
         // Check shallow copy of subregion into base region and old subregion
         // output
@@ -415,7 +491,7 @@ public class StringHierarchyRegionTests
     public void AddSubregion_ShouldReplaceSubregion()
     {
         // Create simple parent region
-        var parent = new StringHierarchyRegion("root", null, null,
+        var parent = new StringHierarchyRegion("root", null!, null!,
             new HashSet<string>(), new Dictionary<string, HashSet<string>>(),
             new Dictionary<string, StringHierarchyRegion>());
         // Create non-empty options, modifiers, and subregions parameters
@@ -427,15 +503,15 @@ public class StringHierarchyRegionTests
         };
         var regionSubregions = new Dictionary<string, StringHierarchyRegion>
         {
-            { "child1", new StringHierarchyRegion("child1", null) },
-            { "child2", new StringHierarchyRegion("child2", null) }
+            { "child1", new StringHierarchyRegion("child1", null!) },
+            { "child2", new StringHierarchyRegion("child2", null!) }
         };
         // Create region with the above parameters
         var stringHierarchyRegion = new StringHierarchyRegion("base", parent,
             parent.Options, regionOptions, regionModifiers, regionSubregions);
 
         // Create variable to store old region output
-        StringHierarchyRegion oldRegion;
+        StringHierarchyRegion? oldRegion;
 
         // Test re-adding existing subregion
         stringHierarchyRegion.AddSubregion(regionSubregions["child2"],
@@ -445,7 +521,7 @@ public class StringHierarchyRegionTests
             stringHierarchyRegion.Subregions["child2"]);
 
         // Create new region with same name as existing subregion
-        var newChildRegion = new StringHierarchyRegion("child1", null);
+        var newChildRegion = new StringHierarchyRegion("child1", null!);
 
         // Test adding new subregion with same name as existing subregion
         stringHierarchyRegion.AddSubregion(newChildRegion, out oldRegion);
@@ -454,17 +530,117 @@ public class StringHierarchyRegionTests
             stringHierarchyRegion.Subregions["child1"]);
         Assert.Same(stringHierarchyRegion, newChildRegion.ParentRegion);
     }
+    #endregion AddSubregion
+
+    #region DeepCopy
+    /// <summary>
+    /// Test the DeepCopy method with various root region structures.
+    /// </summary>
+    /// <param name="root"></param>
+    [Theory]
+    [MemberData(nameof(DeepCopy_TestData))]
+    public void DeepCopy_ShouldSucceed(StringHierarchyRegion root)
+    {
+        // Create the deep copy
+        var deepCopy = root.DeepCopy();
+
+        // Recursive check.
+        DeepCopy_ShouldSucceed_Helper(root, deepCopy);
+    }
+
+    /// <summary>
+    /// Recursive helper method for DeepCopy_ShouldSucceed.
+    /// </summary>
+    /// <param name="original"></param>
+    /// <param name="deepCopy"></param>
+    private void DeepCopy_ShouldSucceed_Helper(StringHierarchyRegion original, 
+        StringHierarchyRegion deepCopy)
+    {
+        // Check root object is different address.
+        Assert.NotSame(original, deepCopy);
+
+        // Check basename is same value.
+        Assert.Equal(original.BaseName, deepCopy.BaseName);
+
+        // Check parent region is different address.
+        if (original.ParentRegion is null)
+        {
+            Assert.Null(deepCopy.ParentRegion);
+        }
+        else
+        {
+            Assert.NotSame(original.ParentRegion, deepCopy.ParentRegion);
+        }
+
+        // Check parent options is different address.
+        Assert.NotSame(original.ParentOptions, deepCopy.ParentOptions);
+
+        // Check parent options is same value.
+        Assert.Equal(original.ParentOptions, deepCopy.ParentOptions);
+
+        // Check options is different address.
+        Assert.NotSame(original.Options, deepCopy.Options);
+
+        // Check options is same value.
+        Assert.Equal(original.Options, deepCopy.Options);
+
+        // Check modifiers is different address.
+        Assert.NotSame(original.Modifiers, deepCopy.Modifiers);
+
+        // Check modifiers is same value.
+        Assert.Equal(original.Modifiers, deepCopy.Modifiers);
+
+        // Check saved locations and areas are different address, same values.
+        Assert.NotSame(original.SavedLocations, deepCopy.SavedLocations);
+        Assert.Equal(original.SavedLocations, deepCopy.SavedLocations);
+        Assert.NotSame(original.SavedAreas, deepCopy.SavedAreas);
+        Assert.Equal(original.SavedAreas, deepCopy.SavedAreas);
+
+        // Check subregions collection is different address.
+        Assert.NotSame(original.Subregions, deepCopy.Subregions);
+
+        // Check subregion collections have same length.
+        Assert.Equal(original.Subregions.Count, deepCopy.Subregions.Count);
+
+        // Check subregions.
+        foreach (var (subregionName, originalSubregion) in original.Subregions)
+        {
+            // Check copy has a subregion of the same name.
+            Assert.True(deepCopy.Subregions.TryGetValue(subregionName, 
+                // Get copied subregion inherently.
+                out var copiedSubregion));
+
+            // Check value (address) of subregion is different.
+            Assert.NotSame(originalSubregion, copiedSubregion);
+
+            // Recurse into subregion.
+            DeepCopy_ShouldSucceed_Helper(originalSubregion, copiedSubregion);
+        }
+    }
+
+    /// <summary>
+    /// Test data for DeepCopy method.
+    /// </summary>
+    /// <returns></returns>
+    public static IEnumerable<object[]> DeepCopy_TestData()
+    {
+        return new List<object[]>
+        {
+            new object[] { ConstructEmptyRoot() },
+            new object[] { ConstructTwoLevelRoot() }
+        };
+    }
 
     /// <summary>
     /// Test the DeepCopy method with retaining the parent reference.
     /// </summary>
     [Fact]
-    public void DeepCopy_ShouldDeepCopy()
+    public void DeepCopy_ShouldDeepCopy_Fact()
     {
         // Create region with null parameter values
-        var nullRegion = new StringHierarchyRegion("base", null);
+        var nullRegion = new StringHierarchyRegion("base", null!);
         // Create region with non-null but empty options, modifiers, and subregions
-        var emptyRegion = new StringHierarchyRegion("root", null, null,
+        var emptyRegion = new StringHierarchyRegion("root", null!, null!,
             new HashSet<string>(), new Dictionary<string, HashSet<string>>(),
             new Dictionary<string, StringHierarchyRegion>());
         // Create non-empty options and modifiers parameters
@@ -476,8 +652,8 @@ public class StringHierarchyRegionTests
         };
         var regionSubregions = new Dictionary<string, StringHierarchyRegion>
         {
-            { "child1", new StringHierarchyRegion("child1", null) },
-            { "child2", new StringHierarchyRegion("child2", null) }
+            { "child1", new StringHierarchyRegion("child1", null!) },
+            { "child2", new StringHierarchyRegion("child2", null!) }
         };
         // Create region with the above parameters
         var stringHierarchyRegion = new StringHierarchyRegion("base",
@@ -485,10 +661,10 @@ public class StringHierarchyRegionTests
             new Dictionary<string, StringHierarchyRegion>());
 
         // Create variable to store old region output
-        StringHierarchyRegion oldRegion;
+        StringHierarchyRegion? oldRegion;
         // Add subregions after creating region to ensure correct parent region fields
-        stringHierarchyRegion.AddSubregion(new StringHierarchyRegion("child1", null), out oldRegion);
-        stringHierarchyRegion.AddSubregion(new StringHierarchyRegion("child2", null), out oldRegion);
+        stringHierarchyRegion.AddSubregion(new StringHierarchyRegion("child1", null!), out oldRegion);
+        stringHierarchyRegion.AddSubregion(new StringHierarchyRegion("child2", null!), out oldRegion);
 
         // Check deep copy for region with null parameter values (i.e., value
         // equality but not reference equality)
@@ -536,9 +712,9 @@ public class StringHierarchyRegionTests
     public void DeepCopy_ShouldDeepCopyResetParent()
     {
         // Create region with null parameter values
-        var nullRegion = new StringHierarchyRegion("base", null);
+        var nullRegion = new StringHierarchyRegion("base", null!);
         // Create region with non-null but empty options, modifiers, and subregions
-        var parent = new StringHierarchyRegion("root", nullRegion, null,
+        var parent = new StringHierarchyRegion("root", nullRegion, null!,
             new HashSet<string>(), new Dictionary<string, HashSet<string>>(),
             new Dictionary<string, StringHierarchyRegion>());
         // Create non-empty options, modifiers, and subregions parameters
@@ -554,17 +730,17 @@ public class StringHierarchyRegionTests
             new Dictionary<string, StringHierarchyRegion>());
 
         // Create variable to store old region output
-        StringHierarchyRegion oldRegion;
+        StringHierarchyRegion? oldRegion;
         // Add subregions after creating region to ensure correct parent region fields
-        stringHierarchyRegion.AddSubregion(new StringHierarchyRegion("child1", null), out oldRegion);
-        stringHierarchyRegion.AddSubregion(new StringHierarchyRegion("child2", null), out oldRegion);
+        stringHierarchyRegion.AddSubregion(new StringHierarchyRegion("child1", null!), out oldRegion);
+        stringHierarchyRegion.AddSubregion(new StringHierarchyRegion("child2", null!), out oldRegion);
 
         // Check deep copy for region with empty parameter values (i.e., value
         // equality but not reference equality) before and after setting parent
         // region of original to null (should be not equal before, equal after)
         var parentCopy = parent.DeepCopy(false);
         Assert.NotEqual(parent.ParentRegion, parentCopy.ParentRegion);
-        parent.ParentRegion = null;
+        parent.ParentRegion = null!;
         Assert.Equal(parent.ParentRegion, parentCopy.ParentRegion);
         Assert.Equivalent(parent, parentCopy, strict: true);
         Assert.NotEqual(parent, parentCopy);
@@ -576,7 +752,7 @@ public class StringHierarchyRegionTests
         var stringHierarchyRegionCopy = stringHierarchyRegion.DeepCopy(false);
         Assert.NotEqual(stringHierarchyRegion.ParentRegion,
             stringHierarchyRegionCopy.ParentRegion);
-        stringHierarchyRegion.ParentRegion = null;
+        stringHierarchyRegion.ParentRegion = null!;
         Assert.Equal(stringHierarchyRegion.ParentRegion,
             stringHierarchyRegionCopy.ParentRegion);
         Assert.Equal(stringHierarchyRegion.ToString(),
@@ -600,7 +776,9 @@ public class StringHierarchyRegionTests
         Assert.NotSame(stringHierarchyRegion.Subregions,
             stringHierarchyRegionCopy.Subregions);
     }
+    #endregion DeepCopy
 
+    #region IsValidModifierSpec
     /// <summary>
     /// Test the IsValidModifierSpec method with invalid modifier specs.
     /// </summary>
@@ -608,7 +786,7 @@ public class StringHierarchyRegionTests
     public void IsValidModifierSpec_ShouldOutputFalse()
     {
         // Create simple parent region
-        var parent = new StringHierarchyRegion("root", null, null,
+        var parent = new StringHierarchyRegion("root", null!, null!,
             new HashSet<string>(), new Dictionary<string, HashSet<string>>(),
             new Dictionary<string, StringHierarchyRegion>());
         // Create non-empty options, modifiers, and subregions parameters
@@ -620,8 +798,8 @@ public class StringHierarchyRegionTests
         };
         var regionSubregions = new Dictionary<string, StringHierarchyRegion>
         {
-            { "child1", new StringHierarchyRegion("child1", null) },
-            { "child2", new StringHierarchyRegion("child2", null) }
+            { "child1", new StringHierarchyRegion("child1", null!) },
+            { "child2", new StringHierarchyRegion("child2", null!) }
         };
         // Create region using the above parameters
         var stringHierarchyRegion = new StringHierarchyRegion("base", parent,
@@ -650,7 +828,7 @@ public class StringHierarchyRegionTests
     public void IsValidModifierSpec_ShouldOutputTrue()
     {
         // Create simple parent region
-        var parent = new StringHierarchyRegion("root", null, null,
+        var parent = new StringHierarchyRegion("root", null!, null!,
             new HashSet<string>(), new Dictionary<string, HashSet<string>>(),
             new Dictionary<string, StringHierarchyRegion>());
         // Create non-empty options, modifiers, and subregions parameters
@@ -662,8 +840,8 @@ public class StringHierarchyRegionTests
         };
         var regionSubregions = new Dictionary<string, StringHierarchyRegion>
         {
-            { "child1", new StringHierarchyRegion("child1", null) },
-            { "child2", new StringHierarchyRegion("child2", null) }
+            { "child1", new StringHierarchyRegion("child1", null!) },
+            { "child2", new StringHierarchyRegion("child2", null!) }
         };
         // Create region using the above parameters
         var stringHierarchyRegion = new StringHierarchyRegion("base", parent,
@@ -678,4 +856,136 @@ public class StringHierarchyRegionTests
         // Test valid modifier set
         Assert.True(stringHierarchyRegion.IsValidModifierSpec(modSpec2));
     }
+
+    /// <summary>
+    /// Test the IsValidModifierSpec method handles cases with same-valued
+    /// modifier axes.
+    /// </summary>
+    [Theory]
+    #region Single shared modifier. Same-length axis modifier value sets.
+    // Shared modifier value used in first axis.
+    [InlineData(
+        new string[] { "left", "middle", "right" }, 
+        new string[] { "proximal", "middle", "distal" }, 
+        "middle, proximal")]
+    // Shared modifier value used in second axis.
+    [InlineData(
+        new string[] { "left", "middle", "right" }, 
+        new string[] { "proximal", "middle", "distal" }, 
+        "left, middle")]
+    // Shared modifier value used in both axes.
+    [InlineData(
+        new string[] { "left", "middle", "right" }, 
+        new string[] { "proximal", "middle", "distal" }, 
+        "middle, middle")]
+    // Shared modifier value used in one axis, no modifier value used in other.
+    // TODO: Should this non-determinism be allowed!!!
+    [InlineData(
+        new string[] { "left", "middle", "right" }, 
+        new string[] { "proximal", "middle", "distal" }, 
+        "middle")]
+    // Shared modifier not used.
+    [InlineData(
+        new string[] { "left", "middle", "right" }, 
+        new string[] { "proximal", "middle", "distal" }, 
+        "distal")]
+    #endregion
+    #region Single shared modifier. Different-length axis modifier value sets.
+    // Shared modifier value used in first (shorter) axis. Listed first.
+    [InlineData(
+        new string[] { "left", "middle" }, 
+        new string[] { "proximal", "middle", "distal" }, 
+        "middle, proximal")]
+    // Shared modifier value used in first (shorter) axis. Listed second.
+    [InlineData(
+        new string[] { "left", "middle" }, 
+        new string[] { "proximal", "middle", "distal" }, 
+        "proximal, middle")]
+    // Shared modifier value used in second (longer) axis. Listed first.
+    // TODO: this test case fails!!! --> REQUIRES FIX in Region!!! larger refactor/reimplement
+    // [InlineData(
+    //     new string[] { "left", "middle" }, 
+    //     new string[] { "proximal", "middle", "distal" }, 
+    //     "middle, left")]
+    // Shared modifier value used in second (longer) axis. Listed second.
+    [InlineData(
+        new string[] { "left", "middle" }, 
+        new string[] { "proximal", "middle", "distal" }, 
+        "left, middle")]
+    // Shared modifier value used in both axes.
+    [InlineData(
+        new string[] { "left", "middle" }, 
+        new string[] { "proximal", "middle", "distal" }, 
+        "middle, middle")]
+    // Shared modifier value used in one axis, no modifier value used in other.
+    // TODO: Should this non-determinism be allowed!!!
+    [InlineData(
+        new string[] { "left", "middle" }, 
+        new string[] { "proximal", "middle", "distal" }, 
+        "middle")]
+    // Shared modifier not used.
+    [InlineData(
+        new string[] { "left", "middle" }, 
+        new string[] { "proximal", "middle", "distal" }, 
+        "distal")]
+    #endregion
+    #region Two shared modifiers. Different-length axis modifier value sets.
+    // TODO: Which axis are shared modifiers bucketed into? Should this 
+    // pseudo-non-determinism (rly just unknown-to-the-user behavior) be 
+    // allowed???!!!
+    // Both values used: order 1.
+    [InlineData(
+        new string[] { "left", "middle" }, 
+        new string[] { "left", "middle", "right" }, 
+        "middle, left")]
+    // Both values used: order 2.
+    [InlineData(
+        new string[] { "left", "middle" }, 
+        new string[] { "left", "middle", "right" },
+        "left, middle")]
+    // One value use: axis 1, listed first.
+    [InlineData(
+        new string[] { "left", "middle" }, 
+        new string[] { "left", "middle", "right" }, 
+        "middle, right")]
+    // One value used: axis 1, listed second.
+    [InlineData(
+        new string[] { "left", "middle" }, 
+        new string[] { "left", "middle", "right" }, 
+        "right, middle")]
+    #endregion
+    #region Single shared modifier. One axis only has the shared modifier.
+    // Shared modifier value used in first (shorter) axis. Listed first.
+    [InlineData(
+        new string[] { "middle" }, 
+        new string[] { "proximal", "middle", "distal" }, 
+        "middle, proximal")]
+    // Shared modifier value used in first (shorter) axis. Listed second.
+    [InlineData(
+        new string[] { "middle" }, 
+        new string[] { "proximal", "middle", "distal" }, 
+        "proximal, middle")]
+    // Shared modifier value used in one axis, no modifier value used in other.
+    // TODO: Should this non-determinism be allowed!!!
+    [InlineData(
+        new string[] { "middle" }, 
+        new string[] { "proximal", "middle", "distal" }, 
+        "middle")]
+    #endregion
+    public void IsValidModifierSpec_DuplicateModifierValues_ShouldSucceed(
+        string[] axis1Values, string[] axis2Values,
+        string modSpec)
+    {
+        // Create a region with the same value on two modifier axes.
+        var region = new StringHierarchyRegion("hand", null!, 
+            modifiers: new Dictionary<string, HashSet<string>>
+            {
+                { "x", new HashSet<string>(axis1Values) },
+                { "y", new HashSet<string>(axis2Values) }
+            });
+
+        // Test valid modifier set
+        Assert.True(region.IsValidModifierSpec(modSpec));
+    }
+    #endregion IsValidModifierSpec
 }
