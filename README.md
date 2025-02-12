@@ -1,6 +1,17 @@
 # EStimLibrary
 A C# library to facilitate electrical stimulation research and development.
 
+[Dependencies](#dependencies)
+    [Extensions for VSCode Users](#extensions-for-vscode-users)
+[Repo Contents](#repo-contents)
+    [Top-Level Structures](#top-level-structure)
+    [Projects and Solutions](#projects-and-solutions)
+[Library Structure](#library-structure)
+[UML Diagrams](#uml-diagrams)
+[Usage](#usage)
+    [VisualStudio](#visualstudio)
+    [VSCode or your other preferred IDE](#vscode-or-your-other-preferred-ide)
+
 ## Dependencies
 * .NET 9.0
     * 10-minute [Tim Corey video](https://www.youtube.com/watch?v=sXEsvqCCTTc): how to upgrade or install fresh
@@ -19,7 +30,7 @@ A C# library to facilitate electrical stimulation research and development.
         * coverlet.collector
     * Versions are listed in the `.csproj` files and should be pulled automatically when building projects and solutions in this repo.
 
-## Extensions for VSCode Users
+### Extensions for VSCode Users
 Optional but highly recommended:
 * C# Dev Kit: provides much of the same C# support and within-solution navigation features as VisualStudio
 
@@ -81,7 +92,7 @@ See [UML.md](./docs/UML.md) for a UML intro.
 
 
 ## Usage
-To use the library, clone a local the repo and checkout the `release-v2.0` branch for the most recent development:
+To use the library, clone the repo and checkout the `release-v2.0` branch for the most recent development:
 ```
 # To clone submodules as well: call git clone with the --recurse-submodules option if you have Git 2.13 or later, else --recursive
 git clone git@github.com:lhmcgann/EStimLibrary.git
