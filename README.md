@@ -1,16 +1,17 @@
 # EStimLibrary
 A C# library to facilitate electrical stimulation research and development.
 
-[Dependencies](#dependencies)
-    [Extensions for VSCode Users](#extensions-for-vscode-users)
-[Repo Contents](#repo-contents)
-    [Top-Level Structures](#top-level-structure)
-    [Projects and Solutions](#projects-and-solutions)
-[Library Structure](#library-structure)
-[UML Diagrams](#uml-diagrams)
-[Usage](#usage)
-    [VisualStudio](#visualstudio)
-    [VSCode or your other preferred IDE](#vscode-or-your-other-preferred-ide)
+## Table of Contents
+* [Dependencies](#dependencies)
+    * [Extensions for VSCode Users](#extensions-for-vscode-users)
+* [Repo Contents](#repo-contents)
+    * [Top-Level Structures](#top-level-structure)
+    * [Projects and Solutions](#projects-and-solutions)
+* [Library Structure](#library-structure)
+* [UML Diagrams](#uml-diagrams)
+* [Usage](#usage)
+    * [VisualStudio](#visualstudio)
+    * [VSCode or your other preferred IDE](#vscode-or-your-other-preferred-ide)
 
 ## Dependencies
 * .NET 9.0
