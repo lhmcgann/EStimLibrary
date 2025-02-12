@@ -8,7 +8,7 @@ A C# library to facilitate electrical stimulation research and development.
     * [Top-Level Structures](#top-level-structure)
     * [Projects and Solutions](#projects-and-solutions)
 * [Library Structure](#library-structure)
-* [UML Diagrams](#uml-diagrams)
+* [Diagrams](#diagrams)
 * [Usage](#usage)
     * [VisualStudio](#visualstudio)
     * [VSCode or your other preferred IDE](#vscode-or-your-other-preferred-ide)
@@ -76,8 +76,11 @@ The `Extensions/` folder mimics this structure to the extent that example implem
 
 The `EStimLibrary.UnitTests` project also mimics the `Core/`, `Extensions/`, and sub-directory structures.
 
-## UML Diagrams
+## Diagrams
 Last updated: February 2025
+
+These diagrams are based on UML formatting but adhere to that to varying degrees.
+* [Key Components](https://lucid.app/lucidchart/7b9b75ff-8dee-41d8-b650-082adc9bcb8f/edit?viewport_loc=-1212%2C-695%2C5508%2C2636%2C0_0&invitationId=inv_0a3eaaf0-7a4f-4fcd-a813-b786f47e548f)
 * [Class Diagram - High-Level](https://lucid.app/lucidchart/1366a885-086c-45d0-8763-63448fe11a86/edit?viewport_loc=-3539%2C-4330%2C16143%2C7727%2C0_0&invitationId=inv_10ca78f7-8fcc-4d34-8466-aa8da86d8716)
 * [`StringHierarchy` Class Diagram](https://lucid.app/lucidchart/8f0c6f70-c343-444e-9e6f-5c51557384ec/edit?viewport_loc=-2888%2C-1102%2C7382%2C3534%2C0_0&invitationId=inv_7e104f4d-b695-4ff7-84b2-87b3bff9a9fb)
 * [Sequence Diagrams](https://lucid.app/lucidchart/312bfb4e-807b-4f90-9e56-7cdc64a0172d/edit?viewport_loc=-858%2C313%2C2104%2C917%2C0_0&invitationId=inv_94e9dfe8-1656-45c9-abc7-d433c77d7a95)
