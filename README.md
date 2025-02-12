@@ -28,6 +28,7 @@ Optional but highly recommended:
 * `src/` - the library source code project
 * `tests/` - the test project(s)
 * `models/` - examples of spatial model definition files
+    * contains [`EStimLibrary.SpatialModels`](https://github.com/lhmcgann/EStimLibrary.SpatialModels/) as a submodule
 * `examples/` - example applications (projects) using the library's high-level API
 * `docs/` - additional documentation files, including a dictionary and coding conventions
 
@@ -82,7 +83,8 @@ See [UML.md](./docs/UML.md) for a UML intro.
 ## Usage
 To use the library, clone a local the repo and checkout the `release-v2.0` branch for the most recent development:
 ```
-git@github.com:lhmcgann/EStimLibrary.git
+# To clone submodules as well: call git clone with the --recurse-submodules option if you have Git 2.13 or later, else --recursive
+git clone git@github.com:lhmcgann/EStimLibrary.git
 cd EStimLibrary
 git checkout release-v2.0
 ```
