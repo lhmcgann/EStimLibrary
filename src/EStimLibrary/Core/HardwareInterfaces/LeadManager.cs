@@ -30,7 +30,7 @@ public class LeadManager : ResourceManager<Lead>
 
     //TODO? public Dictionary<int, int> ContactOutputMap { get; protected set; }
 
-    public LeadManager()
+    public LeadManager() : base()
     {
         // Initialize wired ID sets.
         this._WiredContacts = new();
