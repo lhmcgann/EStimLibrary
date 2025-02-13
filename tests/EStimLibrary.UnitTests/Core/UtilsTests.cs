@@ -505,6 +505,87 @@ namespace EStimLibrary.UnitTests.Core
 
         #endregion
 
+        #region Manufacturability Tests
+
+        /// <summary>
+        /// Dummy product type that is manufacturable (i.e. a factory exists for it).
+        /// </summary>
+        public class ManufacturableProduct { }
+
+        /// <summary>
+        /// Dummy product type that is non-manufacturable (i.e. no factory exists for it).
+        /// </summary>
+        public class NonManufacturableProduct { }
+
+        /// <summary>
+        /// A dummy factory for <see cref="ManufacturableProduct"/> that implements the production interface IFactory&lt;ManufacturableProduct&gt;.
+        /// </summary>
+        public class ManufacturableProductFactory : IFactory<ManufacturableProduct>
+        {
+            /// <inheritdoc />
+            public string HelpMsg => "Test factory for ManufacturableProduct";
+
+            /// <inheritdoc />
+            public Dictionary<string, IDataLimits> ParamLimits { get; }
+
+            /// <summary>
+            /// Initializes a new instance of the <see cref="ManufacturableProductFactory"/> class.
+            /// </summary>
+            public ManufacturableProductFactory()
+            {
+                // For testing, we use ContinuousIntDataLimits to require an integer between 1 and 10.
+                ParamLimits = new Dictionary<string, IDataLimits>
+        {
+            { "dummy", new ContinuousIntDataLimits(1, 10) }
+        };
+            }
+
+            /// <inheritdoc />
+            public bool TryCreate(Dictionary<string, object> paramValues, out ManufacturableProduct product, bool skipValueValidation = false)
+            {
+                if (paramValues.ContainsKey("dummy") &&
+                    paramValues["dummy"] is int value &&
+                    value >= 1 && value <= 10)
+                {
+                    product = new ManufacturableProduct();
+                    return true;
+                }
+                product = null;
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Tests that <see cref="Utils.IsManufacturableProduct(Type, out Dictionary{string, Type})"/> returns true
+        /// when a factory exists for the product type.
+        /// </summary>
+        [Fact]
+        public void IsManufacturableProduct_WhenFactoryExists_ShouldReturnTrue()
+        {
+            // We know that ManufacturableProduct is produced by ManufacturableProductFactory.
+            // The production IFactory<> implementations are scanned via GetAvailableGenericTypes.
+            bool manufacturable = Utils.IsManufacturableProduct(typeof(ManufacturableProduct), out Dictionary<string, Type> factoryTypes);
+            Assert.True(manufacturable);
+            Assert.NotNull(factoryTypes);
+            Assert.True(factoryTypes.Count > 0);
+        }
+
+        /// <summary>
+        /// Tests that <see cref="Utils.IsManufacturableProduct(Type, out Dictionary{string, Type})"/> returns false
+        /// when no factory exists for the product type.
+        /// </summary>
+        [Fact]
+        public void IsManufacturableProduct_WhenNoFactoryExists_ShouldReturnFalse()
+        {
+            // NonManufacturableProduct is not produced by any factory in this assembly.
+            bool manufacturable = Utils.IsManufacturableProduct(typeof(NonManufacturableProduct), out Dictionary<string, Type> factoryTypes);
+            Assert.False(manufacturable);
+            Assert.NotNull(factoryTypes);
+            Assert.Equal(0, factoryTypes.Count);
+        }
+
+        #endregion
+
         #endregion
     }
 }
