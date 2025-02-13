@@ -3,7 +3,6 @@ using System.IO.Ports;
 using System.Reflection;
 
 using EStimLibrary.Core.Data;
-using EStimLibrary.Core.Stimulation.Stimulators;
 
 
 namespace EStimLibrary.Core;
@@ -565,7 +564,7 @@ public static class Utils
         return returnValue != null;
     }
 
-    #endregion Reflections Functions
+    #endregion Reflection Functions
 
 
     public static string ReadJSON(string filePath)
@@ -740,19 +739,7 @@ public static class Utils
         return typeDict[typeName];
     }
 
-    #region TODO: delete once the generalized functions are tested
-    public static Type SelectStimulatorType(
-        Dictionary<string, Type> stimTypeDict,
-        out string stimTypeName)
-    {
-        // Get the list of string names of all stim types.
-        string[] stimTypeStrs = stimTypeDict.Keys.ToArray();
-        // Get the user selection.
-        stimTypeName = SelectFromList(stimTypeStrs);
-        // Return the stim Type selection.
-        return stimTypeDict[stimTypeName];
-    }
-
+    #region TODO: delete once the generalized functions are tested??
     /// <summary>
     /// SelectPort() retrieves the list of available serial ports, asks the user to
     /// choose one, and returns the selected port name in a string.
