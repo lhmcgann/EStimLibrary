@@ -23,12 +23,12 @@ namespace EStimLibrary.UnitTests.Extensions.SpatialModel.StringHierarchy
         /// JoinRegionSet(string[] regionSet) --- DONE
         /// JoinModifierSet(string[] modifierSet) --- DONE
         /// TryParseOptionedRegionName(string optionedRegionName, out string baseName, out string options) --- DONE
-        /// RegionSetOverlaps(StringHierarchySpec other, out string[] sharedRegionSet) --- DONE
-        /// ModifiersAllowOverlap(StringHierarchySpec other, out string[] commonModifiers) --- DONE
-        /// TryGetOverlap(StringHierarchySpec other, out string overlappingRegion, out bool contains) --- DONE
+        /// RegionSetOverlaps(StringHierarchySpec other, out string[] sharedRegionSet) --- DEFUNCT
+        /// ModifiersAllowOverlap(StringHierarchySpec other, out string[] commonModifiers) --- DEFUNCT
+        /// TryGetOverlap(StringHierarchySpec other, out string overlappingRegion, out bool contains) --- MOVE TO BodyModel TESTING
         /// Equals(StringHierarchySpec? other) --- DONE
-        /// GetHashCode() --- INCOMPLETE
-        /// ToString() --- INCOMPLETE
+        /// GetHashCode() --- DONE
+        /// ToString() --- DONE
 
         /// <summary>
         /// Test the constructor StringHierarchySpec(string fullSpec), where the input field is not empty.
@@ -265,7 +265,8 @@ namespace EStimLibrary.UnitTests.Extensions.SpatialModel.StringHierarchy
         [InlineData("option1 regionName", "regionName", "option1", true)]
         [InlineData("option1 option2 regionName", "", "", false)]
         [InlineData("regionName", "regionName", "", true)]
-        [InlineData("option1 option2 ", "", "", false)]
+        [InlineData("     regionName        ", "regionName", "", true)]
+        [InlineData("option1     option2 ", "option2", "option1", true)]
         public void TryParseOptionedRegionName_ShouldParseWithExpectedInputs(string input, string expectedBaseName, string expectedOptions, bool expectedResult)
         {
             var result = StringHierarchySpec.TryParseOptionedRegionName(input, out var baseName, out var options);
@@ -421,6 +422,29 @@ namespace EStimLibrary.UnitTests.Extensions.SpatialModel.StringHierarchy
         //    Assert.Equal(expectedOverlappingRegion, overlappingRegion);
         //}
         #endregion Spec Overlap Methods
+
+        /// <summary>
+        /// Test the TryParseOptionedRegionName method.
+        /// </summary>
+        [Theory]
+        [InlineData("option1 regionName", "regionName", "option1", true)] 
+        [InlineData("option1 option2 regionName", "", "", false)] 
+        [InlineData("regionName", "regionName", "", true)] 
+        [InlineData("  optionX   regionY  ", "regionY", "optionX", true)]
+        [InlineData("regionOnly ", "regionOnly", "", true)] 
+        [InlineData("option1", "option1", "", true)] 
+        [InlineData("", "", "", false)] 
+        [InlineData("   ", "", "", false)] 
+        public void TryParseOptionedRegionName_ShouldReturnExpectedResults(
+            string input, string expectedBaseName, string expectedOption, bool expectedResult){
+            var result = StringHierarchySpec.TryParseOptionedRegionName(input, out var baseName, out var option);
+    
+            Assert.Equal(expectedResult, result);
+            Assert.Equal(expectedBaseName, baseName);
+            Assert.Equal(expectedOption, option);
+        }
+
+
 
         /// <summary>
         /// Test the Equals method. 

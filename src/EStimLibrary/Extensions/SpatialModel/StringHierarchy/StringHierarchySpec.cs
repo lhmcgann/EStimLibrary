@@ -112,7 +112,10 @@ public record StringHierarchySpec(string[] RegionSet, string[] ModifierSet)
         }
 
         // Split name elements by OPTION_REGION_DELIMITER
-        var nameElements = optionedRegionName.Split(OPTION_REGION_DELIMITER);
+        var nameElements = optionedRegionName
+        .Split(OPTION_REGION_DELIMITER, StringSplitOptions.RemoveEmptyEntries)
+        .Select(e => e.Trim())
+        .ToArray();
 
         // Fail if more than 2 elements are present
         if (nameElements.Length > 2)
