@@ -67,12 +67,12 @@ public static class Utils
 
     #region Reflection Functions
     /// <summary>
-    /// Get all specific implemented or derived Types of T available in this
+    /// Get all concrete implemented or derived Types of T available in this
     /// AppDomain.
     /// </summary>
     /// <typeparam name="T">The type to search for. Must be a subclass of
     /// ISelectable.</typeparam>
-    /// <returns>A dictionary of (string name, Type) pairs.</returns>
+    /// <returns>A dictionary of (string name, Type) pairs found.</returns>
     public static Dictionary<string, Type> GetAvailableTypes<T>()
         where T : ISelectable
     {
@@ -80,7 +80,7 @@ public static class Utils
     }
 
     /// <summary>
-    /// Get all specific implemented or derived Types of T available in this
+    /// Get all concrete implemented or derived Types of T available in this
     /// AppDomain.
     /// </summary>
     /// <param name="searchType">The type to search for. Must be a subclass of
@@ -108,7 +108,6 @@ public static class Utils
     /// <param name="baseTargetType">The base type or interface.</param>
     /// <param name="derivedTestType">The type to test for assignability.</param>
     /// <returns>True if the derivedTestType is assignable to the baseTargetType; otherwise, false.</returns>
-
     public static bool IsAssignableFromType(Type baseTargetType,
         Type derivedTestType)
     {
@@ -134,7 +133,7 @@ public static class Utils
                 derivedBaseType);
         }
         // 3) Check if the derived type implements any interfaces that are
-        // generic types.
+        // viable generic types, i.e., if secondarily implements base type.
         var interfaceTypes = derivedTestType.GetInterfaces();
         bool success = false;
         foreach (var iType in interfaceTypes)
@@ -328,7 +327,6 @@ public static class Utils
     /// When this method returns, contains the converted value if successful; otherwise, null.
     /// </param>
     /// <returns>True if conversion was successful (convertedVal is not null); otherwise, false.</returns>
-
     public static bool TryConvertFromType(string userInput, Type targetType,
         out object convertedVal)
     {
