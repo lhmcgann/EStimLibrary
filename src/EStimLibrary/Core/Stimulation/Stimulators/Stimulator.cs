@@ -1,6 +1,6 @@
 ﻿using EStimLibrary.Core.Stimulation.Data;
 using EStimLibrary.Core.Stimulation.Functions;
-using EStimLibrary.Core.Stimulation.Trains;
+using EStimLibrary.Core.Data;
 
 
 namespace EStimLibrary.Core.Stimulation.Stimulators;
@@ -35,26 +35,51 @@ public abstract class Stimulator : ISelectable, IIdentifiable
     // Derived classes must implement the get() of the abstract properties.
     // e.g., SpecificStimulator.NumOutputs get { return constNumOutputs; }.
 
-    public abstract Dictionary<string, Tuple<IDataLimits, object>> StimParamData
+    // TODO: define (in Extensions) a type that is a NestedParam; maybe it's a
+    // nested param DataLimits, idk, but a tool ppl who are running into the
+    // "trainMods: List<TrainModSpecs>" case can use; maybe it's just an example
+    // implementation, but something
+
+    /// <summary>
+    /// The definition of available stimulation parameters on the stimulator,
+    /// their data limits, and their default/fixed value.
+    /// {"paramNameOrKey": (dataLimitsObject, defaultOrFixedValue), ...}
+    /// typeof(defaultOrFixedValue) must match dataLimitsObject.ValidDataType.
+    /// dataLimitsObject.IsValidDataValue(defaultOrFixedValue) must return True.
+    /// </summary>
+    public abstract Dictionary<string, Tuple<IDataLimits, object>>
+        StimParamSpecs
     { get; }
+
+    /// <summary>
+    /// The set of string keys of stimluation parameters that can be modulated
+    /// on the fly at run-time. All keys specified must be in StimParamSpecs.
+    /// </summary>
     public abstract SortedSet<string> ModulatableStimParams
     { get; }
-    // Fixed-value params must be all params available that aren't modulatable.
+
+    /// <summary>
+    /// All stimulation parameters available that are not modulatable on the fly
+    /// at run-time. All keys listed will be in StimParamSpecs.
+    /// </summary>
     public SortedSet<string> FixedStimParams =>
         new(this._StimParamsAvailable.Except(this.ModulatableStimParams));
-    //public abstract Dictionary<StimParamType, double> FixedStimParamValues
-    //{ get; }
-    // Essentially a validation check on stim param specification after
-    // Stimulator construction.
-    public bool ValidStimParamSpecification =>
-        // a) at least the base stim params are included in the enum.
-        BaseStimParams.ParamOrderIndices.Keys.All(
-            this.StimParamData.Keys.Contains) &&
-        // b) all available parameters are from the same enum
-        this.StimParamData.Keys.Select(param => param.GetType())
-            .Distinct().Count() == 1;
 
-    // Instantiated in constructor based on the keys in StimParamData.
+    /// <summary>
+    /// A validation check on stimulation parameter specification after
+    /// Stimulator construction. True if:
+    /// 1) all specified default/fixed values are within the specified data
+    /// limits per specified parameter, and
+    /// 2) all param keys marked as modulatable are real specified parameters
+    /// </summary>
+    public bool ValidStimParamSpecification =>
+        // 1) Spec provides value default/fixed values
+        StimParamSpecs.All(
+            kvp => kvp.Value.Item1.IsValidDataValue(kvp.Value.Item2)) &&
+        // 2) All param keys in modulatable list are specified
+        ModulatableStimParams.All(k => StimParamSpecs.Keys.Contains(k));
+
+    // Instantiated in constructor based on the keys in StimParamSpecs.
     protected readonly SortedSet<string> _StimParamsAvailable;
     public SortedSet<string> StimParamsAvailable => this._StimParamsAvailable;
     //new SortedSet<Enum>((Enum[])Enum.GetValues(typeof(StimParamType)));
@@ -96,7 +121,7 @@ public abstract class Stimulator : ISelectable, IIdentifiable
         this.Id = -1;
 
         // Store the param options.
-        this._StimParamsAvailable = new(this.StimParamData.Keys);
+        this._StimParamsAvailable = new(this.StimParamSpecs.Keys);
 
         // Init empty output config dict and array of used markings per output.
         this._outputConfigs = new();
@@ -116,14 +141,21 @@ public abstract class Stimulator : ISelectable, IIdentifiable
     /// <returns></returns>
     public abstract bool IsValidOutputWiring(IEnumerable<int> localOutputIds);
 
+    // TODO: use this somewhere!!! e.g., UpdateStim()
     public bool IsValidParamValue(string stimParam, object paramValue)
     {
-        var (paramLims, defaultVal) = this.StimParamData[stimParam];
+        var (paramLims, defaultVal) = this.StimParamSpecs[stimParam];
         return paramLims.IsValidDataValue(paramValue);
     }
 
+
+    // TODO: calibration/comfort safety check function, then also call that
+    // somewhere like IsValidParamValue, e.g., in UpdateStim
+
+
     // MAIN UPDATE STIM METHOD PASSED TO EACH THREAD DURING CONFIG AND CALLED
     // BY TRANSDUCER ON UPDATE
+    // TODO; propogate exception
     public bool UpdateStim(object state)
     {
         // TODO: there is probably a better way to do this global-local output
@@ -135,10 +167,13 @@ public abstract class Stimulator : ISelectable, IIdentifiable
             Dictionary<int, Constants.OutputAssignment>))state;
         var trainsParams = data.Item1;
         var localOutputAssignments = data.Item2;
+        // TODO: apply check functions
         return this.HW_UpdateStim(trainsParams, localOutputAssignments);
     }
     //protected abstract bool HW_UpdateStim(IEnumerable<Train> stimTrains,
     //    Dictionary<int, int> globalToLocalOutputIds);
+    // TODO @Rachel: implement for WSS! NOT UpdateStim
+    // TODO: throw exception upon failure
     protected abstract bool HW_UpdateStim(
         IEnumerable<Dictionary<string, object>> trainsParams,
         Dictionary<int, Constants.OutputAssignment> localOutputAssignments);
@@ -234,6 +269,4 @@ public abstract class Stimulator : ISelectable, IIdentifiable
     /// </summary>
     /// <param name="data">The full byte array of data to send.</param>
     protected abstract void HW_SendMessage(byte[] data);
-
 }
-

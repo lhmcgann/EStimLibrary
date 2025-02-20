@@ -468,7 +468,7 @@ public class HapticSession
             this._stimManager.TryGetStimulator(stimId, out var stimulator);
             // Create config data: [stimId, leads, availableParams]
             ThreadConfigDataPerStimulator data = new(stimId, stimLeads,
-                stimulator.StimParamData, stimulator.ModulatableStimParams);
+                stimulator.StimParamSpecs, stimulator.ModulatableStimParams);
             // Add to total set of config data.
             allConfigData.Add(stimId, data);
         }
