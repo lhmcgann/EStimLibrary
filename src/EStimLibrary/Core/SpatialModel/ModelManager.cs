@@ -8,7 +8,7 @@ public class ModelManager : ResourceManager<IBodyModel>
     public int NumModels => this.NumTotalResources;
     //public List<string> BodyModelKeys => this._BodyModels.Keys.ToList();
 
-    public Dictionary<string, int> _NameToIDs; 
+    public Dictionary<string, int> _NameToIds; 
 
     protected ReusableIdPool _GlobalLocationIdPool;
     protected Dictionary<int, SpatialId> _GlobalToLocalLocationIds;
@@ -20,7 +20,7 @@ public class ModelManager : ResourceManager<IBodyModel>
     public ModelManager()
     {
         //this._BodyModels = new();
-        this._NameToIDs = new();
+        this._NameToIds = new();
 
         this._GlobalLocationIdPool = new();
         this._GlobalToLocalLocationIds = new();
@@ -48,20 +48,14 @@ public class ModelManager : ResourceManager<IBodyModel>
     {
         // Output the body model key regardless of successful add or not.
         // If no default-override key is given, use the model name.
-        bodyModelKey = (nonNameBodyModelKey == "") ? bodyModel.Name :
-            nonNameBodyModelKey;
-        try
+        bodyModelKey = (nonNameBodyModelKey == "") ? bodyModel.Name : nonNameBodyModelKey;
+        
+        if (TryGetNextAvailableId(out int nextAvailableId))
         {
-            if (TryGetNextAvailableId(out int nextAvailableId))
-            {
-                _NameToIDs.TryAdd(bodyModelKey, nextAvailableId);
-            }
-            return TryAddResource(nextAvailableId, bodyModel);
+            _NameToIds.TryAdd(bodyModelKey, nextAvailableId);
         }
-        catch (Exception)
-        {
-            return false;
-        }
+        return TryAddResource(nextAvailableId, bodyModel);
+        
         
         //// If body model not already stored under the same key, add new model.
         //if (!this._BodyModels.Keys.Contains(bodyModelKey))
@@ -73,11 +67,13 @@ public class ModelManager : ResourceManager<IBodyModel>
         //return false;
     }
 
-    public bool _TryGetBodyModel(string modelKey, out IBodyModel bodyModel)
-    {
-        _NameToIDs.TryGetValue(modelKey, out int id);
+    protected bool _TryGetBodyModel(string modelKey, out IBodyModel bodyModel)
+    {        
+        if (_NameToIds.TryGetValue(modelKey, out int id) == false)
+        {
+            throw new KeyNotFoundException($"No body model exists for the given key: '{modelKey}'.");
+        }
         return TryGetResource(id, out bodyModel);
-        //return this._BodyModels.TryGetValue(modelKey, out bodyModel);
     }
 
     // TODO: keep these two methods? if so, leave as are - iterating through all
@@ -85,10 +81,14 @@ public class ModelManager : ResourceManager<IBodyModel>
     public bool IsLocationInModel(ILocation location)
     {
         // Check if location is contained in one model.
-        foreach (string key in _NameToIDs.Keys) {
-            _NameToIDs.TryGetValue(key, out int id);
-            TryGetResource(id, out IBodyModel resource);
-            if (resource.IsLocationInModel(location)) return true;
+        foreach (string bodyModelKey in _NameToIds.Keys) 
+        {
+            _NameToIds.TryGetValue(bodyModelKey, out int id);
+            TryGetResource(id, out IBodyModel bodyModel);
+            if (bodyModel.IsLocationInModel(location)) 
+            { 
+                return true; 
+            }
         }
         return false;
         //foreach (var (modelKey, bodyModel) in this._BodyModels)
@@ -105,13 +105,17 @@ public class ModelManager : ResourceManager<IBodyModel>
     public bool IsAreaInModel(IArea area)
     {
         // Check if area is contained in one model.
-        foreach (string key in _NameToIDs.Keys)
+
+        foreach (var kvp in _NameToIds)
         {
-            _NameToIDs.TryGetValue(key, out int id);
-            TryGetResource(id, out IBodyModel resource);
-            if (resource.IsAreaInModel(area)) return true;
+            TryGetResource(kvp.Value, out IBodyModel resource);
+            if (resource.IsAreaInModel(area))
+            {
+                return true;
+            }
         }
         return false;
+
         //foreach (var (modelKey, bodyModel) in this._BodyModels)
         //{
         //    if (bodyModel.IsAreaInModel(area))
