@@ -67,7 +67,7 @@ public class ModelManager : ResourceManager<IBodyModel>
         //return false;
     }
 
-    protected bool _TryGetBodyModel(string modelKey, out IBodyModel bodyModel)
+    public bool _TryGetBodyModel(string modelKey, out IBodyModel bodyModel)
     {        
         if (_NameToIds.TryGetValue(modelKey, out int id) == false)
         {
