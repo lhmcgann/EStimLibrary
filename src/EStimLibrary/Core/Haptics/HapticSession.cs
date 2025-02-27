@@ -109,7 +109,7 @@ public class HapticSession
     {
         bool niCreated = this._neuralInterfaceManager
             .CreateAndRegisterNeuralInterface(interfaceType,
-            interfaceSpecificParams, out globalInterfaceId, out var contactIDs);
+            interfaceSpecificParams, out globalInterfaceId, out var contactIds);
 
         // TODO?
 
