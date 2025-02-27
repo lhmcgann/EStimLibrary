@@ -107,9 +107,9 @@ public class HapticSession
     public SortedSet<int> AddInterface(Type interfaceType,
         object[] interfaceSpecificParams, out int globalInterfaceId)
     {
-        var contactIds = this._neuralInterfaceManager
+        bool niCreated = this._neuralInterfaceManager
             .CreateAndRegisterNeuralInterface(interfaceType,
-            interfaceSpecificParams, out globalInterfaceId);
+            interfaceSpecificParams, out globalInterfaceId, out var contactIDs);
 
         // TODO?
 

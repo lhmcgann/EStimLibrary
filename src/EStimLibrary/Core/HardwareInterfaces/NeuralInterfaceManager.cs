@@ -42,10 +42,12 @@ public class NeuralInterfaceManager : ResourceManager<NeuralInterfaceHardware>
         this._ContactInterfaceIdMap = new();
     }
 
-    public SortedSet<int> CreateAndRegisterNeuralInterface(Type interfaceType,
-        object[] interfaceSpecificParams, out int globalInterfaceId)
+    public bool CreateAndRegisterNeuralInterface(Type interfaceType, object[] interfaceSpecificParams,
+        out int globalInterfaceId, out SortedSet<int> newContactIds)
     {
         // 0) Check interfaceType is valid derived class, throw exception if not.
+        // IsAssignableFrom has edge cases allowing for related abstracts and
+        // interfaces to be "true", hence the two additional statements. 
         if (!(typeof(NeuralInterfaceHardware).IsAssignableFrom(interfaceType)
              && !interfaceType.IsInterface && !interfaceType.IsAbstract))
         {
@@ -55,9 +57,11 @@ public class NeuralInterfaceManager : ResourceManager<NeuralInterfaceHardware>
         }
 
         // 1) Try to generate this new interface's new managed ID.
+        // return false and empty set of IDs if no IDs available
         if (!this.TryGetNextAvailableId(out globalInterfaceId))
         {
-            return new();   // TODO: refactor to return bool and put this in out param?
+            newContactIds = new SortedSet<int>();
+            return false;
         }
 
         // 2) Create the new interface of the given type.
@@ -71,7 +75,7 @@ public class NeuralInterfaceManager : ResourceManager<NeuralInterfaceHardware>
         this.TryAddResource(globalInterfaceId, newInterface);  // Save object.
 
         // 4) Generate the new contact IDs and add them to internal structs.
-        var newContactIds = this._UseContacts(newInterface.NumContacts);
+        newContactIds = this._UseContacts(newInterface.NumContacts);
 
         // 5) Add the global contact IDs to the contact-NI ID map.
         foreach (var globalContactId in newContactIds)
@@ -80,7 +84,7 @@ public class NeuralInterfaceManager : ResourceManager<NeuralInterfaceHardware>
         }
 
         // Return the contact IDs.
-        return newContactIds;
+        return true;
     }
 
     /// <summary>
