@@ -68,11 +68,14 @@ public class ModelManager : ResourceManager<IBodyModel>
     }
 
     public bool _TryGetBodyModel(string modelKey, out IBodyModel bodyModel)
-    {        
-        if (_NameToIds.TryGetValue(modelKey, out int id) == false)
+    {
+        /*if (_NameToIds.TryGetValue(modelKey, out int id) == false)
         {
             throw new KeyNotFoundException($"No body model exists for the given key: '{modelKey}'.");
+            return false;
         }
+        return TryGetResource(id, out bodyModel);*/
+        _NameToIds.TryGetValue(modelKey, out int id);
         return TryGetResource(id, out bodyModel);
     }
 
@@ -289,7 +292,7 @@ public class ModelManager : ResourceManager<IBodyModel>
         {
             // Get the local ID info.
             var localSpatialId =
-                this._GlobalToLocalLocationIds[globalAreaId];
+                this._GlobalToLocalAreaIds[globalAreaId];
             bodyModelKey = localSpatialId.BodyModelKey;
             // Get the body model to search in.
             this._TryGetBodyModel(bodyModelKey, out var bodyModel);
@@ -318,35 +321,76 @@ public class ModelManager : ResourceManager<IBodyModel>
     /// possibly null, if this method returns False.</param>
     /// <returns>True if the location can be localized, False if not (e.g., body
     /// model key or location were invalid).</returns>
-    public bool TryLocalizeByLocation(string bodyModelKey,
-        ILocation targetLocation, out LocalizationData globalLocalizationData)
-    {
-        // Check if model key and area are valid. Output localization data if
-        // both valid.
-        if (this._TryGetBodyModel(bodyModelKey, out var bodyModel) &&
-            bodyModel.TryFindContainingAreas(targetLocation,
-            out var localLocalizationData))
-        {
-            // Convert to global IDs.
-            var globalFullyContainingIds = _GetGlobalIds(
-                this._LocalToGlobalLocationIds, bodyModelKey,
-                localLocalizationData.AreasFullyContaining);
-            var globalPartiallyContainingIds = _GetGlobalIds(
-                this._LocalToGlobalLocationIds, bodyModelKey,
-                localLocalizationData.AreasPartiallyContaining);
+    //public bool TryLocalizeByLocation(string bodyModelKey,
+    //    ILocation targetLocation, out LocalizationData globalLocalizationData)
+    //{
+    //    // Check if model key and area are valid. Output localization data if
+    //    // both valid.
+    //    if (this._TryGetBodyModel(bodyModelKey, out var bodyModel) &&
+    //        bodyModel.TryFindContainingAreas(targetLocation,
+    //        out var localLocalizationData))
+    //    {
+    //        // Convert to global IDs.
+    //        var globalFullyContainingIds = _GetGlobalIds(
+    //            this._LocalToGlobalLocationIds, bodyModelKey,
+    //            localLocalizationData.AreasFullyContaining);
+    //        var globalPartiallyContainingIds = _GetGlobalIds(
+    //            this._LocalToGlobalLocationIds, bodyModelKey,
+    //            localLocalizationData.AreasPartiallyContaining);
 
-            // Return success w/ global localization data.
-            globalLocalizationData = new(globalFullyContainingIds,
-                globalPartiallyContainingIds);
+    //        // Return success w/ global localization data.
+    //        globalLocalizationData = new(globalFullyContainingIds,
+    //            globalPartiallyContainingIds);
+    //        return true;
+    //    }
+    //    else
+    //    {
+    //        // Return failure.
+    //        globalLocalizationData = null;
+    //        return false;
+    //    }
+    //}
+
+    public bool TryLocalizeByLocation(string bodyModelKey, ILocation targetLocation, out LocalizationData globalLocalizationData)
+    {
+        if (this._TryGetBodyModel(bodyModelKey, out var bodyModel) &&
+            bodyModel.TryFindContainingAreas(targetLocation, out var localLocalizationData))
+        {
+            List<int> globalFullyContainingIds = new();
+            foreach (int localId in localLocalizationData.AreasFullyContaining)
+            {
+                var key = new SpatialId(bodyModelKey, localId);
+                if (!this._LocalToGlobalLocationIds.TryGetValue(key, out int globalId))
+                {
+                    globalLocalizationData = null;
+                    return false;
+                }
+                globalFullyContainingIds.Add(globalId);
+            }
+
+            List<int> globalPartiallyContainingIds = new();
+            foreach (int localId in localLocalizationData.AreasPartiallyContaining)
+            {
+                var key = new SpatialId(bodyModelKey, localId);
+                if (!this._LocalToGlobalLocationIds.TryGetValue(key, out int globalId))
+                {
+                    globalLocalizationData = null;
+                    return false;
+                }
+                globalPartiallyContainingIds.Add(globalId);
+            }
+
+            globalLocalizationData = new LocalizationData(globalFullyContainingIds, globalPartiallyContainingIds);
             return true;
         }
         else
         {
-            // Return failure.
             globalLocalizationData = null;
             return false;
         }
     }
+
+
 
     /// <summary>
     /// Try to look up all areas fully or partially containing the given area.
@@ -359,35 +403,77 @@ public class ModelManager : ResourceManager<IBodyModel>
     /// possibly null, if this method returns False.</param>
     /// <returns>True if the area can be localized, False if not (e.g., body
     /// model key or area were invalid).</returns>
-    public bool TryLocalizeByArea(string bodyModelKey, IArea targetArea,
-        out LocalizationData globalLocalizationData)
-    {
-        // Check if model key and area are valid. Output localization data if
-        // both valid.
-        if (this._TryGetBodyModel(bodyModelKey, out var bodyModel) &&
-            bodyModel.TryFindContainingAreas(targetArea,
-            out var localLocalizationData))
-        {
-            // Convert to global IDs.
-            var globalFullyContainingIds = _GetGlobalIds(
-                this._LocalToGlobalAreaIds, bodyModelKey,
-                localLocalizationData.AreasFullyContaining);
-            var globalPartiallyContainingIds = _GetGlobalIds(
-                this._LocalToGlobalAreaIds, bodyModelKey,
-                localLocalizationData.AreasPartiallyContaining);
+    //public bool TryLocalizeByArea(string bodyModelKey, IArea targetArea,
+    //    out LocalizationData globalLocalizationData)
+    //{
+    //    // Check if model key and area are valid. Output localization data if
+    //    // both valid.
+    //    if (this._TryGetBodyModel(bodyModelKey, out var bodyModel) &&
+    //        bodyModel.TryFindContainingAreas(targetArea,
+    //        out var localLocalizationData))
+    //    {
+    //        // Convert to global IDs.
+    //        var globalFullyContainingIds = _GetGlobalIds(
+    //            this._LocalToGlobalAreaIds, bodyModelKey,
+    //            localLocalizationData.AreasFullyContaining);
+    //        var globalPartiallyContainingIds = _GetGlobalIds(
+    //            this._LocalToGlobalAreaIds, bodyModelKey,
+    //            localLocalizationData.AreasPartiallyContaining);
 
-            // Return success w/ global localization data.
-            globalLocalizationData = new(globalFullyContainingIds,
-                globalPartiallyContainingIds);
+    //        // Return success w/ global localization data.
+    //        globalLocalizationData = new(globalFullyContainingIds,
+    //            globalPartiallyContainingIds);
+    //        return true;
+    //    }
+    //    else
+    //    {
+    //        // Return failure.
+    //        globalLocalizationData = null;
+    //        return false;
+    //    }
+    //}
+
+    public bool TryLocalizeByArea(string bodyModelKey, IArea targetArea, out LocalizationData globalLocalizationData)
+    {
+        if (this._TryGetBodyModel(bodyModelKey, out var bodyModel) &&
+            bodyModel.TryFindContainingAreas(targetArea, out var localLocalizationData))
+        {
+            List<int> globalFullyContainingIds = new();
+            foreach (int localId in localLocalizationData.AreasFullyContaining)
+            {
+                // Use the positional constructor to create a SpatialId.
+                var spatialId = new SpatialId(bodyModelKey, localId);
+                if (!this._LocalToGlobalAreaIds.TryGetValue(spatialId, out int globalId))
+                {
+                    globalLocalizationData = null;
+                    return false;
+                }
+                globalFullyContainingIds.Add(globalId);
+            }
+
+            List<int> globalPartiallyContainingIds = new();
+            foreach (int localId in localLocalizationData.AreasPartiallyContaining)
+            {
+                var spatialId = new SpatialId(bodyModelKey, localId);
+                if (!this._LocalToGlobalAreaIds.TryGetValue(spatialId, out int globalId))
+                {
+                    globalLocalizationData = null;
+                    return false;
+                }
+                globalPartiallyContainingIds.Add(globalId);
+            }
+
+            globalLocalizationData = new LocalizationData(globalFullyContainingIds, globalPartiallyContainingIds);
             return true;
         }
         else
         {
-            // Return failure.
             globalLocalizationData = null;
             return false;
         }
     }
+
+
 
     protected static List<int> _GetGlobalIds(
         Dictionary<SpatialId, int> localToGlobalMap,

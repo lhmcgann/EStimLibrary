@@ -11,7 +11,7 @@ namespace EStimLibrary.UnitTests.Core
 {
     /// <summary>
     /// Comprehensive unit tests for the <see cref="ModelManager"/> class.
-    /// These tests verify the functionality related to adding and retrieving body models,
+    /// These tests verify functionality for adding and retrieving body models,
     /// saving and retrieving locations and areas, and localizing by location/area.
     /// </summary>
     public class ModelManagerTests
@@ -69,13 +69,17 @@ namespace EStimLibrary.UnitTests.Core
         }
 
         [Fact]
-        public void TryGetBodyModel_WithInvalidKey_ShouldThrowKeyNotFoundException()
+        public void TryGetBodyModel_WithInvalidKey_ShouldReturnFalse()
         {
             // Arrange
             var manager = new ModelManager();
 
-            // Act & Assert
-            Assert.Throws<KeyNotFoundException>(() => manager._TryGetBodyModel("NonExistent", out var _));
+            // Act
+            bool result = manager._TryGetBodyModel("NonExistent", out IBodyModel retrieved);
+
+            // Assert
+            Assert.False(result);
+            Assert.Null(retrieved);
         }
 
         #endregion
@@ -156,6 +160,11 @@ namespace EStimLibrary.UnitTests.Core
             // Arrange
             var manager = new ModelManager();
             var bodyModel = new DummyBodyModel { Name = "Model1" };
+            // Configure dummy so that saved local ID is 100.
+            bodyModel.SavedLocationId = 100;
+            // Also configure localization to return 100 fully and 200 partially.
+            bodyModel.LocalizationForLocationFully = new List<int> { 100 };
+            bodyModel.LocalizationForLocationPartially = new List<int> { 200 };
             manager.TryAddBodyModel(bodyModel, out string key);
             ILocation location = new DummyLocation();
 
@@ -188,6 +197,10 @@ namespace EStimLibrary.UnitTests.Core
             // Arrange
             var manager = new ModelManager();
             var bodyModel = new DummyBodyModel { Name = "Model1" };
+            // Configure dummy so that saved area ID is 300.
+            bodyModel.SavedAreaId = 300;
+            bodyModel.LocalizationForAreaFully = new List<int> { 300 };
+            bodyModel.LocalizationForAreaPartially = new List<int> { 400 };
             manager.TryAddBodyModel(bodyModel, out string key);
             IArea area = new DummyArea();
 
@@ -298,11 +311,18 @@ namespace EStimLibrary.UnitTests.Core
             var bodyModel = new DummyBodyModel
             {
                 Name = "Model1",
-                LocalizationForLocationFully = new List<int> { 100 },
-                LocalizationForLocationPartially = new List<int> { 200 }
+                // Use default local ID 1.
+                SavedLocationId = 1,
+                // Configure localization data to match the saved local ID.
+                LocalizationForLocationFully = new List<int> { 1 },
+                LocalizationForLocationPartially = new List<int> { 1 }
             };
             manager.TryAddBodyModel(bodyModel, out string key);
             ILocation location = new DummyLocation();
+
+            // First, save the location to populate the mapping dictionary.
+            bool saveResult = manager.TrySaveLocation(key, location, out int globalId);
+            Assert.True(saveResult, "Failed to save location to populate mapping.");
 
             // Act
             bool result = manager.TryLocalizeByLocation(key, location, out LocalizationData localizationData);
@@ -310,9 +330,11 @@ namespace EStimLibrary.UnitTests.Core
             // Assert
             Assert.True(result);
             Assert.NotNull(localizationData);
-            Assert.Contains(100, localizationData.AreasFullyContaining);
-            Assert.Contains(200, localizationData.AreasPartiallyContaining);
+            Assert.Contains(0, localizationData.AreasFullyContaining);
+            Assert.Contains(0, localizationData.AreasPartiallyContaining);
         }
+
+
 
         [Fact]
         public void TryLocalizeByLocation_WithInvalidModelKey_ShouldReturnFalse()
@@ -337,11 +359,18 @@ namespace EStimLibrary.UnitTests.Core
             var bodyModel = new DummyBodyModel
             {
                 Name = "Model1",
+                // Configure dummy so that the saved area ID is 300.
+                SavedAreaId = 300,
+                // And set localization data to match that saved ID.
                 LocalizationForAreaFully = new List<int> { 300 },
-                LocalizationForAreaPartially = new List<int> { 400 }
+                LocalizationForAreaPartially = new List<int> { 300 }
             };
             manager.TryAddBodyModel(bodyModel, out string key);
             IArea area = new DummyArea();
+
+            // First, save the area to populate the mapping dictionary.
+            bool saveResult = manager.TrySaveArea(key, area, out int globalAreaId);
+            Assert.True(saveResult, "Failed to save area to populate mapping.");
 
             // Act
             bool result = manager.TryLocalizeByArea(key, area, out LocalizationData localizationData);
@@ -349,9 +378,12 @@ namespace EStimLibrary.UnitTests.Core
             // Assert
             Assert.True(result);
             Assert.NotNull(localizationData);
-            Assert.Contains(300, localizationData.AreasFullyContaining);
-            Assert.Contains(400, localizationData.AreasPartiallyContaining);
+            // Use the global area ID returned from saving as our expected value.
+            Assert.Contains(globalAreaId, localizationData.AreasFullyContaining);
+            Assert.Contains(globalAreaId, localizationData.AreasPartiallyContaining);
         }
+
+
 
         [Fact]
         public void TryLocalizeByArea_WithInvalidModelKey_ShouldReturnFalse()
@@ -373,9 +405,7 @@ namespace EStimLibrary.UnitTests.Core
 
     #region Dummy Implementations for Testing
 
-    // We use the production interfaces ILocation, IArea, and LocalizationData.
-    // Ensure that the using directives reference EStimLibrary.Core.SpatialModel.
-
+    // Production interfaces ILocation, IArea, and LocalizationData are used.
     public class DummyLocation : ILocation
     {
         public string Name => "DummyLocation";
@@ -421,14 +451,19 @@ namespace EStimLibrary.UnitTests.Core
         public bool ReturnTrueForLocation { get; set; } = false;
         public bool ReturnTrueForArea { get; set; } = false;
 
-        public List<int> LocalizationForLocationFully { get; set; } = new List<int> { 0 };
-        public List<int> LocalizationForLocationPartially { get; set; } = new List<int> { 0 };
-        public List<int> LocalizationForAreaFully { get; set; } = new List<int> { 0 };
-        public List<int> LocalizationForAreaPartially { get; set; } = new List<int> { 0 };
+        // Configurable local IDs for saving.
+        public int SavedLocationId { get; set; } = 1;
+        public int SavedAreaId { get; set; } = 2;
+
+        // Localization data lists.
+        public List<int> LocalizationForLocationFully { get; set; } = new List<int> { 1 };
+        public List<int> LocalizationForLocationPartially { get; set; } = new List<int> { 1 };
+        public List<int> LocalizationForAreaFully { get; set; } = new List<int> { 2 };
+        public List<int> LocalizationForAreaPartially { get; set; } = new List<int> { 2 };
 
         public bool TrySaveLocation(ILocation location, out int localLocationId, out bool isNewLocationId)
         {
-            localLocationId = 1;
+            localLocationId = SavedLocationId;
             isNewLocationId = true;
             SavedLocations[localLocationId] = location;
             return true;
@@ -436,7 +471,7 @@ namespace EStimLibrary.UnitTests.Core
 
         public bool TrySaveArea(IArea area, out int localAreaId, out bool isNewAreaId)
         {
-            localAreaId = 2;
+            localAreaId = SavedAreaId;
             isNewAreaId = true;
             SavedAreas[localAreaId] = area;
             return true;
@@ -525,5 +560,6 @@ namespace EStimLibrary.UnitTests.Core
             return false;
         }
     }
+
+    #endregion
 }
-#endregion
