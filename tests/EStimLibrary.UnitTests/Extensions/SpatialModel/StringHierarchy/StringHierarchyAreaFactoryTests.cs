@@ -26,13 +26,14 @@ public class StringHierarchyAreaFactoryTests
     /// Test the constructor with null parameter.
     /// </summary>
     [Fact]
-    public void Constructor_ShouldErrorNull()
+    public void Constructor_Null_ShouldError()
     {
         bool caughtError = false;
         try
         {
             // Create factory with null base region
-            StringHierarchyAreaFactory factory = new StringHierarchyAreaFactory(null);
+            StringHierarchyAreaFactory factory = 
+                new StringHierarchyAreaFactory(null!);
         }
         catch (NullReferenceException) { caughtError = true; }
 
@@ -44,7 +45,7 @@ public class StringHierarchyAreaFactoryTests
     /// Test the constructor with non-null parameter.
     /// </summary>
     [Fact]
-    public void Constructor_ShouldInitBaseRegion()
+    public void Constructor_NonNull_ShouldInit()
     {
         // Create base region
         StringHierarchyRegion region = new StringHierarchyRegion("base", null);

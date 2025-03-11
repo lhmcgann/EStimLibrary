@@ -8,32 +8,38 @@ namespace EStimLibrary.Extensions.SpatialModel.StringHierarchy;
 
 
 /// <summary>
-/// StringHierarchAreaFactories are objects used to create instances of the
-/// StringHierarchyArea class.
+/// A factory to create StringHierarchyArea objects.
 /// </summary>
 public class StringHierarchyAreaFactory : IFactory<IArea>
 {
     /// <summary>
-    /// The base region to create StringHierarchyAreas from.
+    /// The base string hierarchy region within which valid 
+    /// StringHierarchyAreas can be created.
     /// </summary>
     private readonly StringHierarchyRegion _baseRegion;
 
     /// <summary>
     /// The help message describing the dynamic data validation performed.
+    /// Will contain a description of valid StringHierarchyAreas based on
+    /// body models configured at run-time.
     /// </summary>
     public string HelpMsg { get; init; }
 
     /// <summary>
     /// The dictionary containing data validation objects for parameters
-    /// passed into the factory create method.
+    /// passed into the factory create method. Contains a single parameter
+    /// "fullSpec" which must be a valid full string area spec wihtin the
+    /// base region.
     /// </summary>
     public Dictionary<string, IDataLimits> ParamLimits { get; init; }
 
     /// <summary>
-    /// The constructor, which creates an instance of the factory with the
-    /// supplied base region and initializes validation.
+    /// Create an instance of the factory using the supplied base region to 
+    /// initialize help and data validation properties.
     /// </summary>
     /// <param name="baseModelRegion">The base region to use.</param>
+    /// <exception cref="NullReferenceException">Thrown if the base region is
+    /// null.</exception>
     public StringHierarchyAreaFactory(StringHierarchyRegion baseModelRegion)
     {
         this._baseRegion = baseModelRegion;
@@ -51,12 +57,11 @@ public class StringHierarchyAreaFactory : IFactory<IArea>
 
     /// <summary>
     /// The validation function used by the factory create method to ensure
-    /// the supplied area spec is valid for the provided base region. The
-    /// fullspec must provide a single region spec which is a subregion
-    /// of the base region, including at most one set of modifiers.
+    /// the supplied area spec - region spec and modifiers - is valid within
+    /// the provided base region.
     /// </summary>
-    /// <param name="fullSpec">The area spec to validate.</param>
-    /// <returns></returns>
+    /// <param name="fullSpec">The full area spec to validate.</param>
+    /// <returns>True if valid area spec, false if not.</returns>
     private bool _AreaSpecCheckFunction(string fullSpec)
     {
         var parts = fullSpec.Split(
@@ -71,37 +76,41 @@ public class StringHierarchyAreaFactory : IFactory<IArea>
     }
 
     /// <summary>
-    /// The factory create method used to create StringHierarchyArea instances.
+    /// Create a StringHierarchyArea object from the provided parameter values.
     /// </summary>
     /// <param name="paramValues">The parameters to pass into the
-    /// StringHierarchyArea constructor. This must include a valid area spec
-    /// with key "fullspec".</param>
+    /// StringHierarchyLocation constructor. This must adhere to the 
+    /// ParamLimits of this factory for successful creation, i.e., include a
+    /// single element keyed "fullSpec" which is a full string area spec valid
+    /// within this factory's base region.</param>
     /// <param name="product">An output parameter: the StringHierarchyArea if
     /// created, else null.</param>
-    /// <param name="skipValueValidation">Whether to skip validation with
-    /// AreaSpecCheckFunction.</param>
-    /// <returns></returns>
+    /// <param name="skipValueValidation">An optional parameter: perform only
+    /// basic input validation and skip any deeper parameter value validation,
+    /// e.g., if the data has already been validated. Default: false.</param>
+    /// <returns>True if a StringHierarchyArea could be created, False if not.
+    /// </returns>
     public bool TryCreate(Dictionary<string, object> paramValues,
-        out IArea product, bool skipValueValidation = false)
+        out IArea? product, bool skipValueValidation = false)
     {
         // Get the params provided for product creation. This factory only
         // requires one parameter value for "fullSpec" which must follow the
         // DynamicDataLimits in this factory's ParamLimits
-        bool valid = paramValues.TryGetValue("fullSpec", out object value);
+        bool valid = paramValues.TryGetValue("fullSpec", out object? value);
 
         // Init the product to null in case of failed creation.
         product = null;
 
-        // Skip param value valudation if requested
+        // Skip param value validation if requested.
         if (!skipValueValidation)
         {
-            valid = this.ParamLimits["fullSpec"].IsValidDataValue(value);
+            valid = this.ParamLimits["fullSpec"].IsValidDataValue(value!);
         }
 
-        // Create and return the product if param values valid
+        // Create and return the product if param values valid.
         if (valid)
         {
-            product = new StringHierarchyArea((string)value);
+            product = new StringHierarchyArea((string)value!);
         }
         return valid;
     }
