@@ -8,33 +8,38 @@ namespace EStimLibrary.Extensions.SpatialModel.StringHierarchy;
 
 
 /// <summary>
-/// StringHierarchyLocationFactories are objects used to create instances of
-/// the StringHierarchyLocation class.
+/// A factory to create StringHierarchyLocation objects.
 /// </summary>
 public class StringHierarchyLocationFactory :
     IFactory<ILocation>
 {
     /// <summary>
-    /// The base region to create StringHierarchyLocations from.
+    /// The base string hierarchy region within which valid 
+    /// StringHierarchyLocations can be created.
     /// </summary>
     private readonly StringHierarchyRegion _baseRegion;
 
     /// <summary>
     /// The help message describing the dynamic data validation performed.
+    /// Will contain a description of valid StringHierarchyLocations based on
+    /// body models configured at run-time.
     /// </summary>
     public string HelpMsg { get; init; }
 
     /// <summary>
     /// The dictionary containing data validation objects for parameters
-    /// passed into the factory create method.
+    /// passed into the factory create method. Contains a single parameter
+    /// "fullSpec" which must be a valid full string location spec wihtin the
+    /// base region.
     /// </summary>
     public Dictionary<string, IDataLimits> ParamLimits { get; init; }
 
     /// <summary>
-    /// The constructor, which creates an instance of the factory with the
-    /// supplied base region and initializes validation.
+    /// Create an instance of the factory using the supplied base region to 
+    /// initialize help and data validation properties.
     /// </summary>
-    /// <param name="baseModelRegion">The base region to use.</param>
+    /// <exception cref="NullReferenceException">Thrown if the base region is
+    /// null.</exception>
     public StringHierarchyLocationFactory(
         StringHierarchyRegion baseModelRegion)
     {
@@ -48,9 +53,15 @@ public class StringHierarchyLocationFactory :
             {"fullSpec",
                 new DynamicDataLimits<string>(this._LocationSpecCheckFunction,
                 this.HelpMsg) } };
-
     }
 
+    /// <summary>
+    /// The validation function used by the factory create method to ensure
+    /// the supplied location spec - region spec and modifiers - is valid 
+    /// within the provided base region.
+    /// </summary>
+    /// <param name="fullSpec">The full location spec to validate.</param>
+    /// <returns>True if valid location spec, false if not.</returns>
     private bool _LocationSpecCheckFunction(string fullSpec)
     {
         var parts = fullSpec.Split(
@@ -65,38 +76,42 @@ public class StringHierarchyLocationFactory :
     }
 
     /// <summary>
-    /// The factory create method used to create StringHierarchyLocation
-    /// instances. 
+    /// Create a StringHierarchyLocation object from the provided parameter
+    /// values.
     /// </summary>
     /// <param name="paramValues">The parameters to pass into the
-    /// StringHierarchyLocation constructor. This must include a valid location
-    /// spec with key "fullspec".</param>
+    /// StringHierarchyLocation constructor. This must adhere to the 
+    /// ParamLimits of this factory for successful creation, i.e., include a
+    /// single element keyed "fullSpec" which is a full string location spec 
+    /// valid within this factory's base region.</param>
     /// <param name="product">An output parameter: the StringHierarchyLocation
     /// if created, else null.</param>
-    /// <param name="skipValueValidation">Whether to skip validation with
-    /// LocationSpecCheckFunction.</param>
-    /// <returns></returns>
+    /// <param name="skipValueValidation">An optional parameter: perform only
+    /// basic input validation and skip any deeper parameter value validation,
+    /// e.g., if the data has already been validated. Default: false.</param>
+    /// <returns>True if a StringHierarchyLocation could be created, False if 
+    /// not.</returns>
     public bool TryCreate(Dictionary<string, object> paramValues,
-        out ILocation product, bool skipValueValidation = false)
+        out ILocation? product, bool skipValueValidation = false)
     {
         // Get the params provided for product creation. This factory only
         // requires one parameter value for "fullSpec" which must follow the
         // DynamicDataLimits in this factory's ParamLimits
-        bool valid = paramValues.TryGetValue("fullSpec", out object value);
+        bool valid = paramValues.TryGetValue("fullSpec", out object? value);
 
         // Init the product to null in case of failed creation.
         product = null;
 
-        // Skip param value valudation if requested
+        // Skip param value validation if requested.
         if (!skipValueValidation)
         {
-            valid = this.ParamLimits["fullSpec"].IsValidDataValue(value);
+            valid = this.ParamLimits["fullSpec"].IsValidDataValue(value!);
         }
 
-        // Create and return the product if param values valid
+        // Create and return the product if param values valid.
         if (valid)
         {
-            product = new StringHierarchyLocation((string)value);
+            product = new StringHierarchyLocation((string)value!);
         }
         return valid;
     }

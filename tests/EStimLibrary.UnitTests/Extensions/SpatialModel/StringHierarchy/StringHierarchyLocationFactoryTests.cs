@@ -26,14 +26,14 @@ public class StringHierarchyLocationFactoryTests
     /// Test the constructor with null parameter.
     /// </summary>
     [Fact]
-    public void Constructor_ShouldErrorNull()
+    public void Constructor_Null_ShouldError()
     {
         bool caughtError = false;
         try
         {
             // Create factory with null base region
             StringHierarchyLocationFactory factory =
-                new StringHierarchyLocationFactory(null);
+                new StringHierarchyLocationFactory(null!);
         }
         catch (NullReferenceException) { caughtError = true; }
 
@@ -45,16 +45,16 @@ public class StringHierarchyLocationFactoryTests
     /// Test the constructor with non-null parameter.
     /// </summary>
     [Fact]
-    public void Constructor_ShouldInitBaseRegion()
+    public void Constructor_NonNull_ShouldInit()
     {
-        // Create base region
-        StringHierarchyRegion region = new StringHierarchyRegion("base", null);
+        // Create base region.
+        StringHierarchyRegion region = new StringHierarchyRegion("base", null!);
 
-        // Create factory with non-null base region
+        // Create factory with non-null base region.
         StringHierarchyLocationFactory factory =
             new StringHierarchyLocationFactory(region);
 
-        // Check that HelpMsg and ParamLimits are initialized correctly
+        // Check that HelpMsg and ParamLimits are initialized correctly.
         Assert.Equal("A StringHierarchyLocation can be built from one of " +
             "the following path specs, selecting one option from any list " +
             "in [] and excluding the []:\n" + region.ToString(),
@@ -65,13 +65,13 @@ public class StringHierarchyLocationFactoryTests
 
     /// <summary>
     /// Test the TryCreate method with paramValues not including a fullSpec
-    /// value and skipping value validation
+    /// value and skipping value validation.
     /// </summary>
     [Fact]
     public void TryCreate_ShouldNotValidateShouldNotCreate()
     {
         // Create base region
-        StringHierarchyRegion region = new StringHierarchyRegion("base", null);
+        StringHierarchyRegion region = new StringHierarchyRegion("base", null!);
 
         // Create factory with non-null base region
         StringHierarchyLocationFactory factory =
@@ -82,7 +82,7 @@ public class StringHierarchyLocationFactoryTests
             new Dictionary<string, object>();
 
         // Create variable to store produced IArea
-        ILocation product;
+        ILocation? product;
 
         // Check TryCreate return and product
         bool valid = factory.TryCreate(paramValues, out product, true);
@@ -128,14 +128,14 @@ public class StringHierarchyLocationFactoryTests
             new Dictionary<string, object>() { { "fullSpec", "" } };
 
         // Create variable to store produced IArea
-        ILocation product;
+        ILocation? product;
 
         // Check TryCreate return and product for valid spec
         bool valid = factory.TryCreate(paramValues1, out product,
             skipValueValidation: true);
         Assert.True(valid);
         Assert.NotNull(product);
-        Assert.Equal((ILocation)new StringHierarchyLocation("left base, child1"),
+        Assert.Equal(new StringHierarchyLocation("left base, child1"),
             product);
 
         // Check TryCreate return and product for invalid spec
@@ -143,7 +143,7 @@ public class StringHierarchyLocationFactoryTests
             skipValueValidation: true);
         Assert.True(valid);
         Assert.NotNull(product);
-        Assert.Equal((ILocation)new StringHierarchyLocation(""), product);
+        Assert.Equal(new StringHierarchyLocation(""), product);
     }
 
     /// <summary>

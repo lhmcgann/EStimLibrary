@@ -7,7 +7,9 @@ namespace EStimLibrary.Core;
 public interface IFactory<ProductType>
 {
     public string HelpMsg { get; }
+    
     public Dictionary<string, IDataLimits> ParamLimits { get; }
+
     /// <summary>
     /// Try creating a product from a given set of param values.
     /// </summary>
@@ -22,7 +24,7 @@ public interface IFactory<ProductType>
     /// e.g., if the data has already been validated. Default: false.</param>
     /// <returns>True if a product could be created, False if not.</returns>
     public bool TryCreate(Dictionary<string, object> paramValues,
-        out ProductType product, bool skipValueValidation = false);
+        out ProductType? product, bool skipValueValidation = false);
     //// Try creating product from I/O interaction.
     //public bool TryCreate(Action<string> displayOutput, Func<string> readInput);
 }
