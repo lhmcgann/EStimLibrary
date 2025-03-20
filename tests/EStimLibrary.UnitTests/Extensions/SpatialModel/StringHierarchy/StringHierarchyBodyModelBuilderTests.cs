@@ -1,6 +1,6 @@
 ﻿using EStimLibrary.Extensions.SpatialModel.StringHierarchy;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Xunit.Sdk;
 
 namespace EStimLibrary.UnitTests.Extensions.SpatialModel.StringHierarchy;
 
@@ -36,7 +36,7 @@ public class StringHierarchyBodyModelBuilderTests
     /// Test _CheckJSONPropertyType with differing types.
     /// </summary>
     [Fact]
-    public void CheckJSONPropertyType_ShouldThrowException()
+    public void CheckJSONPropertyType_ShouldThrowArgumentException()
     {
         Type type = typeof(StringHierarchyBodyModelBuilder);
 
@@ -79,59 +79,131 @@ public class StringHierarchyBodyModelBuilderTests
     }
 
     /// <summary>
-    /// Test _ParseJSONBodyRegion with invalid regionJson body.
-    /// </summary>
-
-    /// <summary>
-    /// Test _ParseJSONBodyRegion with empty properties.
-    /// </summary>
-
-    /// <summary>
-    /// Test _ParseJSONBodyRegion with invalid properties.
-    /// </summary>
-
-    /// <summary>
-    /// Test _ParseJSONBodyRegion with empty modifiers.
-    /// </summary>
-
-    /// <summary>
-    /// Test _ParseJSONBodyRegion with duplicate modifiers.
-    /// </summary>
-
-    /// <summary>
-    /// Test _ParseJSONBodyRegion with missing modifiers.
-    /// </summary>
-
-    /// <summary>
-    /// Test _ParseJSONBodyRegion with valid inputs.
-    /// </summary>
-
-    /// <summary>
-    /// Test _ParseJSONBodyRegion with no propagating options.
-    /// </summary>
-
-    /// <summary>
-    /// Test _ParseJSONBodyRegion with propagating options.
-    /// </summary>
-
-    /// <summary>
-    /// Test _ParseJSONBodyRegion with no subregions.
-    /// </summary>
-
-    /// <summary>
-    /// Test _ParseJSONBodyRegion with invalid subregions.
-    /// </summary>
-
-    /// <summary>
     /// Test constructor with invalid filepath.
     /// </summary>
+    [Fact]
+    public void Constructor_ShouldThrowIOException()
+    {
+        Assert.Throws<IOException>(() =>
+            new StringHierarchyBodyModelBuilder("invalid-filapath"));
+    }
 
     /// <summary>
     /// Test constructor with valid filepath but invalid JSON specification.
     /// </summary>
+    [Fact]
+    public void Constructor_ShouldThrowJsonReaderException()
+    {
+        Assert.Throws<JsonReaderException>(() =>
+            new StringHierarchyBodyModelBuilder("valid-filepath"));
+    }
 
     /// <summary>
-    /// Test constructor with valid JSON specification.
+    /// Test constructor with invalid properties.
+    /// </summary>
+    [Theory]
+    // Test invalid number of properties
+    [InlineData("valid-filepath1")]
+    // Test no required modifier array as first property
+    [InlineData("valid-filepath2")]
+    public void Constructor_ShouldThrowArgumentException(string filepath)
+    {
+        Assert.Throws<ArgumentException>(() =>
+            new StringHierarchyBodyModelBuilder(filepath));
+    }
+
+    /// <summary>
+    /// Test constructor with no body regions defined.
+    /// </summary>
+    [Fact]
+    public void Constructor_ShouldInit()
+    {
+        Type type = typeof(StringHierarchyBodyModelBuilder);
+
+        StringHierarchyBodyModelBuilder builder =
+            new StringHierarchyBodyModelBuilder("valid-filepath");
+
+        Assert.Equivalent("expected", type.InvokeMember("_RequiredModifiers",
+            System.Reflection.BindingFlags.GetField |
+            System.Reflection.BindingFlags.NonPublic, null, builder, null));
+        Assert.Equal("expected", type.InvokeMember("_RootRegion",
+            System.Reflection.BindingFlags.GetField |
+            System.Reflection.BindingFlags.NonPublic, null, builder, null));
+        Assert.Equivalent("expected", type.InvokeMember(
+            "_availableBaseRegions", System.Reflection.BindingFlags.GetField |
+            System.Reflection.BindingFlags.NonPublic, null, builder, null));
+        Assert.Equivalent("expected", builder.AvailableModelNames);
+    }
+
+    /// <summary>
+    /// Test _ParseJSONBodyRegion (via constructor) with invalid regionJson
+    /// body.
+    /// </summary>
+    [Fact]
+    public void ParseJSONBodyRegion_ShouldThrowArgumentException()
+    {
+        Assert.Throws<ArgumentException>(() =>
+            new StringHierarchyBodyModelBuilder("valid-filepath"));
+    }
+
+    /// <summary>
+    /// Test _ParseJSONBodyRegion (via constructor) with empty properties in
+    /// regionJson body.
+    /// </summary>
+
+    /// <summary>
+    /// Test _ParseJSONBodyRegion (via constructor) with invalid properties in
+    /// regionJson body.
+    /// </summary>
+
+    /// <summary>
+    /// Test _ParseJSONBodyRegion (via constructor) with empty modifiers in
+    /// regionJson body.
+    /// </summary>
+
+    /// <summary>
+    /// Test _ParseJSONBodyRegion (via constructor) with duplicate modifiers in
+    /// regionJson body.
+    /// </summary>
+
+    /// <summary>
+    /// Test _ParseJSONBodyRegion (via constructor) with missing modifiers in
+    /// regionJson body.
+    /// </summary>
+
+    /// <summary>
+    /// Test _ParseJSONBodyRegion (via constructor) with valid inputs in
+    /// regionJson body.
+    /// </summary>
+
+    /// <summary>
+    /// Test _ParseJSONBodyRegion (via constructor) with no propagating options
+    /// in regionJson body.
+    /// </summary>
+
+    /// <summary>
+    /// Test _ParseJSONBodyRegion (via constructor) with propagating options in
+    /// regionJson body.
+    /// </summary>
+
+    /// <summary>
+    /// Test _ParseJSONBodyRegion (via constructor) with no subregions in
+    /// regionJson body.
+    /// </summary>
+
+    /// <summary>
+    /// Test _ParseJSONBodyRegion (via constructor) with invalid subregions in
+    /// regionJson body.
+    /// </summary>
+
+    /// <summary>
+    /// Test _ParseJSONBodyRegion (via constructor) with non-null options
+    /// passed?
+    /// </summary>
+
+    /// <summary>
+    /// Test _ParseJSONBodyRegion (via constructor) with non-null modifiers
+    /// passed?
     /// </summary>
 
     /// <summary>
