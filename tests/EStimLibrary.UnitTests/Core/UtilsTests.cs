@@ -443,7 +443,7 @@ public class UtilsTests
     /// <summary>
     /// Dummy derived class for testing assignability.
     /// </summary>
-    public class DerivedClass : BaseClass { }
+    public class DerivedClass : BaseGenericClass<object> { }
 
     /// <summary>
     /// Dummy unrelated class for testing assignability.
@@ -453,7 +453,7 @@ public class UtilsTests
     /// <summary>
     /// Dummy base generic class for testing assignability.
     /// </summary>
-    public class BaseGenericClass<T> { }
+    public class BaseGenericClass<T> : BaseClass { }
 
     /// <summary>
     /// Dummy derived class for testing assignability.

@@ -108,54 +108,125 @@ public static class Utils
     /// <param name="baseTargetType">The base type or interface.</param>
     /// <param name="derivedTestType">The type to test for assignability.</param>
     /// <returns>True if the derivedTestType is assignable to the baseTargetType; otherwise, false.</returns>
-    public static bool IsAssignableFromType(Type baseTargetType,
-        Type derivedTestType)
+    /// 
+
+    public static bool IsAssignableFromType(Type baseTargetType, Type derivedTestType)
     {
-        // If target type is simple and not a generic type, use existing check.
+        // If the base type is not generic:
         if (!baseTargetType.IsGenericType)
         {
+            // If the derived type is an open generic, try checking its implemented interfaces.
+            if (derivedTestType.IsGenericType && !derivedTestType.IsConstructedGenericType)
+            {
+                foreach (var iface in derivedTestType.GetInterfaces())
+                {
+                    if (baseTargetType.IsAssignableFrom(iface))
+                        return true;
+                }
+                return false;
+            }
+            // Otherwise, use the built‐in check.
             return baseTargetType.IsAssignableFrom(derivedTestType);
         }
 
-        // Otherwise, perform a more in-depth evaluation for the generic type.
-        // 1) Check the derived type directly.
-        if (derivedTestType.IsGenericType)
+        // If the base type is generic and the built‐in check returns true, then return true.
+        if (baseTargetType.IsAssignableFrom(derivedTestType))
         {
-            return Utils.IsGenericAssignableFrom(baseTargetType,
-                derivedTestType);
+            return true;
         }
-        // 2) Check if the derived type inherits from a base type that is
-        // generic. BaseType property returns null if from Object or interface.
-        var derivedBaseType = derivedTestType.BaseType;
-        if (derivedBaseType is not null && derivedBaseType.IsGenericType)
+
+        // For generic types, work with the generic type definition.
+        Type baseGenericDef = baseTargetType.IsGenericTypeDefinition
+            ? baseTargetType
+            : baseTargetType.GetGenericTypeDefinition();
+
+        // Traverse the base class chain.
+        for (Type current = derivedTestType; current != null; current = current.BaseType)
         {
-            return Utils.IsGenericAssignableFrom(baseTargetType,
-                derivedBaseType);
-        }
-        // 3) Check if the derived type implements any interfaces that are
-        // viable generic types, i.e., if secondarily implements base type.
-        var interfaceTypes = derivedTestType.GetInterfaces();
-        bool success = false;
-        foreach (var iType in interfaceTypes)
-        {
-            if (iType.IsGenericType)
+            if (current.IsGenericType)
             {
-                success |= Utils.IsGenericAssignableFrom(baseTargetType, iType);
+                Type currentGenericDef = current.GetGenericTypeDefinition();
+                if (currentGenericDef == baseGenericDef)
+                {
+                    // If both are constructed generics, check type parameter compatibility.
+                    if (baseTargetType.IsConstructedGenericType && current.IsConstructedGenericType)
+                    {
+                        return AreTypeParametersCompatible(baseTargetType, current);
+                    }
+                    return true;
+                }
             }
         }
-        // Return if any acceptable interface found.
-        return success;
 
-        //if (baseTargetType.IsGenericTypeDefinition)
-        //{
-        //    Type[] derivedBaseTypeGenericArgs = derivedTestType.BaseType?.GetGenericArguments();
-        //    if (derivedBaseTypeGenericArgs != null && derivedBaseTypeGenericArgs.Length > 0)
-        //    {
-        //        Type baseTypeDefinition = derivedTestType.BaseType.GetGenericTypeDefinition();
-        //        return baseTypeDefinition == baseTargetType;
-        //    }
-        //}
+        // Traverse the implemented interfaces.
+        foreach (Type iface in derivedTestType.GetInterfaces())
+        {
+            if (iface.IsGenericType)
+            {
+                Type ifaceGenericDef = iface.GetGenericTypeDefinition();
+                if (ifaceGenericDef == baseGenericDef)
+                {
+                    if (baseTargetType.IsConstructedGenericType && iface.IsConstructedGenericType)
+                    {
+                        return AreTypeParametersCompatible(baseTargetType, iface);
+                    }
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
+
+
+    //public static bool IsAssignableFromType(Type baseTargetType,
+    //    Type derivedTestType)
+    //{
+    //    // If target type is simple and not a generic type, use existing check.
+    //    if (!baseTargetType.IsGenericType)
+    //    {
+    //        return baseTargetType.IsAssignableFrom(derivedTestType);
+    //    }
+
+    //    // Otherwise, perform a more in-depth evaluation for the generic type.
+    //    // 1) Check the derived type directly.
+    //    if (derivedTestType.IsGenericType)
+    //    {
+    //        return Utils.IsGenericAssignableFrom(baseTargetType,
+    //            derivedTestType);
+    //    }
+    //    // 2) Check if the derived type inherits from a base type that is
+    //    // generic. BaseType property returns null if from Object or interface.
+    //    var derivedBaseType = derivedTestType.BaseType;
+    //    if (derivedBaseType is not null && derivedBaseType.IsGenericType)
+    //    {
+    //        return Utils.IsGenericAssignableFrom(baseTargetType,
+    //            derivedBaseType);
+    //    }
+    //    // 3) Check if the derived type implements any interfaces that are
+    //    // viable generic types, i.e., if secondarily implements base type.
+    //    var interfaceTypes = derivedTestType.GetInterfaces();
+    //    bool success = false;
+    //    foreach (var iType in interfaceTypes)
+    //    {
+    //        if (iType.IsGenericType)
+    //        {
+    //            success |= Utils.IsGenericAssignableFrom(baseTargetType, iType);
+    //        }
+    //    }
+    //    // Return if any acceptable interface found.
+    //    return success;
+
+    //    //if (baseTargetType.IsGenericTypeDefinition)
+    //    //{
+    //    //    Type[] derivedBaseTypeGenericArgs = derivedTestType.BaseType?.GetGenericArguments();
+    //    //    if (derivedBaseTypeGenericArgs != null && derivedBaseTypeGenericArgs.Length > 0)
+    //    //    {
+    //    //        Type baseTypeDefinition = derivedTestType.BaseType.GetGenericTypeDefinition();
+    //    //        return baseTypeDefinition == baseTargetType;
+    //    //    }
+    //    //}
+    //}
 
     /// <summary>
     /// Test if a generic base type can be assigned from a test generic type,
