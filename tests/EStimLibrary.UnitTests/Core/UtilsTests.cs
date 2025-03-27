@@ -9,6 +9,7 @@ using EStimLibrary.Extensions.Haptics;
 using EStimLibrary.Extensions.HardwareInterfaces;
 using EStimLibrary.Extensions.SpatialModel.StringHierarchy;
 using EStimLibrary.Extensions.Stimulation.Stimulators;
+using System.IO.Ports;
 
 
 namespace EStimLibrary.UnitTests.Core;
@@ -947,6 +948,123 @@ public class UtilsTests
     }
 
     #endregion
+    #region Additional Uncovered Methods Tests
+
+    // Test cases for IsGenericAssignableFrom
+    [Fact]
+    public void IsGenericAssignableFrom_WhenTestTypeIsNotGeneric_ShouldReturnFalse()
+    {
+        // When the test type is not generic, the method should return false.
+        bool result = Utils.IsGenericAssignableFrom(typeof(List<>), typeof(int));
+        Assert.False(result);
+    }
+
+    // Test cases for AreTypeParametersCompatible
+    [Fact]
+    public void AreTypeParametersCompatible_WithCovariantTypes_ShouldReturnTrue()
+    {
+        // In this case, object is assignable from string so List<object> should be compatible with List<string>.
+        bool result = Utils.AreTypeParametersCompatible(typeof(List<object>), typeof(List<string>));
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void AreTypeParametersCompatible_WithIncompatibleTypes_ShouldReturnFalse()
+    {
+        // Here, string is not assignable from object so List<string> should NOT be compatible with List<object>.
+        bool result = Utils.AreTypeParametersCompatible(typeof(List<string>), typeof(List<object>));
+        Assert.False(result);
+    }
+
+    // Test case for ReadJSON: test the error path when the file does not exist.
+    [Fact]
+    public void ReadJSON_WhenFileDoesNotExist_ShouldThrowFileNotFoundException()
+    {
+        Assert.Throws<FileNotFoundException>(() => Utils.ReadJSON("nonexistentfile.json"));
+    }
+
+    // Test cases for EnumerableToString
+    [Fact]
+    public void EnumerableToString_WithEmptyEnumerable_ShouldReturnEmptyBrackets()
+    {
+        var list = new List<int>();
+        string result = Utils.EnumerableToString(list);
+        Assert.Equal("[]", result);
+    }
+
+    // Test cases for SelectFromList with simulated invalid then valid input.
+    [Fact]
+    public void SelectFromList_WithInvalidThenValidInput_ShouldReturnCorrectOption()
+    {
+        var options = new[] { "Opt1", "Opt2", "Opt3" };
+        // Simulate first an invalid input then a valid selection ("2")
+        using (var sr = new StringReader("invalid\n2\n"))
+        {
+            // Redirect Console input.
+            Console.SetIn(sr);
+            string selected = Utils.SelectFromList(options);
+            Assert.Equal("Opt2", selected);
+        }
+    }
+
+    // Test case for SelectPort.
+    // (Note: This test will only run if there is at least one available serial port.)
+    [Fact]
+    public void SelectPort_ShouldReturnAValueFromAvailablePorts_IfAvailable()
+    {
+        string[] ports = SerialPort.GetPortNames();
+        if (ports.Length == 0)
+        {
+            // If no ports are available, skip this test.
+            return;
+        }
+        using (var sr = new StringReader("1\n"))
+        {
+            Console.SetIn(sr);
+            string selected = Utils.SelectPort();
+            Assert.Equal(ports[0], selected);
+        }
+    }
+
+    // Test case for RequestConstructorParameterValues.
+    // This test uses a dummy type with a two-parameter constructor.
+    [Fact]
+    public void RequestConstructorParameterValues_ShouldReturnCorrectValues()
+    {
+        var type = typeof(DummyMultiConstructor);
+        string simulatedInput = "10\nHello\n";
+        TextReader originalIn = Console.In;
+        try
+        {
+            using (var sr = new StringReader(simulatedInput))
+            {
+                Console.SetIn(sr);
+                var (values, dict) = Utils.RequestConstructorParameterValues(type);
+                Assert.Equal(2, values.Length);
+                Assert.Equal(10, values[0]);
+                Assert.Equal("Hello", values[1]);
+            }
+        }
+        finally
+        {
+            Console.SetIn(originalIn);
+        }
+    }
+
+    // Dummy type for testing RequestConstructorParameterValues.
+    public class DummyMultiConstructor
+    {
+        public int A { get; }
+        public string B { get; }
+        public DummyMultiConstructor(int a, string b)
+        {
+            A = a;
+            B = b;
+        }
+    }
+
+    #endregion
+
 
     #region Manufacturability Tests
 
