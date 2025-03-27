@@ -237,6 +237,22 @@ public class UtilsTests
         var result = Utils.IsGenericAssignableFrom(typeof(List<>), typeof(Dictionary<int, int>));
         Assert.False(result);
     }
+    // Additional Test Cases for IsGenericAssignableFrom
+    [Theory]
+    [InlineData(typeof(List<>), typeof(List<int>), true)]
+    [InlineData(typeof(IEnumerable<>), typeof(List<int>), false)]
+    [InlineData(typeof(List<string>), typeof(List<int>), false)]
+    [InlineData(typeof(IEnumerable<object>), typeof(List<string>), true)]
+    [InlineData(typeof(string), typeof(int), false)]
+    [InlineData(typeof(IEnumerable<>), typeof(List<>), false)]
+    [InlineData(typeof(IDictionary<,>), typeof(List<int>), false)]
+    [InlineData(typeof(List<int>), typeof(List<int>), true)]
+    [InlineData(typeof(IEnumerable<int>), typeof(List<int>), true)]
+    public void IsGenericAssignableFrom_ShouldReturnExpectedResults(Type baseGenericTypeOrDefinition, Type testGenericType, bool expected)
+    {
+        var result = Utils.IsGenericAssignableFrom(baseGenericTypeOrDefinition, testGenericType);
+        Assert.Equal(expected, result);
+    }
 
     /// <summary>
     /// Tests that <see cref="Utils.GetAvailableGenericTypes(Type, Type[])"/> returns generic types that use the specified parameters.
