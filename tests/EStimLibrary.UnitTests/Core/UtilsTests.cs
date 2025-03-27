@@ -613,13 +613,34 @@ public class UtilsTests
     [Fact]
     public void GetHardwareId_ShouldReturnParsedInteger()
     {
-        using (var sr = new StringReader("42\n"))
+        // Save original Console input.
+        TextReader originalIn = Console.In;
+
+        try
         {
-            Console.SetIn(sr);
-            int id = Utils.GetHardwareId();
-            Assert.Equal(42, id);
+            // Test with first simulated input "42"
+            using (var sr = new StringReader("42\n"))
+            {
+                Console.SetIn(sr);
+                int id = Utils.GetHardwareId();
+                Assert.Equal(42, id);
+            }
+
+            // Test with second simulated input "123"
+            using (var sr = new StringReader("123\n"))
+            {
+                Console.SetIn(sr);
+                int id = Utils.GetHardwareId();
+                Assert.Equal(123, id);
+            }
+        }
+        finally
+        {
+            // Restore the original Console input.
+            Console.SetIn(originalIn);
         }
     }
+
 
     /// <summary>
     /// Dummy class with a constructor taking a single integer, used to test ConstructWithUserInputParams.
@@ -664,18 +685,35 @@ public class UtilsTests
     [Fact]
     public void ReadJSON_ShouldReturnFileContents()
     {
-        string tempFile = Path.GetTempFileName();
+        // First test with expected content "TestContent"
+        string tempFile1 = Path.GetTempFileName();
         try
         {
-            File.WriteAllText(tempFile, "TestContent");
-            string content = Utils.ReadJSON(tempFile);
-            Assert.Equal("TestContent", content);
+            string expected1 = "TestContent";
+            File.WriteAllText(tempFile1, expected1);
+            string content1 = Utils.ReadJSON(tempFile1);
+            Assert.Equal(expected1, content1);
         }
         finally
         {
-            File.Delete(tempFile);
+            File.Delete(tempFile1);
+        }
+
+        // Second test with expected content "Test JSON Content"
+        string tempFile2 = Path.GetTempFileName();
+        try
+        {
+            string expected2 = "Test JSON Content";
+            File.WriteAllText(tempFile2, expected2);
+            string content2 = Utils.ReadJSON(tempFile2);
+            Assert.Equal(expected2, content2);
+        }
+        finally
+        {
+            File.Delete(tempFile2);
         }
     }
+
 
     /// <summary>
     /// Tests that UserInputDataIsValidType validates input correctly using the type converter.
@@ -688,6 +726,98 @@ public class UtilsTests
     }
 
     #endregion
+
+    #region Interactive Helper Functions Tests
+
+    [Fact]
+    public void RequestUserInput_WhenInvalidThenValidInput_ShouldReturnParsedValue()
+    {
+        // Arrange
+        string prompt = "Enter int:";
+        string errorMsg = "Invalid input";
+        string confMsg = "You entered:";
+        int callCount = 0;
+        // Simulate first invalid ("abc") then valid ("99") input.
+        Func<string> readInput = () =>
+        {
+            callCount++;
+            return callCount == 1 ? "abc" : "99";
+        };
+        var outputs = new List<string>();
+        Action<string> displayOutput = s => outputs.Add(s);
+
+        // Act
+        int result = Utils.RequestUserInput<int>(prompt, errorMsg, confMsg, displayOutput, readInput,
+            (string input, out int parsed) => int.TryParse(input, out parsed));
+
+        // Assert
+        Assert.Equal(99, result);
+    }
+
+    [Fact]
+    public void ConstructWithUserInputParams_ShouldCreateObjectFromConsoleInput()
+    {
+        // Arrange: Create a dummy class with a constructor that accepts an int.
+        // We'll use an inline dummy type for this test.
+        Type typeToConstruct = typeof(DummyForInput);
+        // Simulate user entering "77"
+        var input = new StringReader("77\n");
+        var originalIn = Console.In;
+        Console.SetIn(input);
+
+        try
+        {
+            // Act
+            var obj = Utils.ConstructWithUserInputParams(typeToConstruct) as DummyForInput;
+
+            // Assert
+            Assert.NotNull(obj);
+            Assert.Equal(77, obj.Value);
+        }
+        finally
+        {
+            Console.SetIn(originalIn);
+        }
+    }
+
+    [Fact]
+    public void EnumerableToString_ShouldReturnCommaSeparatedValues()
+    {
+        // Arrange
+        var items = new List<string> { "A", "B", "C" };
+
+        // Act
+        string result = Utils.EnumerableToString(items);
+
+        // Assert (format: [A,B,C])
+        Assert.Equal("[A,B,C]", result);
+    }
+
+    [Fact]
+    public void TryParseEnumerableOfStrings_WithValidIEnumerable_ShouldReturnTrueAndList()
+    {
+        // Arrange
+        object input = new List<string> { "X", "Y", "Z" };
+
+        // Act
+        bool success = Utils.TryParseEnumerableOfStrings(input, out List<string> output);
+
+        // Assert
+        Assert.True(success);
+        Assert.Equal(new List<string> { "X", "Y", "Z" }, output);
+    }
+
+    #endregion
+
+    // Dummy type for ConstructWithUserInputParams test.
+    public class DummyForInput
+    {
+        public int Value { get; }
+        public DummyForInput(int value)
+        {
+            Value = value;
+        }
+    }
 
 
     #region Test Product
