@@ -522,6 +522,174 @@ public class UtilsTests
         public int SampleMethod(int a, int b) => a + b;
     }
 
+    #region Additional Utility and Interactive Functions Tests
+
+    /// <summary>
+    /// Tests that TryParseEnumerableOfStrings returns true and the correct list when given an IEnumerable<string>.
+    /// </summary>
+    [Fact]
+    public void TryParseEnumerableOfStrings_WithEnumerable_ShouldReturnTrue()
+    {
+        IEnumerable<string> input = new List<string> { "a", "b", "c" };
+        bool result = Utils.TryParseEnumerableOfStrings(input, out List<string> output);
+        Assert.True(result);
+        Assert.Equal(new List<string> { "a", "b", "c" }, output);
+    }
+
+    /// <summary>
+    /// Tests that TryParseEnumerableOfStrings returns false and an empty list when given a non-enumerable object.
+    /// </summary>
+    [Fact]
+    public void TryParseEnumerableOfStrings_WithNonEnumerable_ShouldReturnFalse()
+    {
+        object input = 123;
+        bool result = Utils.TryParseEnumerableOfStrings(input, out List<string> output);
+        Assert.False(result);
+        Assert.Empty(output);
+    }
+
+    /// <summary>
+    /// Tests that DictOfSetsToString returns a correctly formatted string containing the header and dictionary entries.
+    /// </summary>
+    [Fact]
+    public void DictOfSetsToString_ShouldReturnFormattedString()
+    {
+        var dict = new Dictionary<string, SortedSet<int>>
+    {
+        { "key1", new SortedSet<int> { 1, 2 } },
+        { "key2", new SortedSet<int> { 3, 4 } }
+    };
+        string header = "Header:";
+        string result = Utils.DictOfSetsToString(dict, header);
+        Assert.Contains("Header:", result);
+        Assert.Contains("key1", result);
+        Assert.Contains("1", result);
+        Assert.Contains("2", result);
+        Assert.Contains("key2", result);
+        Assert.Contains("3", result);
+        Assert.Contains("4", result);
+    }
+
+    /// <summary>
+    /// Tests that SelectFromList returns the correct option when simulated input is provided.
+    /// </summary>
+    [Fact]
+    public void SelectFromList_ShouldReturnCorrectOption()
+    {
+        var options = new[] { "Option1", "Option2", "Option3" };
+        using (var sr = new StringReader("2\n"))
+        {
+            // Redirect Console input.
+            Console.SetIn(sr);
+            string selected = Utils.SelectFromList(options);
+            Assert.Equal("Option2", selected);
+        }
+    }
+
+    /// <summary>
+    /// Tests that SelectType returns the correct type and sets the out parameter based on simulated input.
+    /// </summary>
+    [Fact]
+    public void SelectType_ShouldReturnCorrectTypeAndSetOutParameter()
+    {
+        var dict = new Dictionary<string, Type>
+    {
+         { "TypeA", typeof(int) },
+         { "TypeB", typeof(string) }
+    };
+        using (var sr = new StringReader("1\n"))
+        {
+            Console.SetIn(sr);
+            string outName;
+            var type = Utils.SelectType(dict, out outName);
+            Assert.Equal(typeof(int), type);
+            Assert.Equal("TypeA", outName);
+        }
+    }
+
+    /// <summary>
+    /// Tests that GetHardwareId returns the correct integer value when simulated input is provided.
+    /// </summary>
+    [Fact]
+    public void GetHardwareId_ShouldReturnParsedInteger()
+    {
+        using (var sr = new StringReader("42\n"))
+        {
+            Console.SetIn(sr);
+            int id = Utils.GetHardwareId();
+            Assert.Equal(42, id);
+        }
+    }
+
+    /// <summary>
+    /// Dummy class with a constructor taking a single integer, used to test ConstructWithUserInputParams.
+    /// </summary>
+    public class DummyConstructor
+    {
+        public int X { get; }
+        public DummyConstructor(int x) { X = x; }
+    }
+
+    /// <summary>
+    /// Tests that ConstructWithUserInputParams creates an instance of the type with the correct parameter value
+    /// when simulated input is provided.
+    /// </summary>
+    [Fact]
+    public void ConstructWithUserInputParams_ShouldReturnInstanceWithCorrectValue()
+    {
+        using (var sr = new StringReader("100\n"))
+        {
+            Console.SetIn(sr);
+            object instance = Utils.ConstructWithUserInputParams(typeof(DummyConstructor));
+            Assert.IsType<DummyConstructor>(instance);
+            var dummy = (DummyConstructor)instance;
+            Assert.Equal(100, dummy.X);
+        }
+    }
+
+    /// <summary>
+    /// Tests that EnumerableToString returns a correctly formatted comma‐separated string.
+    /// </summary>
+    [Fact]
+    public void EnumerableToString_ShouldReturnCommaSeparatedString()
+    {
+        var list = new List<int> { 1, 2, 3 };
+        string result = Utils.EnumerableToString(list);
+        Assert.Equal("[1,2,3]", result);
+    }
+
+    /// <summary>
+    /// Tests that ReadJSON returns the correct file content by creating a temporary file.
+    /// </summary>
+    [Fact]
+    public void ReadJSON_ShouldReturnFileContents()
+    {
+        string tempFile = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllText(tempFile, "TestContent");
+            string content = Utils.ReadJSON(tempFile);
+            Assert.Equal("TestContent", content);
+        }
+        finally
+        {
+            File.Delete(tempFile);
+        }
+    }
+
+    /// <summary>
+    /// Tests that UserInputDataIsValidType validates input correctly using the type converter.
+    /// </summary>
+    [Fact]
+    public void UserInputDataIsValidType_ShouldValidateCorrectly()
+    {
+        bool result = Utils.UserInputDataIsValidType("123", typeof(int));
+        Assert.True(result);
+    }
+
+    #endregion
+
+
     #region Test Product
 
     /// <summary>
