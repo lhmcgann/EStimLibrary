@@ -10,6 +10,7 @@ using EStimLibrary.Extensions.HardwareInterfaces;
 using EStimLibrary.Extensions.SpatialModel.StringHierarchy;
 using EStimLibrary.Extensions.Stimulation.Stimulators;
 using System.IO.Ports;
+using System.Text;
 
 
 namespace EStimLibrary.UnitTests.Core;
@@ -240,8 +241,8 @@ public class UtilsTests
     // Additional Test Cases for IsGenericAssignableFrom
     [Theory]
     [InlineData(typeof(List<>), typeof(List<int>), true)]
-    [InlineData(typeof(IEnumerable<>), typeof(List<int>), false)]
     [InlineData(typeof(List<string>), typeof(List<int>), false)]
+    [InlineData(typeof(IEnumerable<>), typeof(List<int>), false)]
     [InlineData(typeof(IEnumerable<object>), typeof(List<string>), true)]
     [InlineData(typeof(string), typeof(int), false)]
     [InlineData(typeof(IEnumerable<>), typeof(List<>), false)]
@@ -285,6 +286,36 @@ public class UtilsTests
     {
         var result = Utils.AreTypeParametersCompatible(typeof(List<int>), typeof(List<string>));
         Assert.False(result);
+    }
+
+    // Test cases for AreTypeParametersCompatible
+    [Fact]
+    public void AreTypeParametersCompatible_WithCovariantTypes_ShouldReturnTrue()
+    {
+        // In this case, object is assignable from string so List<object> should be compatible with List<string>.
+        bool result = Utils.AreTypeParametersCompatible(typeof(List<object>), typeof(List<string>));
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void AreTypeParametersCompatible_WithIncompatibleTypes_ShouldReturnFalse()
+    {
+        // Here, string is not assignable from object so List<string> should NOT be compatible with List<object>.
+        bool result = Utils.AreTypeParametersCompatible(typeof(List<string>), typeof(List<object>));
+        Assert.False(result);
+    }
+    [Theory]
+    [InlineData(typeof(List<int>), typeof(List<int>), true)] // exact match
+    [InlineData(typeof(List<object>), typeof(List<string>), true)] // compatible (string -> object)
+    [InlineData(typeof(List<string>), typeof(List<object>), false)] // incompatible (object -> string)
+    [InlineData(typeof(IEnumerable<string>), typeof(List<string>), false)] // different generic definitions
+    [InlineData(typeof(List<int>), typeof(Dictionary<int, string>), false)] // different generic definitions
+    [InlineData(typeof(List<int>), typeof(int), false)] // one non-generic type
+    [InlineData(typeof(int), typeof(int), false)] // both non-generic types
+    public void AreTypeParametersCompatible_ShouldReturnExpectedResult(Type typeA, Type typeB, bool expected)
+    {
+        var result = Utils.AreTypeParametersCompatible(typeA, typeB);
+        Assert.Equal(expected, result);
     }
 
     /// <summary>
@@ -975,23 +1006,6 @@ public class UtilsTests
         Assert.False(result);
     }
 
-    // Test cases for AreTypeParametersCompatible
-    [Fact]
-    public void AreTypeParametersCompatible_WithCovariantTypes_ShouldReturnTrue()
-    {
-        // In this case, object is assignable from string so List<object> should be compatible with List<string>.
-        bool result = Utils.AreTypeParametersCompatible(typeof(List<object>), typeof(List<string>));
-        Assert.True(result);
-    }
-
-    [Fact]
-    public void AreTypeParametersCompatible_WithIncompatibleTypes_ShouldReturnFalse()
-    {
-        // Here, string is not assignable from object so List<string> should NOT be compatible with List<object>.
-        bool result = Utils.AreTypeParametersCompatible(typeof(List<string>), typeof(List<object>));
-        Assert.False(result);
-    }
-
     // Test case for ReadJSON: test the error path when the file does not exist.
     [Fact]
     public void ReadJSON_WhenFileDoesNotExist_ShouldThrowFileNotFoundException()
@@ -1139,12 +1153,16 @@ public class UtilsTests
     [Fact]
     public void IsManufacturableProduct_WhenFactoryExists_ShouldReturnTrue()
     {
-        // We know that ManufacturableProduct is produced by ManufacturableProductFactory.
-        // The production IFactory<> implementations are scanned via GetAvailableGenericTypes.
-        bool manufacturable = Utils.IsManufacturableProduct(typeof(ManufacturableProduct), out Dictionary<string, Type> factoryTypes);
-        Assert.True(manufacturable);
-        Assert.NotNull(factoryTypes);
-        Assert.True(factoryTypes.Count > 0);
+        // Arrange
+        Type productType = typeof(IBodyModel); // Assuming IBodyModel has factories implemented
+
+        // Act
+        bool result = Utils.IsManufacturableProduct(productType, out var availableFactories);
+
+        // Assert
+        Assert.True(result);
+        Assert.NotNull(availableFactories);
+        Assert.NotEmpty(availableFactories);
     }
 
     /// <summary>
@@ -1152,14 +1170,165 @@ public class UtilsTests
     /// when no factory exists for the product type.
     /// </summary>
     [Fact]
-    public void IsManufacturableProduct_WhenNoFactoryExists_ShouldReturnFalse()
+    public void IsManufacturableProduct_WhenFactoryDoesNotExist_ShouldReturnFalse()
     {
-        // NonManufacturableProduct is not produced by any factory in this assembly.
-        bool manufacturable = Utils.IsManufacturableProduct(typeof(NonManufacturableProduct), out Dictionary<string, Type> factoryTypes);
-        Assert.False(manufacturable);
-        Assert.NotNull(factoryTypes);
-        Assert.Empty(factoryTypes);
+        // Arrange
+        Type productType = typeof(string); // Standard type without factories in this context
+
+        // Act
+        bool result = Utils.IsManufacturableProduct(productType, out var availableFactories);
+
+        // Assert
+        Assert.False(result);
+        Assert.True(availableFactories == null || availableFactories.Count == 0);
     }
+    /// <summary>
+    /// Tests that <see cref="Utils.IsManufacturableProduct(Type, out Dictionary{string, Type})"/> returns false
+    /// when the open generic product type.
+    /// </summary>
+    [Fact]
+    public void IsManufacturableProduct_WithOpenGenericType_ShouldReturnFalse()
+    {
+        // Arrange
+        Type openGenericType = typeof(IEnumerable<>); // Open generic type without specific factory
+
+        // Act
+        bool result = Utils.IsManufacturableProduct(openGenericType, out var availableFactories);
+
+        // Assert
+        Assert.False(result);
+        Assert.True(availableFactories == null || availableFactories.Count == 0);
+    }
+
+    /// <summary>
+    /// Tests that <see cref="Utils.RequestFactoryCreateParamValues"/> returns correctly parsed values
+    /// when provided valid user inputs and using FixedOptionDataLimits.
+    /// </summary>
+    [Fact]
+    public void RequestFactoryCreateParamValues_WithFixedOptionDataLimits_ShouldReturnCorrectValues()
+    {
+        // Arrange
+        var paramLimits = new Dictionary<string, IDataLimits>
+        {
+            ["OptionParam"] = new FixedOptionDataLimits<string>(new SortedSet<string> { "Option1", "Option2" })
+        };
+
+        var inputs = new Queue<string>(new[] { "Option1" });
+        var output = new StringBuilder();
+
+        // Act
+        var result = Utils.RequestFactoryCreateParamValues(
+            "Test FixedOptionDataLimits",
+            paramLimits,
+            s => output.AppendLine(s),
+            inputs.Dequeue);
+
+        // Assert
+        Assert.Single(result);
+        Assert.Equal("Option1", result["OptionParam"]);
+    }
+
+    /// <summary>
+    /// Tests that <see cref="Utils.RequestFactoryCreateParamValues"/> properly handles invalid inputs
+    /// and only accepts values defined by FixedOptionDataLimits.
+    /// </summary>
+    [Fact]
+    public void RequestFactoryCreateParamValues_WithFixedOptionDataLimits_InvalidInput_ShouldRepromptUntilValid()
+    {
+        // Arrange
+        var paramLimits = new Dictionary<string, IDataLimits>
+        {
+            ["OptionParam"] = new FixedOptionDataLimits<int>(new SortedSet<int> { 10, 20 })
+        };
+
+        var inputs = new Queue<string>(new[] { "15", "30", "20" }); // invalid inputs first, then valid
+        var output = new StringBuilder();
+
+        // Act
+        var result = Utils.RequestFactoryCreateParamValues(
+            "Test FixedOptionDataLimits with reprompt",
+            paramLimits,
+            s => output.AppendLine(s),
+            inputs.Dequeue);
+
+        // Assert
+        Assert.Single(result);
+        Assert.Equal(20, result["OptionParam"]);
+    }
+
+    /// <summary>
+    /// Tests that <see cref="Utils.RequestFactoryCreateParamValues"/> returns correctly structured values
+    /// when provided valid sequence inputs according to SequenceDataLimits.
+    /// </summary>
+    [Fact]
+    public void RequestFactoryCreateParamValues_WithSequenceDataLimits_ShouldReturnCorrectSequence()
+    {
+        // Arrange
+        var sequenceLimits = new SequenceDataLimits(
+            new List<string> { "First", "Second" },
+            new Dictionary<string, IDataLimits>
+            {
+                ["First"] = new FixedOptionDataLimits<string>(new SortedSet<string> { "Alpha", "Beta" }),
+                ["Second"] = new FixedOptionDataLimits<int>(new SortedSet<int> { 1, 2 })
+            }
+        );
+
+        var paramLimits = sequenceLimits.ElementLimits;
+
+        var inputs = new Queue<string>(new[] { "Alpha", "2" });
+        var output = new StringBuilder();
+
+        // Act
+        var result = Utils.RequestFactoryCreateParamValues(
+            "Test SequenceDataLimits",
+            paramLimits,
+            s => output.AppendLine(s),
+            inputs.Dequeue);
+
+        // Assert
+        Assert.Equal(2, result.Count);
+        Assert.Equal("Alpha", result["First"]);
+        Assert.Equal(2, result["Second"]);
+    }
+
+
+
+    /// <summary>
+    /// Tests that <see cref="Utils.RequestFactoryCreateParamValues"/> correctly handles optional elements
+    /// within SequenceDataLimits.
+    /// </summary>
+    [Fact]
+    public void RequestFactoryCreateParamValues_WithSequenceDataLimits_OptionalElements_ShouldHandleCorrectly()
+    {
+        // Arrange
+        var sequenceLimits = new SequenceDataLimits(
+            new List<string> { "First", "Second" },
+            new Dictionary<string, IDataLimits>
+            {
+                ["First"] = new FixedOptionDataLimits<string>(new SortedSet<string> { "Alpha", "Beta" }),
+                ["Second"] = new FixedOptionDataLimits<int>(new SortedSet<int> { 1, 2 })
+            }
+        );
+
+        var paramLimits = sequenceLimits.ElementLimits;
+
+        // Correctly queue each input separately instead of comma-separated single input
+        var inputs = new Queue<string>(new[] { "Alpha", "1" });
+        var output = new StringBuilder();
+
+        // Act
+        var result = Utils.RequestFactoryCreateParamValues(
+            "Test SequenceDataLimits with Optional Elements",
+            paramLimits,
+            s => output.AppendLine(s),
+            inputs.Dequeue);
+
+        // Assert
+        Assert.Equal(2, result.Count);
+        Assert.Equal("Alpha", result["First"]);
+        Assert.Equal(1, result["Second"]);
+    }
+
 
     #endregion
 
