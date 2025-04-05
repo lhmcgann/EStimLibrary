@@ -1,0 +1,4 @@
+{
+    "_requiredModifiers": [ "x", "y", "z" ],
+    "baseBodyRegion1": "x"
+}
