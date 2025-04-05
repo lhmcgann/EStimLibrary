@@ -1,6 +1,9 @@
 ﻿using EStimLibrary.Extensions.SpatialModel.StringHierarchy;
+using Microsoft.VisualStudio.TestPlatform.Utilities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Runtime.InteropServices;
+using System.Xml.Linq;
 
 namespace EStimLibrary.UnitTests.Extensions.SpatialModel.StringHierarchy;
 
@@ -9,6 +12,10 @@ namespace EStimLibrary.UnitTests.Extensions.SpatialModel.StringHierarchy;
 public class StringHierarchyBodyModelBuilderTests
 {
     private readonly ITestOutputHelper _output;
+
+    protected const string TEST_FILEPATH =
+        "./../../../Extensions/SpatialModel/StringHierarchy" +
+        "/StringHierarchyBodyModelBuilderTestFiles";
 
     // Test class constructor creates an output helper so can write console
     // output.
@@ -84,7 +91,7 @@ public class StringHierarchyBodyModelBuilderTests
     [Fact]
     public void Constructor_ShouldThrowIOException()
     {
-        Assert.Throws<IOException>(() =>
+        Assert.ThrowsAny<IOException>(() =>
             new StringHierarchyBodyModelBuilder("invalid-filapath"));
     }
 
@@ -95,7 +102,8 @@ public class StringHierarchyBodyModelBuilderTests
     public void Constructor_ShouldThrowJsonReaderException()
     {
         Assert.Throws<JsonReaderException>(() =>
-            new StringHierarchyBodyModelBuilder("valid-filepath"));
+            new StringHierarchyBodyModelBuilder(TEST_FILEPATH +
+                "/Constructor_ShouldThrowJsonReaderException.txt"));
     }
 
     /// <summary>
@@ -103,17 +111,22 @@ public class StringHierarchyBodyModelBuilderTests
     /// </summary>
     [Theory]
     // Test invalid number of properties
-    [InlineData("valid-filepath1")]
+    [InlineData(TEST_FILEPATH +
+        "/Constructor_ShouldThrowArgumentExceptionNumProps.txt")]
     // Test no required modifier array as first property
-    [InlineData("valid-filepath2")]
+    [InlineData(TEST_FILEPATH +
+        "/Constructor_ShouldThrowArgumentExceptionNoReqs.txt")]
+    // Test required modifier property not an array
+    [InlineData(TEST_FILEPATH +
+        "/Constructor_ShouldThrowArgumentExceptionReqsNotArray.txt")]
     public void Constructor_ShouldThrowArgumentException(string filepath)
     {
         Assert.Throws<ArgumentException>(() =>
             new StringHierarchyBodyModelBuilder(filepath));
     }
-
+    
     /// <summary>
-    /// Test constructor with no body regions defined.
+    /// Test constructor with normal inputs.
     /// </summary>
     [Fact]
     public void Constructor_ShouldInit()
@@ -121,153 +134,356 @@ public class StringHierarchyBodyModelBuilderTests
         Type type = typeof(StringHierarchyBodyModelBuilder);
 
         StringHierarchyBodyModelBuilder builder =
-            new StringHierarchyBodyModelBuilder("valid-filepath");
+            new StringHierarchyBodyModelBuilder(TEST_FILEPATH +
+                "/Constructor_ShouldInit.txt");
 
-        Assert.Equivalent("expected", type.InvokeMember("_RequiredModifiers",
-            System.Reflection.BindingFlags.GetField |
-            System.Reflection.BindingFlags.NonPublic, null, builder, null));
-        Assert.Equal("expected", type.InvokeMember("_RootRegion",
-            System.Reflection.BindingFlags.GetField |
-            System.Reflection.BindingFlags.NonPublic, null, builder, null));
-        Assert.Equivalent("expected", type.InvokeMember(
-            "_availableBaseRegions", System.Reflection.BindingFlags.GetField |
-            System.Reflection.BindingFlags.NonPublic, null, builder, null));
-        Assert.Equivalent("expected", builder.AvailableModelNames);
+        // Set up expected _availableBaseRegions values
+        StringHierarchyRegion root = new StringHierarchyRegion("root", null);
+
+        StringHierarchyRegion region1 = new StringHierarchyRegion(
+            "basebodyregion1", root, options: new HashSet<string> {
+                "independentoptiona1", "independentoptionan" },
+            modifiers: new Dictionary<string, HashSet<string>> {
+                { "x", new HashSet<string> {
+                    "medial", "central", "lateral" } },
+                { "y", new HashSet<string> { "superior", "inferior" } },
+                { "z", new HashSet<string> { "anterior", "posterior" } }
+            });
+
+        StringHierarchyRegion existing;
+
+        region1.AddSubregion(new StringHierarchyRegion("subregion1", region1,
+            parentOptions: new HashSet<string> {
+                "independentoptiona1", "independentoptionan" },
+            modifiers: new Dictionary<string, HashSet<string>> {
+                { "y", new HashSet<string> {
+                    "proximal", "intermediate", "distal" } },
+                { "x", new HashSet<string> {
+                    "medial", "central", "lateral" } },
+                { "z", new HashSet<string> { "anterior", "posterior" } }
+            }), out existing);
+
+        region1.AddSubregion(new StringHierarchyRegion("subregionn", region1,
+            parentOptions: new HashSet<string> {
+                "independentoptiona1", "independentoptionan" },
+            modifiers: new Dictionary<string, HashSet<string>> {
+                { "y", new HashSet<string> { "rostral", "middle", "caudal" } },
+                { "x", new HashSet<string> {
+                    "medial", "central", "lateral" } },
+                { "z", new HashSet<string> { "anterior", "posterior" } }
+            }), out existing);
+
+        Dictionary<string, StringHierarchyRegion> baseRegions =
+            new Dictionary<string, StringHierarchyRegion> { };
+
+        foreach (string name in region1.OptionedRegionNames)
+        {
+            baseRegions.Add(name, region1);
+        }
+
+        foreach (KeyValuePair<string,StringHierarchyRegion> subregionPair
+            in region1.Subregions)
+        {
+            foreach (string option in region1.Options)
+            {
+                baseRegions.Add(option + " " + subregionPair.Key,
+                    subregionPair.Value);
+            }
+        }
+
+        foreach (KeyValuePair<string, StringHierarchyRegion> entry
+            in (Dictionary<string, StringHierarchyRegion>)
+            type.InvokeMember("_availableBaseRegions",
+            System.Reflection.BindingFlags.NonPublic |
+            System.Reflection.BindingFlags.Instance |
+            System.Reflection.BindingFlags.GetProperty,
+            null, builder, null))
+        {
+            Assert.Equal(baseRegions[entry.Key].ToString(),
+                entry.Value.ToString());
+        }
+
+        Assert.Equivalent(baseRegions.Keys, builder.AvailableModelNames);
     }
 
     /// <summary>
     /// Test _ParseJSONBodyRegion (via constructor) with invalid regionJson
-    /// body.
+    /// body or missing modifiers.
     /// </summary>
-    [Fact]
-    public void ParseJSONBodyRegion_ShouldThrowArgumentException()
+    [Theory]
+    // Test un-parseable regionJson body
+    [InlineData(TEST_FILEPATH +
+        "/ParseJSONBodyRegion_ShouldThrowArgumentException.txt")]
+    //Test missing required mods
+    [InlineData(TEST_FILEPATH +
+        "/ParseJSONBodyRegion_ShouldThrowArgumentExceptionReqMods.txt")]
+    public void ParseJSONBodyRegion_ShouldThrowArgumentException(
+        string filepath)
     {
         Assert.Throws<ArgumentException>(() =>
-            new StringHierarchyBodyModelBuilder("valid-filepath"));
+            new StringHierarchyBodyModelBuilder(TEST_FILEPATH +
+                "/ParseJSONBodyRegion_ShouldThrowArgumentException.txt"));
     }
 
     /// <summary>
-    /// Test _ParseJSONBodyRegion (via constructor) with empty properties in
-    /// regionJson body.
+    /// Test _ParseJSONBodyRegion (via constructor) with valid JSON input which
+    /// provokes a warning.
     /// </summary>
+    [Theory]
+    // Test invalid property
+    [InlineData(TEST_FILEPATH +
+        "/ParseJSONBodyRegion_ShouldInitAndWarnInvalidProp.txt")]
+    // Test invalid modifier
+    [InlineData(TEST_FILEPATH +
+        "/ParseJSONBodyRegion_ShouldInitAndWarnInvalidMod.txt")]
+    // Test duplicate subregions
+    [InlineData(TEST_FILEPATH +
+        "/ParseJSONBodyRegion_ShouldInitAndWarnDuplicateSubregions.txt")]
+    public void Constructor_ShouldInitAndWarn(string filepath)
+    {
+        Type type = typeof(StringHierarchyBodyModelBuilder);
+
+        StringHierarchyBodyModelBuilder builder =
+            new StringHierarchyBodyModelBuilder(filepath);
+
+        // Set up expected _availableBaseRegions values
+        StringHierarchyRegion root = new StringHierarchyRegion("root", null);
+
+        StringHierarchyRegion region1 = new StringHierarchyRegion(
+            "basebodyregion1", root, options: new HashSet<string> {
+                "independentoptiona1", "independentoptionan" },
+            modifiers: new Dictionary<string, HashSet<string>> {
+                { "x", new HashSet<string> {
+                    "medial", "central", "lateral" } },
+                { "y", new HashSet<string> { "superior", "inferior" } },
+                { "z", new HashSet<string> { "anterior", "posterior" } }
+            });
+
+        StringHierarchyRegion existing;
+
+        region1.AddSubregion(new StringHierarchyRegion("subregion1", region1,
+            parentOptions: new HashSet<string> {
+                "independentoptiona1", "independentoptionan" },
+            modifiers: new Dictionary<string, HashSet<string>> {
+                { "y", new HashSet<string> {
+                    "proximal", "intermediate", "distal" } },
+                { "x", new HashSet<string> {
+                    "medial", "central", "lateral" } },
+                { "z", new HashSet<string> { "anterior", "posterior" } }
+            }), out existing);
+
+        region1.AddSubregion(new StringHierarchyRegion("subregionn", region1,
+            parentOptions: new HashSet<string> {
+                "independentoptiona1", "independentoptionan" },
+            modifiers: new Dictionary<string, HashSet<string>> {
+                { "x", new HashSet<string> {
+                    "medial", "central", "lateral" } },
+                { "y", new HashSet<string> { "superior", "inferior" } },
+                { "z", new HashSet<string> { "anterior", "posterior" } }
+            }), out existing);
+
+        Dictionary<string, StringHierarchyRegion> baseRegions =
+            new Dictionary<string, StringHierarchyRegion> { };
+
+        foreach (string name in region1.OptionedRegionNames)
+        {
+            baseRegions.Add(name, region1);
+        }
+
+        foreach (KeyValuePair<string, StringHierarchyRegion> subregionPair
+            in region1.Subregions)
+        {
+            foreach (string option in region1.Options)
+            {
+                baseRegions.Add(option + " " + subregionPair.Key,
+                    subregionPair.Value);
+            }
+        }
+
+        foreach (KeyValuePair<string, StringHierarchyRegion> entry
+            in (Dictionary<string, StringHierarchyRegion>)
+            type.InvokeMember("_availableBaseRegions",
+            System.Reflection.BindingFlags.NonPublic |
+            System.Reflection.BindingFlags.Instance |
+            System.Reflection.BindingFlags.GetProperty,
+            null, builder, null))
+        {
+            Assert.Equal(baseRegions[entry.Key].ToString(),
+                entry.Value.ToString());
+        }
+
+        Assert.Equivalent(baseRegions.Keys, builder.AvailableModelNames);
+    }
 
     /// <summary>
-    /// Test _ParseJSONBodyRegion (via constructor) with invalid properties in
-    /// regionJson body.
+    /// Test _ParseJSONBodyRegion (via constructor) with no options.
     /// </summary>
+    [Fact]
+    public void ParseJSONBodyRegion_ShouldInitNoOptions()
+    {
+        Type type = typeof(StringHierarchyBodyModelBuilder);
+
+        StringHierarchyBodyModelBuilder builder =
+            new StringHierarchyBodyModelBuilder(TEST_FILEPATH +
+                "/ParseJSONBodyRegion_ShouldInitNoOptions.txt");
+
+        // Set up expected _availableBaseRegions values
+        StringHierarchyRegion root = new StringHierarchyRegion("root", null);
+
+        StringHierarchyRegion region1 = new StringHierarchyRegion(
+            "basebodyregion1", root,
+            modifiers: new Dictionary<string, HashSet<string>> {
+                { "x", new HashSet<string> {
+                    "medial", "central", "lateral" } },
+                { "y", new HashSet<string> { "superior", "inferior" } },
+                { "z", new HashSet<string> { "anterior", "posterior" } }
+            });
+
+        StringHierarchyRegion existing;
+
+        region1.AddSubregion(new StringHierarchyRegion("subregion1", region1,
+            modifiers: new Dictionary<string, HashSet<string>> {
+                { "y", new HashSet<string> {
+                    "proximal", "intermediate", "distal" } },
+                { "x", new HashSet<string> {
+                    "medial", "central", "lateral" } },
+                { "z", new HashSet<string> { "anterior", "posterior" } }
+            }), out existing);
+
+        region1.AddSubregion(new StringHierarchyRegion("subregionn", region1,
+            modifiers: new Dictionary<string, HashSet<string>> {
+                { "y", new HashSet<string> { "rostral", "middle", "caudal" } },
+                { "x", new HashSet<string> {
+                    "medial", "central", "lateral" } },
+                { "z", new HashSet<string> { "anterior", "posterior" } }
+            }), out existing);
+
+        Dictionary<string, StringHierarchyRegion> baseRegions =
+            new Dictionary<string, StringHierarchyRegion> { };
+
+        foreach (string name in region1.OptionedRegionNames)
+        {
+            baseRegions.Add(name, region1);
+        }
+
+        foreach (KeyValuePair<string, StringHierarchyRegion> subregionPair
+            in region1.Subregions)
+        {
+            baseRegions.Add(subregionPair.Key, subregionPair.Value);
+        }
+
+        foreach (KeyValuePair<string, StringHierarchyRegion> entry
+            in (Dictionary<string, StringHierarchyRegion>)
+            type.InvokeMember("_availableBaseRegions",
+            System.Reflection.BindingFlags.NonPublic |
+            System.Reflection.BindingFlags.Instance |
+            System.Reflection.BindingFlags.GetProperty,
+            null, builder, null))
+        {
+            Assert.Equal(baseRegions[entry.Key].ToString(),
+                entry.Value.ToString());
+        }
+
+        Assert.Equivalent(baseRegions.Keys, builder.AvailableModelNames);
+    }
 
     /// <summary>
-    /// Test _ParseJSONBodyRegion (via constructor) with empty modifiers in
-    /// regionJson body.
+    /// Test _ParseJSONBodyRegion (via constructor) with both propagated and
+    /// locally-defined options.
     /// </summary>
+    [Fact]
+    public void ParseJSONBodyRegion_ShouldInitNestedOptions()
+    {
+        Type type = typeof(StringHierarchyBodyModelBuilder);
 
-    /// <summary>
-    /// Test _ParseJSONBodyRegion (via constructor) with duplicate modifiers in
-    /// regionJson body.
-    /// </summary>
+        StringHierarchyBodyModelBuilder builder =
+            new StringHierarchyBodyModelBuilder(TEST_FILEPATH +
+                "/ParseJSONBodyRegion_ShouldInitNestedOptions.txt");
 
-    /// <summary>
-    /// Test _ParseJSONBodyRegion (via constructor) with missing modifiers in
-    /// regionJson body.
-    /// </summary>
+        // Set up expected _availableBaseRegions values
+        StringHierarchyRegion root = new StringHierarchyRegion("root", null);
 
-    /// <summary>
-    /// Test _ParseJSONBodyRegion (via constructor) with valid inputs in
-    /// regionJson body.
-    /// </summary>
+        StringHierarchyRegion region1 = new StringHierarchyRegion(
+            "basebodyregion1", root, options: new HashSet<string> {
+                "independentoptiona1", "independentoptionan" },
+            modifiers: new Dictionary<string, HashSet<string>> {
+                { "x", new HashSet<string> {
+                    "medial", "central", "lateral" } },
+                { "y", new HashSet<string> { "superior", "inferior" } },
+                { "z", new HashSet<string> { "anterior", "posterior" } }
+            });
 
-    /// <summary>
-    /// Test _ParseJSONBodyRegion (via constructor) with no propagating options
-    /// in regionJson body.
-    /// </summary>
+        StringHierarchyRegion existing;
 
-    /// <summary>
-    /// Test _ParseJSONBodyRegion (via constructor) with propagating options in
-    /// regionJson body.
-    /// </summary>
+        region1.AddSubregion(new StringHierarchyRegion("subregion1", region1,
+            options: new HashSet<string> {
+                "suboptiona1", "suboptionan" },
+            parentOptions: new HashSet<string> {
+                "independentoptiona1", "independentoptionan" },
+            modifiers: new Dictionary<string, HashSet<string>> {
+                { "y", new HashSet<string> {
+                    "proximal", "intermediate", "distal" } },
+                { "x", new HashSet<string> {
+                    "medial", "central", "lateral" } },
+                { "z", new HashSet<string> { "anterior", "posterior" } }
+            }), out existing);
 
-    /// <summary>
-    /// Test _ParseJSONBodyRegion (via constructor) with no subregions in
-    /// regionJson body.
-    /// </summary>
+        region1.AddSubregion(new StringHierarchyRegion("subregionn", region1,
+            parentOptions: new HashSet<string> {
+                "independentoptiona1", "independentoptionan" },
+            modifiers: new Dictionary<string, HashSet<string>> {
+                { "y", new HashSet<string> { "rostral", "middle", "caudal" } },
+                { "x", new HashSet<string> {
+                    "medial", "central", "lateral" } },
+                { "z", new HashSet<string> { "anterior", "posterior" } }
+            }), out existing);
 
-    /// <summary>
-    /// Test _ParseJSONBodyRegion (via constructor) with invalid subregions in
-    /// regionJson body.
-    /// </summary>
+        Dictionary<string, StringHierarchyRegion> baseRegions =
+            new Dictionary<string, StringHierarchyRegion> { };
 
-    /// <summary>
-    /// Test _ParseJSONBodyRegion (via constructor) with non-null options
-    /// passed?
-    /// </summary>
+        foreach (string name in region1.OptionedRegionNames)
+        {
+            baseRegions.Add(name, region1);
+        }
 
-    /// <summary>
-    /// Test _ParseJSONBodyRegion (via constructor) with non-null modifiers
-    /// passed?
-    /// </summary>
+        foreach (KeyValuePair<string, StringHierarchyRegion> subregionPair
+            in region1.Subregions)
+        {
+            foreach (string option in region1.Options)
+            {
+                if (subregionPair.Value.HasOptions)
+                {
+                    foreach (string name
+                        in subregionPair.Value.OptionedRegionNames)
+                    {
+                        baseRegions.Add(option + " " + name,
+                            subregionPair.Value);
+                    }
+                }
+                else
+                {
+                    baseRegions.Add(option + " " + subregionPair.Key,
+                    subregionPair.Value);
+                }
+            }
+        }
+
+        foreach (KeyValuePair<string, StringHierarchyRegion> entry
+            in (Dictionary<string, StringHierarchyRegion>)
+            type.InvokeMember("_availableBaseRegions",
+            System.Reflection.BindingFlags.NonPublic |
+            System.Reflection.BindingFlags.Instance |
+            System.Reflection.BindingFlags.GetProperty,
+            null, builder, null))
+        {
+            Assert.Equal(baseRegions[entry.Key].ToString(),
+                entry.Value.ToString());
+        }
+
+        Assert.Equivalent(baseRegions.Keys, builder.AvailableModelNames);
+    }
 
     /// <summary>
     /// Test TryCreate...
     /// </summary>
-
-    // Test method naming convention: LibClassMethodName_ScenarioShouldExpectn
-
-    /*
-    /// <summary>
-    /// Test the empty constructor.
-    /// </summary>
-    [Fact]
-    public void EmptyConstuctor_ShouldInitEmpty()
-    {
-        var reusableIdPool = new ReusableIdPool();
-
-        Assert.Equal(0, reusableIdPool.BaseId);
-        Assert.Equal(0, reusableIdPool.NumIds);
-        Assert.Empty(reusableIdPool.Ids);
-        Assert.Equal(0, reusableIdPool.NumUsedIds);
-        Assert.Empty(reusableIdPool.UsedIds);
-        Assert.Equal(0, reusableIdPool.NumFreeIds);
-        Assert.Empty(reusableIdPool.FreeIds);
-    }
-
-
-    /// <summary>
-    /// Test the parameterized constructor with different data values.
-    /// </summary>
-    [Theory]
-    // Test expected valid (non-negative) parameter values.
-    [InlineData(0, 0, new int[0])]
-    [InlineData(0, 1, new int[] { 0 })]
-    [InlineData(0, 10, new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 })]
-    [InlineData(1, 0, new int[0])]
-    [InlineData(1, 1, new int[] { 1 })]
-    [InlineData(2, 9, new int[] { 2, 3, 4, 5, 6, 7, 8, 9, 10 })]
-    // Test negative parameter values default to 0 before generating ID set.
-    [InlineData(-1, 0, new int[0])]
-    [InlineData(-3, 3, new int[] { 0, 1, 2 })]
-    [InlineData(0, -1, new int[0])]
-    [InlineData(3, -3, new int[0])]
-    [InlineData(-5, -4, new int[0])]
-    public void Constuctor_ShouldInitIdSets(int baseId, int numIds,
-        int[] expectedIds)
-    {
-        // Init new ReusableIdPool
-        var reusableIdPool = new ReusableIdPool(baseId, numIds);
-
-        // Set expected values.
-        int expectedBaseId = Math.Max(baseId, 0);
-        int expectedNumIds = Math.Max(numIds, 0);
-        SortedSet<int> expectedIdSet = new(expectedIds);
-        this._output.WriteLine($"\nBase Id: {expectedBaseId}\nNum Ids: " +
-            $"{expectedNumIds}");
-
-        // Test ReusableIdPool properties are initialized correctly.
-        Assert.Equal(expectedBaseId, reusableIdPool.BaseId);
-        Assert.Equal(expectedNumIds, reusableIdPool.NumIds);
-        Assert.Equal<int>(expectedIdSet, reusableIdPool.Ids);
-        Assert.Equal(0, reusableIdPool.NumUsedIds);
-        Assert.Empty(reusableIdPool.UsedIds);
-        Assert.Equal(expectedNumIds, reusableIdPool.NumFreeIds);
-        Assert.Equal<int>(expectedIdSet, reusableIdPool.FreeIds);
-    }*/
 }

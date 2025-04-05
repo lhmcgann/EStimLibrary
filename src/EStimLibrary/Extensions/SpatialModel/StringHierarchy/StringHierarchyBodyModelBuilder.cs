@@ -76,9 +76,6 @@ public class StringHierarchyBodyModelBuilder : BodyModelBuilderBase
         }
         // Fill the available model names property.
         this.AvailableModelNames = this._availableBaseRegions.Keys.ToList();
-
-        // TODO: remove this print once done debugging
-        Console.WriteLine(this._RootRegion);
     }
 
     // TODO: TEST THE HECK OUT OF THIS
@@ -97,7 +94,9 @@ public class StringHierarchyBodyModelBuilder : BodyModelBuilderBase
     /// region. Neither this dictionary not the contained value sets shall be
     /// modified by this function call.</param>
     /// <returns>The 'root' node constructed from this JSON property.</returns>
-    /// <exception cref="ArgumentException">TODO</exception>
+    /// <exception cref="ArgumentException">One or more JSON properties do not
+    /// match expected types, or one or more required modifiers are missing.
+    /// </exception>
     protected StringHierarchyRegion _ParseJSONBodyRegion(
         StringHierarchyRegion parentRegion,
         JProperty regionJson, HashSet<string> passedOptions = null,
