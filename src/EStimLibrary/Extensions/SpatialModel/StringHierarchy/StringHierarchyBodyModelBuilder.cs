@@ -354,9 +354,10 @@ public class StringHierarchyBodyModelBuilder : BodyModelBuilderBase
         out IBodyModel bodyModel)
     {
         // Try locating the region. Throws exception if invalid name format.
-        if (this._availableBaseRegions.TryGetValue(parentOptionedRegionSpec,
-            out var region) && StringHierarchySpec.TryParseOptionedRegionName(
-                parentOptionedRegionSpec, out _, out string optionStr))
+        if (StringHierarchySpec.TryParseOptionedRegionName(
+            parentOptionedRegionSpec, out _, out string optionStr) &&
+            this._availableBaseRegions.TryGetValue(parentOptionedRegionSpec,
+            out var region))
         {
             // Build the body model if successful. Deep copy of subtree and null
             // parent reference to mark the base region as 'root' for the body

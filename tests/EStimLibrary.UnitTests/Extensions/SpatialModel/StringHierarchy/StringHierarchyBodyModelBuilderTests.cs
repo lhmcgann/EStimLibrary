@@ -1,4 +1,5 @@
-﻿using EStimLibrary.Extensions.SpatialModel.StringHierarchy;
+﻿using EStimLibrary.Core.SpatialModel;
+using EStimLibrary.Extensions.SpatialModel.StringHierarchy;
 using Microsoft.VisualStudio.TestPlatform.Utilities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -221,8 +222,7 @@ public class StringHierarchyBodyModelBuilderTests
         string filepath)
     {
         Assert.Throws<ArgumentException>(() =>
-            new StringHierarchyBodyModelBuilder(TEST_FILEPATH +
-                "/ParseJSONBodyRegion_ShouldThrowArgumentException.txt"));
+            new StringHierarchyBodyModelBuilder(filepath));
     }
 
     /// <summary>
@@ -484,6 +484,39 @@ public class StringHierarchyBodyModelBuilderTests
     }
 
     /// <summary>
-    /// Test TryCreate...
+    /// Test TryCreate with specified region spec not in available base regions
     /// </summary>
+    [Theory]
+    // Test invalid region spec
+    [InlineData("option1 option2 basebodyregion1")]
+    // Test region spec not in available base regions
+    [InlineData("option1 basebodyregion1")]
+    public void TryCreate_ShouldReturnFalse(string regionspec)
+    {
+        StringHierarchyBodyModelBuilder builder =
+            new StringHierarchyBodyModelBuilder(TEST_FILEPATH +
+                "/Constructor_ShouldInit.txt");
+
+        IBodyModel model;
+
+        Assert.False(builder.TryCreate(regionspec, out model));
+    }
+
+    /// <summary>
+    /// Test TryCreate with specified region spec in available base regions
+    /// </summary>
+    [Fact]
+    public void TryCreate_ShouldCreateAndReturnTrue()
+    {
+        StringHierarchyBodyModelBuilder builder =
+            new StringHierarchyBodyModelBuilder(TEST_FILEPATH +
+                "/Constructor_ShouldInit.txt");
+
+        IBodyModel model;
+
+        Assert.True(builder.TryCreate("independentoptiona1 basebodyregion1",
+            out model));
+
+        Assert.NotNull(model);
+    }
 }
