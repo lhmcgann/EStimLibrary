@@ -47,8 +47,9 @@ public class StringHierarchyLocationFactoryTests
     [Fact]
     public void Constructor_NonNull_ShouldInit()
     {
-        // Create base region.
-        StringHierarchyRegion region = new StringHierarchyRegion("base", null!);
+        // Create base region
+        StringHierarchyRegion region =
+            new StringHierarchyRegion("base", null!);
 
         // Create factory with non-null base region.
         StringHierarchyLocationFactory factory =
@@ -71,7 +72,8 @@ public class StringHierarchyLocationFactoryTests
     public void TryCreate_ShouldNotValidateShouldNotCreate()
     {
         // Create base region
-        StringHierarchyRegion region = new StringHierarchyRegion("base", null!);
+        StringHierarchyRegion region =
+            new StringHierarchyRegion("base", null!);
 
         // Create factory with non-null base region
         StringHierarchyLocationFactory factory =
@@ -106,13 +108,13 @@ public class StringHierarchyLocationFactoryTests
         };
         var regionSubregions = new Dictionary<string, StringHierarchyRegion>
         {
-            { "child1", new StringHierarchyRegion("child1", null, null, null,
-                regionModifiers) },
-            { "child2", new StringHierarchyRegion("child2", null) }
+            { "child1", new StringHierarchyRegion("child1", null!, null!,
+                null!, regionModifiers) },
+            { "child2", new StringHierarchyRegion("child2", null!) }
         };
         // Create region with the above parameters
-        var region = new StringHierarchyRegion("base", null,
-            null, regionOptions, null, regionSubregions);
+        var region = new StringHierarchyRegion("base", null!, null!,
+            regionOptions, null!, regionSubregions);
 
         // Create factory with non-null base region
         StringHierarchyLocationFactory factory =
@@ -163,13 +165,13 @@ public class StringHierarchyLocationFactoryTests
         };
         var regionSubregions = new Dictionary<string, StringHierarchyRegion>
         {
-            { "child1", new StringHierarchyRegion("child1", null, null, null,
-                regionModifiers) },
-            { "child2", new StringHierarchyRegion("child2", null) }
+            { "child1", new StringHierarchyRegion("child1", null!, null!,
+                null!, regionModifiers) },
+            { "child2", new StringHierarchyRegion("child2", null!) }
         };
         // Create region with the above parameters
-        var region = new StringHierarchyRegion("base", null,
-            null, regionOptions, null, regionSubregions);
+        var region = new StringHierarchyRegion("base", null!, null!,
+            regionOptions, null!, regionSubregions);
 
         // Create factory with non-null base region
         StringHierarchyLocationFactory factory =
@@ -181,7 +183,7 @@ public class StringHierarchyLocationFactoryTests
 
         // Create dictionaries with invalid specs
         Dictionary<string, object> paramValues2 =
-            new Dictionary<string, object>() { { "fullSpec", null } };
+            new Dictionary<string, object>() { { "fullSpec", null! } };
         Dictionary<string, object> paramValues3 =
             new Dictionary<string, object>() { { "fullSpec", new object() } };
         Dictionary<string, object> paramValues4 =
@@ -196,7 +198,7 @@ public class StringHierarchyLocationFactoryTests
                     "left base, child1 | mod1 | mod3" } };
 
         // Create variable to store produced IArea
-        ILocation product;
+        ILocation? product;
 
         // Test no value
         bool valid = factory.TryCreate(paramValues1, out product, false);
@@ -250,13 +252,13 @@ public class StringHierarchyLocationFactoryTests
         };
         var regionSubregions = new Dictionary<string, StringHierarchyRegion>
         {
-            { "child1", new StringHierarchyRegion("child1", null, null, null,
-                regionModifiers) },
-            { "child2", new StringHierarchyRegion("child2", null) }
+            { "child1", new StringHierarchyRegion("child1", null!, null!,
+                null!, regionModifiers) },
+            { "child2", new StringHierarchyRegion("child2", null!) }
         };
         // Create region with the above parameters
-        var region = new StringHierarchyRegion("base", null,
-            null, regionOptions, null, regionSubregions);
+        var region = new StringHierarchyRegion("base", null!, null!,
+            regionOptions, null!, regionSubregions);
 
         // Create factory with non-null base region
         StringHierarchyLocationFactory factory =
@@ -271,14 +273,15 @@ public class StringHierarchyLocationFactoryTests
                 { "fullSpec", "left base, child1 | mod1" } };
 
         // Create variable to store produced IArea
-        ILocation product;
+        ILocation? product;
 
         // Test valid spec without modifiers
         bool valid = factory.TryCreate(paramValues1, out product,
             skipValueValidation: false);
         Assert.True(valid);
         Assert.NotNull(product);
-        Assert.Equal((ILocation)new StringHierarchyLocation("left base, child1"),
+        Assert.Equal(
+            (ILocation)new StringHierarchyLocation("left base, child1"),
             product);
 
         // Test valid spec with modifiers
@@ -286,7 +289,8 @@ public class StringHierarchyLocationFactoryTests
             skipValueValidation: false);
         Assert.True(valid);
         Assert.NotNull(product);
-        Assert.Equal((ILocation)new StringHierarchyLocation("left base, child1 | mod1"),
+        Assert.Equal(
+            (ILocation)new StringHierarchyLocation("left base, child1 | mod1"),
             product);
 
         // Test null value
