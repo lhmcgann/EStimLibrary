@@ -13,8 +13,16 @@ public abstract class BodyModelBuilderBase : ISelectable, IFactory<IBodyModel>
 
     public abstract List<string> AvailableModelNames { get; init; }
 
+    /// <summary>
+    /// Try to create a body model keyed by the given name.
+    /// </summary>
+    /// <param name="modelName">The string key of the body model to build. 
+    /// Must be valid within this builder's context.</param>
+    /// <param name="bodyModel">An output parameter: the created body model of 
+    /// this builder's type, if successful, null otherwise.</param>
+    /// <returns>T/F if body model created successfully.</returns>
     public abstract bool TryCreate(string modelName,
-        out IBodyModel bodyModel);
+        out IBodyModel? bodyModel);
     #endregion
 
     #region IFactory<IBodyModel> Implementation

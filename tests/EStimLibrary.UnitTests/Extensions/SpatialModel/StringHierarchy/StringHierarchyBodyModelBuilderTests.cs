@@ -1,15 +1,15 @@
 ﻿using EStimLibrary.Core.SpatialModel;
 using EStimLibrary.Extensions.SpatialModel.StringHierarchy;
-using Microsoft.VisualStudio.TestPlatform.Utilities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System.Runtime.InteropServices;
-using System.Xml.Linq;
+
 
 namespace EStimLibrary.UnitTests.Extensions.SpatialModel.StringHierarchy;
 
 
-// Test class naming convention: LibClassTests
+/// <summary>
+/// Unit tests for the StringHierarchyBodyModelBuilder class.
+/// </summary>
 public class StringHierarchyBodyModelBuilderTests
 {
     private readonly ITestOutputHelper _output;
@@ -18,7 +18,10 @@ public class StringHierarchyBodyModelBuilderTests
         "./../../../Extensions/SpatialModel/StringHierarchy" +
         "/StringHierarchyBodyModelBuilderTestFiles";
 
-    // Test class constructor creates an output helper so can write console
+    /// <summary>
+    /// Test class constructor creates an output helper so can write console
+    /// </summary>
+    /// <param name="testOutputHelper">Test console.</param>
     // output.
     public StringHierarchyBodyModelBuilderTests(
         ITestOutputHelper testOutputHelper)
@@ -39,6 +42,9 @@ public class StringHierarchyBodyModelBuilderTests
 
         Assert.NotNull(obj);
     }
+
+
+    #region _CheckJSONPropertyType Tests
 
     /// <summary>
     /// Test _CheckJSONPropertyType with differing types.
@@ -69,7 +75,8 @@ public class StringHierarchyBodyModelBuilderTests
     }
 
     /// <summary>
-    /// Test _CheckJSONPropertyType with matching types.
+    /// Test _CheckJSONPropertyType with matching types. Should complete 
+    /// without throwing an exception, returning nothing.
     /// </summary>
     [Fact]
     public void CheckJSONPropertyType_ShouldReturnNothing()
@@ -85,6 +92,12 @@ public class StringHierarchyBodyModelBuilderTests
             System.Reflection.BindingFlags.Static, null, null,
             new object[2] { prop, tok }));
     }
+
+    #endregion _CheckJSONPropertyType Tests
+
+
+
+    #region Constructor Tests
 
     /// <summary>
     /// Test constructor with invalid filepath.
@@ -111,13 +124,13 @@ public class StringHierarchyBodyModelBuilderTests
     /// Test constructor with invalid properties.
     /// </summary>
     [Theory]
-    // Test invalid number of properties
+    // Test invalid number of properties.
     [InlineData(TEST_FILEPATH +
         "/Constructor_ShouldThrowArgumentExceptionNumProps.json")]
-    // Test no required modifier array as first property
+    // Test missing required modifier array as first property.
     [InlineData(TEST_FILEPATH +
         "/Constructor_ShouldThrowArgumentExceptionNoReqs.json")]
-    // Test required modifier property not an array
+    // Test required modifier property as not an array.
     [InlineData(TEST_FILEPATH +
         "/Constructor_ShouldThrowArgumentExceptionReqsNotArray.json")]
     public void Constructor_ShouldThrowArgumentException(string filepath)
@@ -137,6 +150,8 @@ public class StringHierarchyBodyModelBuilderTests
         StringHierarchyBodyModelBuilder builder =
             new StringHierarchyBodyModelBuilder(TEST_FILEPATH +
                 "/Constructor_ShouldInit.json");
+
+        Assert.Equal("StringHierarchyModelBuilder", builder.Name);
 
         // Set up expected _availableBaseRegions values
         StringHierarchyRegion root = new StringHierarchyRegion("root", null);
@@ -206,6 +221,12 @@ public class StringHierarchyBodyModelBuilderTests
 
         Assert.Equivalent(baseRegions.Keys, builder.AvailableModelNames);
     }
+
+    #endregion Constructor Tests
+
+
+
+    #region _ParseJSONBodyRegion Tests
 
     /// <summary>
     /// Test _ParseJSONBodyRegion (via constructor) with invalid regionJson
@@ -483,6 +504,12 @@ public class StringHierarchyBodyModelBuilderTests
         Assert.Equivalent(baseRegions.Keys, builder.AvailableModelNames);
     }
 
+    #endregion _ParseJSONBodyRegion Tests
+
+
+
+    #region TryCreate Tests
+
     /// <summary>
     /// Test TryCreate with specified region spec not in available base regions
     /// </summary>
@@ -519,4 +546,7 @@ public class StringHierarchyBodyModelBuilderTests
 
         Assert.NotNull(model);
     }
+
+    #endregion TryCreate Tests
+    
 }
