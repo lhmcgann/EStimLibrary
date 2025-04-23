@@ -104,7 +104,7 @@ public class StringHierarchyBodyModelBuilderTests
     {
         Assert.Throws<JsonReaderException>(() =>
             new StringHierarchyBodyModelBuilder(TEST_FILEPATH +
-                "/Constructor_ShouldThrowJsonReaderException.txt"));
+                "/Constructor_ShouldThrowJsonReaderException.json"));
     }
 
     /// <summary>
@@ -113,13 +113,13 @@ public class StringHierarchyBodyModelBuilderTests
     [Theory]
     // Test invalid number of properties
     [InlineData(TEST_FILEPATH +
-        "/Constructor_ShouldThrowArgumentExceptionNumProps.txt")]
+        "/Constructor_ShouldThrowArgumentExceptionNumProps.json")]
     // Test no required modifier array as first property
     [InlineData(TEST_FILEPATH +
-        "/Constructor_ShouldThrowArgumentExceptionNoReqs.txt")]
+        "/Constructor_ShouldThrowArgumentExceptionNoReqs.json")]
     // Test required modifier property not an array
     [InlineData(TEST_FILEPATH +
-        "/Constructor_ShouldThrowArgumentExceptionReqsNotArray.txt")]
+        "/Constructor_ShouldThrowArgumentExceptionReqsNotArray.json")]
     public void Constructor_ShouldThrowArgumentException(string filepath)
     {
         Assert.Throws<ArgumentException>(() =>
@@ -136,7 +136,7 @@ public class StringHierarchyBodyModelBuilderTests
 
         StringHierarchyBodyModelBuilder builder =
             new StringHierarchyBodyModelBuilder(TEST_FILEPATH +
-                "/Constructor_ShouldInit.txt");
+                "/Constructor_ShouldInit.json");
 
         // Set up expected _availableBaseRegions values
         StringHierarchyRegion root = new StringHierarchyRegion("root", null);
@@ -214,10 +214,10 @@ public class StringHierarchyBodyModelBuilderTests
     [Theory]
     // Test un-parseable regionJson body
     [InlineData(TEST_FILEPATH +
-        "/ParseJSONBodyRegion_ShouldThrowArgumentException.txt")]
+        "/ParseJSONBodyRegion_ShouldThrowArgumentException.json")]
     //Test missing required mods
     [InlineData(TEST_FILEPATH +
-        "/ParseJSONBodyRegion_ShouldThrowArgumentExceptionReqMods.txt")]
+        "/ParseJSONBodyRegion_ShouldThrowArgumentExceptionReqMods.json")]
     public void ParseJSONBodyRegion_ShouldThrowArgumentException(
         string filepath)
     {
@@ -232,13 +232,13 @@ public class StringHierarchyBodyModelBuilderTests
     [Theory]
     // Test invalid property
     [InlineData(TEST_FILEPATH +
-        "/ParseJSONBodyRegion_ShouldInitAndWarnInvalidProp.txt")]
+        "/ParseJSONBodyRegion_ShouldInitAndWarnInvalidProp.json")]
     // Test invalid modifier
     [InlineData(TEST_FILEPATH +
-        "/ParseJSONBodyRegion_ShouldInitAndWarnInvalidMod.txt")]
+        "/ParseJSONBodyRegion_ShouldInitAndWarnInvalidMod.json")]
     // Test duplicate subregions
     [InlineData(TEST_FILEPATH +
-        "/ParseJSONBodyRegion_ShouldInitAndWarnDuplicateSubregions.txt")]
+        "/ParseJSONBodyRegion_ShouldInitAndWarnDuplicateSubregions.json")]
     public void Constructor_ShouldInitAndWarn(string filepath)
     {
         Type type = typeof(StringHierarchyBodyModelBuilder);
@@ -325,7 +325,7 @@ public class StringHierarchyBodyModelBuilderTests
 
         StringHierarchyBodyModelBuilder builder =
             new StringHierarchyBodyModelBuilder(TEST_FILEPATH +
-                "/ParseJSONBodyRegion_ShouldInitNoOptions.txt");
+                "/ParseJSONBodyRegion_ShouldInitNoOptions.json");
 
         // Set up expected _availableBaseRegions values
         StringHierarchyRegion root = new StringHierarchyRegion("root", null);
@@ -398,7 +398,7 @@ public class StringHierarchyBodyModelBuilderTests
 
         StringHierarchyBodyModelBuilder builder =
             new StringHierarchyBodyModelBuilder(TEST_FILEPATH +
-                "/ParseJSONBodyRegion_ShouldInitNestedOptions.txt");
+                "/ParseJSONBodyRegion_ShouldInitNestedOptions.json");
 
         // Set up expected _availableBaseRegions values
         StringHierarchyRegion root = new StringHierarchyRegion("root", null);
@@ -495,7 +495,7 @@ public class StringHierarchyBodyModelBuilderTests
     {
         StringHierarchyBodyModelBuilder builder =
             new StringHierarchyBodyModelBuilder(TEST_FILEPATH +
-                "/Constructor_ShouldInit.txt");
+                "/Constructor_ShouldInit.json");
 
         IBodyModel model;
 
@@ -510,7 +510,7 @@ public class StringHierarchyBodyModelBuilderTests
     {
         StringHierarchyBodyModelBuilder builder =
             new StringHierarchyBodyModelBuilder(TEST_FILEPATH +
-                "/Constructor_ShouldInit.txt");
+                "/Constructor_ShouldInit.json");
 
         IBodyModel model;
 
