@@ -29,7 +29,7 @@ public class StringHierarchyLocationFactory :
     /// <summary>
     /// The dictionary containing data validation objects for parameters
     /// passed into the factory create method. Contains a single parameter
-    /// "fullSpec" which must be a valid full string location spec wihtin the
+    /// "fullSpec" which must be a valid full string location spec within the
     /// base region.
     /// </summary>
     public Dictionary<string, IDataLimits> ParamLimits { get; init; }
@@ -60,10 +60,13 @@ public class StringHierarchyLocationFactory :
     /// the supplied location spec - region spec and modifiers - is valid 
     /// within the provided base region.
     /// </summary>
-    /// <param name="fullSpec">The full location spec to validate.</param>
+    /// <param name="fullSpec">The full location spec to validate. Assumed to
+    /// be not null.</param>
     /// <returns>True if valid location spec, false if not.</returns>
     private bool _LocationSpecCheckFunction(string fullSpec)
     {
+        // TryGetSubregion and IsValidModifiers inherently validate those spec
+        // parts, so split manually rather than call ParseSpec.
         var parts = fullSpec.Split(
             StringHierarchySpec.REGIONS_MODIFIERS_DELIMITER);
 
