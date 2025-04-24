@@ -49,13 +49,15 @@ public class StringHierarchyBodyModelBuilderTests
     /// <summary>
     /// Test _CheckJSONPropertyType with differing types.
     /// </summary>
-    [Fact]
-    public void CheckJSONPropertyType_ShouldThrowArgumentException()
+    [Theory]
+    [InlineData("bool", 8, JTokenType.Boolean)]
+    [InlineData("array", "string", JTokenType.Array)]
+    public void CheckJSONPropertyType_ShouldThrowArgumentException(
+        string propName, object propValue, JTokenType expectedType)
     {
         Type type = typeof(StringHierarchyBodyModelBuilder);
 
-        JProperty prop = new JProperty("property", 8);
-        JTokenType tok = JTokenType.Boolean;
+        JProperty prop = new JProperty(propName, propValue);
 
         Assert.Throws<ArgumentException>(() =>
         {
@@ -65,7 +67,7 @@ public class StringHierarchyBodyModelBuilderTests
                     System.Reflection.BindingFlags.InvokeMethod |
                     System.Reflection.BindingFlags.NonPublic |
                     System.Reflection.BindingFlags.Static, null, null,
-                    new object[2] { prop, tok });
+                    new object[2] { prop, expectedType });
             }
             catch (System.Reflection.TargetInvocationException e)
             {
@@ -124,12 +126,20 @@ public class StringHierarchyBodyModelBuilderTests
     /// Test constructor with invalid properties.
     /// </summary>
     [Theory]
-    // Test invalid number of properties.
+    // Test invalid number of properties. (0)
     [InlineData(TEST_FILEPATH +
-        "/Constructor_ShouldThrowArgumentExceptionNumProps.json")]
-    // Test missing required modifier array as first property.
+        "/Constructor_ShouldThrowArgumentExceptionNumProps0.json")]
+    // Test invalid number of properties. (1)
+    [InlineData(TEST_FILEPATH +
+        "/Constructor_ShouldThrowArgumentExceptionNumProps1.json")]
+    // Test missing required modifier array as first property. 2 base regions 
+    // though.
     [InlineData(TEST_FILEPATH +
         "/Constructor_ShouldThrowArgumentExceptionNoReqs.json")]
+    // Test required modifier array present but not as first property. 2 base  
+    // regions though.
+    [InlineData(TEST_FILEPATH +
+        "/Constructor_ShouldThrowArgumentExceptionReqsNotFirst.json")]
     // Test required modifier property as not an array.
     [InlineData(TEST_FILEPATH +
         "/Constructor_ShouldThrowArgumentExceptionReqsNotArray.json")]
@@ -145,15 +155,13 @@ public class StringHierarchyBodyModelBuilderTests
     [Fact]
     public void Constructor_ShouldInit()
     {
+        // Arrange
+        // For reflective InvokeMember calls later, to access non-public 
+        // entities.
         Type type = typeof(StringHierarchyBodyModelBuilder);
 
-        StringHierarchyBodyModelBuilder builder =
-            new StringHierarchyBodyModelBuilder(TEST_FILEPATH +
-                "/Constructor_ShouldInit.json");
-
-        Assert.Equal("StringHierarchyModelBuilder", builder.Name);
-
-        // Set up expected _availableBaseRegions values
+        // Set up expected _availableBaseRegions values.
+        // Set up the region objects.
         StringHierarchyRegion root = new StringHierarchyRegion("root", null);
 
         StringHierarchyRegion region1 = new StringHierarchyRegion(
@@ -189,14 +197,17 @@ public class StringHierarchyBodyModelBuilderTests
                 { "z", new HashSet<string> { "anterior", "posterior" } }
             }), out existing);
 
+        // Set up the collections of regions.
         Dictionary<string, StringHierarchyRegion> baseRegions =
             new Dictionary<string, StringHierarchyRegion> { };
 
+        // Add base regions
         foreach (string name in region1.OptionedRegionNames)
         {
             baseRegions.Add(name, region1);
         }
 
+        // Add subregions
         foreach (KeyValuePair<string,StringHierarchyRegion> subregionPair
             in region1.Subregions)
         {
@@ -207,25 +218,35 @@ public class StringHierarchyBodyModelBuilderTests
             }
         }
 
-        foreach (KeyValuePair<string, StringHierarchyRegion> entry
-            in (Dictionary<string, StringHierarchyRegion>)
-            type.InvokeMember("_availableBaseRegions",
-            System.Reflection.BindingFlags.NonPublic |
-            System.Reflection.BindingFlags.Instance |
-            System.Reflection.BindingFlags.GetProperty,
-            null, builder, null))
+        // Act
+        StringHierarchyBodyModelBuilder builder =
+            new StringHierarchyBodyModelBuilder(TEST_FILEPATH +
+                "/Constructor_ShouldInit.json");
+
+        // Assert
+        Assert.Equal("StringHierarchyModelBuilder", builder.Name);
+        Assert.Equivalent(baseRegions.Keys, builder.AvailableModelNames);
+        foreach (KeyValuePair<string, StringHierarchyRegion> entry in
+            (Dictionary<string, StringHierarchyRegion>)
+                type.InvokeMember("_availableBaseRegions",
+                System.Reflection.BindingFlags.NonPublic |
+                System.Reflection.BindingFlags.Instance |
+                System.Reflection.BindingFlags.GetProperty,
+                null, builder, null))
         {
             Assert.Equal(baseRegions[entry.Key].ToString(),
                 entry.Value.ToString());
         }
-
-        Assert.Equivalent(baseRegions.Keys, builder.AvailableModelNames);
+        Assert.Equivalent(new HashSet<string>() {"x", "y", "z"},
+            (HashSet<string>)type.InvokeMember("_RequiredModifiers",
+                System.Reflection.BindingFlags.NonPublic |
+                System.Reflection.BindingFlags.Instance |
+                System.Reflection.BindingFlags.GetField,
+                null, builder, null));
     }
 
-    #endregion Constructor Tests
 
-
-
+    // Subregion of tests since testing this function via constructor.
     #region _ParseJSONBodyRegion Tests
 
     /// <summary>
@@ -233,10 +254,10 @@ public class StringHierarchyBodyModelBuilderTests
     /// body or missing modifiers.
     /// </summary>
     [Theory]
-    // Test un-parseable regionJson body
+    // Test un-parseable JSON body region: no body region objects.
     [InlineData(TEST_FILEPATH +
         "/ParseJSONBodyRegion_ShouldThrowArgumentException.json")]
-    //Test missing required mods
+    // Test missing required mods in a top body region definition.
     [InlineData(TEST_FILEPATH +
         "/ParseJSONBodyRegion_ShouldThrowArgumentExceptionReqMods.json")]
     public void ParseJSONBodyRegion_ShouldThrowArgumentException(
@@ -257,15 +278,14 @@ public class StringHierarchyBodyModelBuilderTests
     // Test invalid modifier
     [InlineData(TEST_FILEPATH +
         "/ParseJSONBodyRegion_ShouldInitAndWarnInvalidMod.json")]
-    // Test duplicate subregions
+    // Test duplicate subregions. Should just take the last subregion of the
+    // same name due to inherent JSON parsing.
     [InlineData(TEST_FILEPATH +
         "/ParseJSONBodyRegion_ShouldInitAndWarnDuplicateSubregions.json")]
     public void Constructor_ShouldInitAndWarn(string filepath)
     {
+        // Arrange
         Type type = typeof(StringHierarchyBodyModelBuilder);
-
-        StringHierarchyBodyModelBuilder builder =
-            new StringHierarchyBodyModelBuilder(filepath);
 
         // Set up expected _availableBaseRegions values
         StringHierarchyRegion root = new StringHierarchyRegion("root", null);
@@ -321,6 +341,12 @@ public class StringHierarchyBodyModelBuilderTests
             }
         }
 
+        // Act
+        StringHierarchyBodyModelBuilder builder =
+            new StringHierarchyBodyModelBuilder(filepath);
+
+        // Assert
+        Assert.Equivalent(baseRegions.Keys, builder.AvailableModelNames);
         foreach (KeyValuePair<string, StringHierarchyRegion> entry
             in (Dictionary<string, StringHierarchyRegion>)
             type.InvokeMember("_availableBaseRegions",
@@ -332,8 +358,12 @@ public class StringHierarchyBodyModelBuilderTests
             Assert.Equal(baseRegions[entry.Key].ToString(),
                 entry.Value.ToString());
         }
-
-        Assert.Equivalent(baseRegions.Keys, builder.AvailableModelNames);
+        Assert.Equivalent(new HashSet<string>() {"x", "y", "z"},
+            (HashSet<string>)type.InvokeMember("_RequiredModifiers",
+                System.Reflection.BindingFlags.NonPublic |
+                System.Reflection.BindingFlags.Instance |
+                System.Reflection.BindingFlags.GetField,
+                null, builder, null));
     }
 
     /// <summary>
@@ -342,11 +372,8 @@ public class StringHierarchyBodyModelBuilderTests
     [Fact]
     public void ParseJSONBodyRegion_ShouldInitNoOptions()
     {
+        // Arrange
         Type type = typeof(StringHierarchyBodyModelBuilder);
-
-        StringHierarchyBodyModelBuilder builder =
-            new StringHierarchyBodyModelBuilder(TEST_FILEPATH +
-                "/ParseJSONBodyRegion_ShouldInitNoOptions.json");
 
         // Set up expected _availableBaseRegions values
         StringHierarchyRegion root = new StringHierarchyRegion("root", null);
@@ -393,6 +420,12 @@ public class StringHierarchyBodyModelBuilderTests
             baseRegions.Add(subregionPair.Key, subregionPair.Value);
         }
 
+        // Act
+        StringHierarchyBodyModelBuilder builder =
+            new StringHierarchyBodyModelBuilder(TEST_FILEPATH +
+                "/ParseJSONBodyRegion_ShouldInitNoOptions.json");
+
+        // Assert
         foreach (KeyValuePair<string, StringHierarchyRegion> entry
             in (Dictionary<string, StringHierarchyRegion>)
             type.InvokeMember("_availableBaseRegions",
@@ -404,7 +437,6 @@ public class StringHierarchyBodyModelBuilderTests
             Assert.Equal(baseRegions[entry.Key].ToString(),
                 entry.Value.ToString());
         }
-
         Assert.Equivalent(baseRegions.Keys, builder.AvailableModelNames);
     }
 
@@ -415,11 +447,8 @@ public class StringHierarchyBodyModelBuilderTests
     [Fact]
     public void ParseJSONBodyRegion_ShouldInitNestedOptions()
     {
+        // Arrange
         Type type = typeof(StringHierarchyBodyModelBuilder);
-
-        StringHierarchyBodyModelBuilder builder =
-            new StringHierarchyBodyModelBuilder(TEST_FILEPATH +
-                "/ParseJSONBodyRegion_ShouldInitNestedOptions.json");
 
         // Set up expected _availableBaseRegions values
         StringHierarchyRegion root = new StringHierarchyRegion("root", null);
@@ -489,6 +518,12 @@ public class StringHierarchyBodyModelBuilderTests
             }
         }
 
+        // Act
+        StringHierarchyBodyModelBuilder builder =
+            new StringHierarchyBodyModelBuilder(TEST_FILEPATH +
+                "/ParseJSONBodyRegion_ShouldInitNestedOptions.json");
+
+        // Assert
         foreach (KeyValuePair<string, StringHierarchyRegion> entry
             in (Dictionary<string, StringHierarchyRegion>)
             type.InvokeMember("_availableBaseRegions",
@@ -500,11 +535,12 @@ public class StringHierarchyBodyModelBuilderTests
             Assert.Equal(baseRegions[entry.Key].ToString(),
                 entry.Value.ToString());
         }
-
         Assert.Equivalent(baseRegions.Keys, builder.AvailableModelNames);
     }
 
     #endregion _ParseJSONBodyRegion Tests
+
+    #endregion Constructor Tests
 
 
 
@@ -520,13 +556,17 @@ public class StringHierarchyBodyModelBuilderTests
     [InlineData("option1 basebodyregion1")]
     public void TryCreate_ShouldReturnFalse(string regionspec)
     {
+        // Arrange
         StringHierarchyBodyModelBuilder builder =
             new StringHierarchyBodyModelBuilder(TEST_FILEPATH +
                 "/Constructor_ShouldInit.json");
 
-        IBodyModel model;
+        // Act
+        bool res = builder.TryCreate(regionspec, out IBodyModel? model);
 
-        Assert.False(builder.TryCreate(regionspec, out model));
+        // Assert
+        Assert.False(res);
+        Assert.Null(model);
     }
 
     /// <summary>
@@ -535,15 +575,17 @@ public class StringHierarchyBodyModelBuilderTests
     [Fact]
     public void TryCreate_ShouldCreateAndReturnTrue()
     {
+        // Arrange
         StringHierarchyBodyModelBuilder builder =
             new StringHierarchyBodyModelBuilder(TEST_FILEPATH +
                 "/Constructor_ShouldInit.json");
 
-        IBodyModel model;
+        // Act
+        bool res = builder.TryCreate("independentoptiona1 basebodyregion1",
+            out IBodyModel? model);
 
-        Assert.True(builder.TryCreate("independentoptiona1 basebodyregion1",
-            out model));
-
+        // Assert
+        Assert.True(res);
         Assert.NotNull(model);
     }
 

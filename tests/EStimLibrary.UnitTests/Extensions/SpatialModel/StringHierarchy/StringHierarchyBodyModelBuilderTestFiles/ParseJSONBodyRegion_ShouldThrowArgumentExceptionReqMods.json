@@ -4,6 +4,26 @@
         "options": [ "independentOptionA1", "independentOptionAN" ],
         "modifiers": {
             "x": [ "medial", "central", "lateral" ],
+            "y": [ "superior", "inferior" ],
+            "z": [ "rostral", "caudal" ]
+        },
+        "subregions": {
+            "subregion1": {
+                "modifiers": {
+                    "y": [ "proximal", "intermediate", "distal" ]
+                }
+            },
+            "subregionN": {
+                "modifiers": {
+                    "y": [ "rostral", "middle", "caudal" ]
+                }
+            }
+        }
+    },
+    "baseBodyRegion2": {
+        "options": [ "independentOptionA1", "independentOptionAN" ],
+        "modifiers": {
+            "x": [ "medial", "central", "lateral" ],
             "y": [ "superior", "inferior" ]
         },
         "subregions": {

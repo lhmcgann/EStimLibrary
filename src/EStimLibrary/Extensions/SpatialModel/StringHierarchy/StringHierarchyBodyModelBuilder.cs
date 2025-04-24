@@ -7,14 +7,17 @@ namespace EStimLibrary.Extensions.SpatialModel.StringHierarchy;
 
 
 /// <summary>
-/// A body model builder for the StringHierarchyBodyModel type.
+/// A body model builder for the StringHierarchyBodyModel type. Accepts JSON
+/// body model "space" definitions and builds the StringHierarchyBodyModel(s)
+/// from subsequently given region name(s). The JSON file must be of the 
+/// expected format (see GetTemplateJSONString()). The JSON is parsed into all
+/// possible body model names that can be built by this builder.
 /// </summary>
 public class StringHierarchyBodyModelBuilder : BodyModelBuilderBase
 {
     public override string Name => "StringHierarchyModelBuilder";   // ISelectable
     
     // BodyModelBuilderBase property
-
     /// <summary>
     /// The names of body models that this builder can create. Exactly the 
     /// names that can be passed to this builder's TryCreate method.
@@ -43,15 +46,48 @@ public class StringHierarchyBodyModelBuilder : BodyModelBuilderBase
     /// builder can create StringHierarchyBodyModels.
     /// </summary>
     protected StringHierarchyRegion _RootRegion;
+
+    /// <summary>
+    /// The name of the root region. This is the name of the root node in the
+    /// internal tree representation of the body model "space" from which this
+    /// builder can create StringHierarchyBodyModels. This is not a valid body
+    /// model name, just used as an access point to the tree.
+    /// </summary>
     protected const string ROOT_NAME = "root";
 
     // Property names expected when parsing the JSON file.
     // Everything in the JSON will be turned into lowercase prior to parsing.
+    /// <summary>
+    /// The JSON property name for the required directional modifiers. This 
+    /// must be the first property in a JSON body model "space" definition.
+    /// </summary>
     protected const string REQUIRED_MODIFIERS_KEY = "_requiredmodifiers";
+
+    /// <summary>
+    /// The JSON property name for the options property which is an array of
+    /// reiong option strings, e.g., ["left", "right"]. This property is 
+    /// optional.
+    /// </summary>
     protected const string OPTIONS_KEY = "options";
+
+    /// <summary>
+    /// The JSON property name for the modifiers property which is a
+    /// dictionary of the directional modifiers and their corresponding value
+    /// sets, e.g., { "x": ["medial", "central", "lateral"], ... }. This
+    /// property is must at least be defined for each top-level body model and 
+    /// must contain value sets for each of the required modifiers.
+    /// </summary>
     protected const string MODIFIERS_KEY = "modifiers";
+
+    /// <summary>
+    /// The JSON property name for the subregions property which is a
+    /// dictionary of the subregions of this region. Each subregion is a
+    /// StringHierarchyRegion and can contain its own options, modifiers, and
+    /// subregions. This property is optional.
+    /// </summary>
     protected const string SUBREGIONS_KEY = "subregions";
 
+    // Error/warning messages.
     protected static string _ErrParse = "JSON Body Model Parse Error";
     protected static string _WarnParse = "JSON Body Model Parse Warning";
     protected static string _ErrBuild = "String Hierarchy Body Model Build Error";
@@ -68,6 +104,8 @@ public class StringHierarchyBodyModelBuilder : BodyModelBuilderBase
     /// <exception cref="ArgumentException">Throws an exception if cannot 
     /// locate the file or the contents are not in the correct format.
     /// </exception>
+    /// TODO: move file IO to outside this class. Accept a string (JSON file 
+    /// *contents* instead.)
     public StringHierarchyBodyModelBuilder(string jsonFilePath)
     {
         // Read the JSON file first. Throws exception if any errors.
@@ -76,8 +114,8 @@ public class StringHierarchyBodyModelBuilder : BodyModelBuilderBase
         // Parse the JSON string (make lowercase) into a JObject.
         JObject json = JObject.Parse(jsonBodyDefinition.ToLower());
 
-        // Throw exception if the minimum of required modifiers and a region
-        // definition are not given.
+        // Throw exception if the minimum of (assumed) required modifiers and
+        // a region definition are not given.
         var properties = json.Properties().ToList();
         if (properties.Count < 2)
         {
@@ -319,6 +357,9 @@ public class StringHierarchyBodyModelBuilder : BodyModelBuilderBase
                 // Store in this region's subregion dictionary.
                 // Skip if the add fails (e.g., multiple subregions defined with
                 // the same name).
+                // The TryAdd should always succeeed since JSON parsing does not 
+                // allow properties at the same level to have the same name. It 
+                // always takes the last one. --> TODO: remove the "false" handling?
                 if (!region.Subregions.TryAdd(subregion.BaseName, subregion))
                 {
                     Console.WriteLine($"{_WarnParse}: Could not add " +
