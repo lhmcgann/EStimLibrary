@@ -3,6 +3,7 @@ using EStimLibrary.Core.Stimulation.Data;
 using EStimLibrary.Core.Haptics;
 using EStimLibrary.Core.SpatialModel;
 using EStimLibrary.Core;
+using EStimLibrary.Extensions.Data;
 
 
 namespace EStimLibrary.Extensions.Haptics;
@@ -19,15 +20,11 @@ public class ClassicDirectTransducer : HapticTransducer
     public ClassicDirectTransducer(string modParam)
     {
         // TODO: adjust this validation to be flexible to user-input param
-        // lists.
+        // lists? or just relegate validation to session config??
         // TODO: how to also factor in stimulator-specific modulation abilities?
         // e.g., even if valid param name, the stimulator used for a given event
         // may not be able to mod it...
-        if (!BaseStimParams.ParamOrderIndices.Keys.Contains(modParam))
-        {
-            throw new ArgumentException($"{this.Name} Constructor Error: " +
-                $"{modParam} is not a valid stim param.");
-        }
+
         this.ModulatedParam = modParam;
     }
 
@@ -59,8 +56,7 @@ public class ClassicDirectTransducer : HapticTransducer
         // i.e., P not included at all (otherwise would be first), use the first
         // value.
         // Should be between 0 and 1
-        // TODO: make sure array len >0 before indexing into
-        double modValue = hapticEvent.HapticParamData[0];
+        double modValue = hapticEvent.HapticParamData[HapticParam.P];
 
         // StimThread properties:
         // PerStimulatorConfigs (MAIN constructor input; next 2 derive from it)

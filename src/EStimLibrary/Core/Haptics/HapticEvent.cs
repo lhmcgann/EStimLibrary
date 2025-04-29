@@ -24,19 +24,13 @@ namespace EStimLibrary.Core.Haptics;
 /// conforming to the body model. Parameter may be null or contain otherwise
 /// invalid data if LocalizeByArea is false.
 /// </param>
-/// <param name="HapticParamData"></param>
+/// <param name="HapticParamData">The dictionary of parameters for the haptic
+/// event. Key is the haptic param label (see HapticParamEnum).</param>
 /// <param name="LocalizeByArea">True if this event should be localized on the
 /// body model using this event's Area, False if this event should be localized
 /// on the body model using this event's Location.</param>
 public record HapticEvent(DateTime Timestamp,
     Dictionary<string, IEnumerable<ILocation>> Locations,
     Dictionary<string, IEnumerable<IArea>> Areas,
-    Vector<double> HapticParamData,
+    Dictionary<HapticParam, double> HapticParamData,
     bool LocalizeByArea = true);
-
-// TODO: add labels/headers to stim params. Could either change this record to
-// by default include the below (but need to figure out how to do with enums and
-// allowing extension), or add a record inheriting from this one that is a
-// ParameterizedHapticEvent. If did add this, would need to add a config step to
-// select haptic params.
-// public SortedSet<HapticParam> HapticParams { get; init; }
