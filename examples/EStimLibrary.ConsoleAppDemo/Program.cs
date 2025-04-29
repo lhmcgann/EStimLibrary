@@ -660,12 +660,14 @@ else
                         "left hand, index finger, distal phalanx | palmar");
     foreach (var pVal in pressureValues)
     {
-        var pNormVec = Vector<double>.Build.Dense(new double[] { pVal });
+        //var pNormVec = Vector<double>.Build.Dense(new double[] { pVal });
+        var hapticParams = new Dictionary<HapticParam, double>();
+        hapticParams.Add(HapticParam.P, pVal);
         var event1 = new HapticEvent(DateTime.Now, null,
             new() {
                 { "left hand", new List<IArea>() { eventArea1 } }//, eventArea2 } }
             },
-            pNormVec);
+            hapticParams);
         session.AddEvent(event1);
     }
     session.Stop();
