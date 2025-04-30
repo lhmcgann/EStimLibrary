@@ -8,97 +8,112 @@ namespace EStimLibrary.UnitTests.Extensions.SpatialModel.StringHierarchy;
     {
         private readonly ITestOutputHelper _output;
 
-        public StringHierarchySpecTests(ITestOutputHelper testOutputHelper)
-        {
-            _output = testOutputHelper;
-        }
+    public StringHierarchySpecTests(ITestOutputHelper testOutputHelper)
+    {
+        _output = testOutputHelper;
+    }
 
-        /// Tests:
-        /// StringHierarchySpec(string fullSpec) --- DONE
-        /// StringHierarchySpec((string[] RegionSet, string[] ModifierSet) tuple) --- DONE
-        /// ParseFullSpec(string fullSpec) --- DONE
-        /// ParseRegionSpec(string regionSpec) --- DONE
-        /// ParseModifierSpec(string modifierSpec) --- DONE
-        /// JoinFullSpec(string[] regionSet, string[] modifierSet) --- DONE
-        /// JoinRegionSet(string[] regionSet) --- DONE
-        /// JoinModifierSet(string[] modifierSet) --- DONE
-        /// TryParseOptionedRegionName(string optionedRegionName, out string baseName, out 
-        ///     string options) --- DONE
-        /// TryParseOptions(string options, out string[] parsedOptions) --- DONE
-        /// RegionSetOverlaps(StringHierarchySpec other, out string[] sharedRegionSet) --- 
-        ///     DEFUNCT
-        /// ModifiersAllowOverlap(StringHierarchySpec other, out string[] commonModifiers) 
-        ///     --- DEFUNCT
-        /// TryGetOverlap(StringHierarchySpec other, out string overlappingRegion, out bool
-        ///      contains) --- MOVE TO BodyModel TESTING
-        /// Equals(StringHierarchySpec? other) --- DONE
-        /// GetHashCode() --- DONE
-        /// ToString() --- DONE
+    /// Tests:
+    /// StringHierarchySpec(string fullSpec) --- DONE
+    /// StringHierarchySpec((string[] RegionSet, string[] ModifierSet) tuple) --- DONE
+    /// ParseFullSpec(string fullSpec) --- DONE
+    /// ParseRegionSpec(string regionSpec) --- DONE
+    /// ParseModifierSpec(string modifierSpec) --- DONE
+    /// JoinFullSpec(string[] regionSet, string[] modifierSet) --- DONE
+    /// JoinRegionSet(string[] regionSet) --- DONE
+    /// JoinModifierSet(string[] modifierSet) --- DONE
+    /// TryParseOptionedRegionName(string optionedRegionName, out string baseName, out string options) --- DONE
+    /// RegionSetOverlaps(StringHierarchySpec other, out string[] sharedRegionSet) --- DEFUNCT
+    /// ModifiersAllowOverlap(StringHierarchySpec other, out string[] commonModifiers) --- DEFUNCT
+    /// TryGetOverlap(StringHierarchySpec other, out string overlappingRegion, out bool contains) --- MOVE TO BodyModel TESTING
+    /// Equals(StringHierarchySpec? other) --- DONE
+    /// GetHashCode() --- DONE
+    /// ToString() --- DONE
 
-        /// <summary>
-        /// Test the constructor StringHierarchySpec(string fullSpec), where the input field 
-        /// is not empty.
-        /// </summary>
-        [Theory]
-        // Case with regions and modifiers
-        [InlineData("region1, region2 | modifier1, modifier2",
-                    new[] { "region1", "region2" },
-                    new[] { "modifier1", "modifier2" })] 
-        // Case with only one region
-        [InlineData("region1",
-                    new[] { "region1" },
-                    new string[0])] 
-        // Case sensitivity
-        [InlineData("Region1, REGION2 | Modifier1, MODIFIER2",
-                    new[] { "region1", "region2" },
-                    new[] { "modifier1", "modifier2" })] 
-        // Single region and modifier
-        [InlineData("region1 | modifier1",
-                    new[] { "region1" },
-                    new[] { "modifier1" })] 
-        public void ConstructorFullSpec_ValidInputs_ShouldInit(string fullSpec, string[] 
-            expectedRegions, string[] expectedModifiers)
-        {
-            var stringHierarchySpec = new StringHierarchySpec(fullSpec);
-            Assert.Equal(expectedRegions, stringHierarchySpec.RegionSet);
-            Assert.Equal(expectedModifiers, stringHierarchySpec.ModifierSet);
-        }
+    /// <summary>
+    /// Test the static example spec is correct.
+    /// </summary>
+    [Fact]
+    public void ExamplePath_ShouldBeCorrect()
+    {
+        Assert.Equal("option1 region1, no-option-region2, ... | modifier, ...",
+            StringHierarchySpec.ExamplePath);
+    }
 
-        /// <summary>
-        /// Test the constructor StringHierarchySpec(string fullSpec), where the input 
-        /// field is empty.
-        /// </summary>
-        [Theory]
-        [InlineData("",
-                    new[] { "" },
-                    new string[0])] // Case with empty input
-        public void ConstructorFullSpec_EmptyInputs_ShouldInit(string fullSpec, string[] 
-            expectedRegions, string[] expectedModifiers)
-        {
-            var stringHierarchySpec = new StringHierarchySpec(fullSpec);
-            Assert.Equal(expectedRegions, stringHierarchySpec.RegionSet);
-            Assert.Equal(expectedModifiers, stringHierarchySpec.ModifierSet);
-        }
+    /// <summary>
+    /// Test the constructor StringHierarchySpec that takes the full string 
+    /// spec, where the input field is not empty.
+    /// </summary>
+    [Theory]
+    // Case with regions and modifiers
+    [InlineData("region1, region2 | modifier1, modifier2",
+                new[] { "region1", "region2" },
+                new[] { "modifier1", "modifier2" })]
+    // Case with only one region
+    [InlineData("region1",
+                new[] { "region1" },
+                new string[0])]
+    // Case sensitivity
+    [InlineData("Region1, REGION2 | Modifier1, MODIFIER2",
+                new[] { "region1", "region2" },
+                new[] { "modifier1", "modifier2" })]
+    // Single region and modifier
+    [InlineData("region1 | modifier1",
+                new[] { "region1" },
+                new[] { "modifier1" })]
+    public void ConstructorFullSpec_ValidInputs_ShouldInit(string fullSpec, 
+        string[] expectedRegions, string[] expectedModifiers)
+    {
+        // Build the spec and make sure sets parsed correctly
+        var stringHierarchySpec = new StringHierarchySpec(fullSpec);
+        Assert.Equal(expectedRegions, stringHierarchySpec.RegionSet);
+        Assert.Equal(expectedModifiers, stringHierarchySpec.ModifierSet);
 
-        /// <summary>
-        /// Test the constructor StringHierarchySpec((string[] RegionSet, string[] ModifierSet) 
-        /// tuple).
-        /// </summary>
-        [Theory]
-        // Normal case
-        [InlineData(new[] { "region1", "region2" }, new[] { "modifier1", "modifier2" })] 
-        // Single region, no modifiers
-        [InlineData(new[] { "region1" }, new string[0])] 
-        // Both arrays empty
-        [InlineData(new string[0], new string[0])] 
-        public void ConstructorTuple_ValidInputs_ShouldInit(string[] expectedRegions, 
-            string[] expectedModifiers)
-        {
-            var tuple = (expectedRegions, expectedModifiers);
-            var stringHierarchySpec = new StringHierarchySpec(tuple);
-            Assert.Equal(expectedRegions, stringHierarchySpec.RegionSet);
-            Assert.Equal(expectedModifiers, stringHierarchySpec.ModifierSet);
-        }
+        // Make sure partial string specs are correct
+        var specHalves = fullSpec.Split(
+            StringHierarchySpec.REGIONS_MODIFIERS_DELIMITER);
+        Assert.Equal(specHalves[0].Trim(), stringHierarchySpec.RegionSpec);
+        Assert.Equal(specHalves[1].Trim(), stringHierarchySpec.ModifierSpec);
+    }
+
+    /// <summary>
+    /// Test the constructor StringHierarchySpec(string fullSpec), where the
+    /// input field is empty.
+    /// </summary>
+    [Theory]
+    [InlineData("",
+                new[] { "" },
+                new string[0])] // Case with empty input
+    public void ConstructorFullSpec_EmptyInputs_ShouldInit(string fullSpec, 
+        string[] expectedRegions, string[] expectedModifiers)
+    {
+        var stringHierarchySpec = new StringHierarchySpec(fullSpec);
+        Assert.Equal(expectedRegions, stringHierarchySpec.RegionSet);
+        Assert.Equal(expectedModifiers, stringHierarchySpec.ModifierSet);
+    }
+
+    /// <summary>
+    /// Test the constructor StringHierarchySpec that takes the tuple of region
+    /// and modifier string sets.
+    /// </summary>
+    [Theory]
+    // Normal case
+    [InlineData(new[] { "region1", "region2" }, 
+        new[] { "modifier1", "modifier2" })]
+    // Single region, no modifiers
+    [InlineData(new[] { "region1" }, new string[0])]
+    // Both arrays empty
+    [InlineData(new string[0], new string[0])]
+    // Case sensitivity check
+    [InlineData(new[] { "Region1", "Region2" }, new[] { "Modifier1" })]
+    public void ConstructorTuple_ValidInputs_ShouldInit(
+        string[] expectedRegions, string[] expectedModifiers)
+    {
+        var tuple = (expectedRegions, expectedModifiers);
+        var stringHierarchySpec = new StringHierarchySpec(tuple);
+        Assert.Equal(expectedRegions, stringHierarchySpec.RegionSet);
+        Assert.Equal(expectedModifiers, stringHierarchySpec.ModifierSet);
+    }
 
         /// <summary>
         /// Test the method ParseFullSpec. This requires the methods ParseRegionSpec and 
@@ -454,56 +469,56 @@ namespace EStimLibrary.UnitTests.Extensions.SpatialModel.StringHierarchy;
         //    Assert.Equal(expectedCommonModifiers, commonModifiers);
         //}
 
-        ///// <summary>
-        ///// Test the TryGetOverlap method. Uses inputs that should lead to a succesful overlap.
-        ///// </summary>
-        //[Theory]
-        //[InlineData(
-        //new[] { "region1", "region2" }, new[] { "modifier1", "modifier2" },
-        //new[] { "region1", "region2" }, new[] { "modifier1", "modifier2" },
-        //true, true, "region1, region2 | modifier1, modifier2"
-        //)] // Complete containment
+    ///// <summary>
+    ///// Test the TryGetOverlap method. Uses inputs that should lead to a succesful overlap.
+    ///// </summary>
+    //[Theory]
+    //[InlineData(
+    //new[] { "region1", "region2" }, new[] { "modifier1", "modifier2" },
+    //new[] { "region1", "region2" }, new[] { "modifier1", "modifier2" },
+    //true, true, "region1, region2 | modifier1, modifier2"
+    //)] // Complete containment
 
-        //[InlineData(
-        //new[] { "region1" }, new[] { "modifier1" },
-        //new[] { "region1", "region2" }, new[] { "modifier1", "modifier2" },
-        //true, true, "region1, region2 | modifier1, modifier2"
-        //)] // Partial overlap
+    //[InlineData(
+    //new[] { "region1" }, new[] { "modifier1" },
+    //new[] { "region1", "region2" }, new[] { "modifier1", "modifier2" },
+    //true, true, "region1, region2 | modifier1, modifier2"
+    //)] // Partial overlap
 
-        //public void TryGetOverlap_ShouldIdentifyOverlapIsPossible(
-        //    string[] firstRegionSet, string[] firstModifierSet,
-        //    string[] secondRegionSet, string[] secondModifierSet,
-        //    bool expectedOverlap, bool expectedContains, string expectedOverlappingRegion)
-        //{
-        //    var spec1 = new StringHierarchySpec((firstRegionSet, firstModifierSet));
-        //    var spec2 = new StringHierarchySpec((secondRegionSet, secondModifierSet));
-        //    var result = spec1.TryGetOverlap(spec2, out var overlappingRegion, out var contains);
-        //    Assert.Equal(expectedOverlap, result);
-        //    Assert.Equal(expectedContains, contains);
-        //    Assert.Equal(expectedOverlappingRegion, overlappingRegion);
-        //}
+    //public void TryGetOverlap_ShouldIdentifyOverlapIsPossible(
+    //    string[] firstRegionSet, string[] firstModifierSet,
+    //    string[] secondRegionSet, string[] secondModifierSet,
+    //    bool expectedOverlap, bool expectedContains, string expectedOverlappingRegion)
+    //{
+    //    var spec1 = new StringHierarchySpec((firstRegionSet, firstModifierSet));
+    //    var spec2 = new StringHierarchySpec((secondRegionSet, secondModifierSet));
+    //    var result = spec1.TryGetOverlap(spec2, out var overlappingRegion, out var contains);
+    //    Assert.Equal(expectedOverlap, result);
+    //    Assert.Equal(expectedContains, contains);
+    //    Assert.Equal(expectedOverlappingRegion, overlappingRegion);
+    //}
 
-        ///// <summary>
-        ///// Test the TryGetOverlap method. Uses inputs that should lead to an unsuccesful overlap.
-        ///// </summary>
-        //[Theory]
-        //[InlineData(
-        //new[] { "regionA", "regionB" }, new[] { "modifierX", "modifierY" },
-        //new[] { "region1", "region2" }, new[] { "modifier1", "modifier2" },
-        //false, false, ""
-        //)] // No overlap
+    ///// <summary>
+    ///// Test the TryGetOverlap method. Uses inputs that should lead to an unsuccesful overlap.
+    ///// </summary>
+    //[Theory]
+    //[InlineData(
+    //new[] { "regionA", "regionB" }, new[] { "modifierX", "modifierY" },
+    //new[] { "region1", "region2" }, new[] { "modifier1", "modifier2" },
+    //false, false, ""
+    //)] // No overlap
 
-        //[InlineData(
-        //new[] { "region1" }, new[] { "modifier1", "modifier2" },
-        //new[] { "region1" }, new[] { "modifier3", "modifier4" },
-        //false, false, ""
-        //)] // Region-only overlap
+    //[InlineData(
+    //new[] { "region1" }, new[] { "modifier1", "modifier2" },
+    //new[] { "region1" }, new[] { "modifier3", "modifier4" },
+    //false, false, ""
+    //)] // Region-only overlap
 
-        //[InlineData(
-        //new string[0], new string[0],
-        //new string[0], new string[0],
-        //false, false, ""
-        //)] // Empty sets
+    //[InlineData(
+    //new string[0], new string[0],
+    //new string[0], new string[0],
+    //false, false, ""
+    //)] // Empty sets
 
         //public void TryGetOverlap_ShouldIdentifyOverlapIsNotPossible(
         //    string[] firstRegionSet, string[] firstModifierSet,
