@@ -1,8 +1,10 @@
 ﻿namespace EStimLibrary.Extensions.SpatialModel.StringHierarchy;
 
 
-public record StringHierarchySpec(string[] RegionSet, string[] ModifierSet)
+public record StringHierarchySpec(string[] regionSet, string[] modifierSet)
 {
+    public string[] RegionSet { get; } = regionSet.Select(r => r.ToLower()).ToArray();
+    public string[] ModifierSet { get; } = modifierSet.Select(m => m.ToLower()).ToArray();
     public string FullSpec => JoinFullSpec(this.RegionSet, this.ModifierSet);
     public string RegionSpec => JoinRegionSet(this.RegionSet);
     public string ModifierSpec => JoinModifierSet(this.ModifierSet);
@@ -26,6 +28,13 @@ public record StringHierarchySpec(string[] RegionSet, string[] ModifierSet)
         this(tuple.RegionSet, tuple.ModifierSet)
     {
     }
+
+    /*
+    public StringHierarchySpec(
+        (string[] RegionSet, string[] ModifierSet) tuple) :
+        this(tuple.RegionSet, tuple.ModifierSet)
+    {
+    }*/
 
     /// <summary>
     /// Parse a string hierarchy specification into the region names and 
@@ -98,16 +107,16 @@ public record StringHierarchySpec(string[] RegionSet, string[] ModifierSet)
     /// <param name="optionedRegionName">The full region name to parse.</param>
     /// <param name="baseName">An output parameter: the base name upon success,
     /// else and empty string.</param>
-    /// <param name="option">An output parameter: the string that contains the option if
+    /// <param name="options">An output parameter: the string that contains the option if
     /// there is any, empty if not.</param>
     /// <returns>True if valid parse, False if not.</returns>
     public static bool TryParseOptionedRegionName(string optionedRegionName,
-        out string baseName, out string option)
+        out string baseName, out string options)
     {
         // Check if input is empty
         if (string.IsNullOrWhiteSpace(optionedRegionName))
         {
-            baseName = option = "";
+            baseName = options = "";
             return false;
         }
 
@@ -120,15 +129,42 @@ public record StringHierarchySpec(string[] RegionSet, string[] ModifierSet)
         // Fail if more than 2 elements are present
         if (nameElements.Length > 2)
         {
-            baseName = option = "";
+            baseName = options = "";
             return false;
         }
 
         // Process one or two elements
         baseName = nameElements[^1].Trim();
-        option = nameElements.Length == 2 ? nameElements[0].Trim() : "";
+        options = nameElements.Length == 2 ? nameElements[0].Trim() : "";
         return true;
     }
+
+    /// <summary>
+    /// Attempts to parse an options string into an array of individual options.
+    /// </summary>
+    /// <param name="options">The string containing options separated by OPTION_REGION_DELIMITER.</param>
+    /// <param name="parsedOptions">An output parameter that contains the parsed array of option names.</param>
+    /// <returns>True if at least one valid option is found; otherwise, false.</returns>
+    public static bool TryParseOptions(string options, out string[] parsedOptions)
+    {
+        // If the input is null or empty, return false with an empty array
+        if (string.IsNullOrWhiteSpace(options))
+        {
+            parsedOptions = Array.Empty<string>();
+            return false;
+        }
+
+        // Split options by OPTION_REGION_DELIMITER, remove empty elements, and trim each part
+        parsedOptions = options
+            .Split(OPTION_REGION_DELIMITER, StringSplitOptions.RemoveEmptyEntries)
+            .Select(option => option.Trim())
+            .Where(option => !string.IsNullOrEmpty(option)) // Ensure no empty options remain
+            .ToArray();
+
+        // Return true if at least one valid option is found, false otherwise
+        return parsedOptions.Length > 0;
+    }
+
 
     // TODO: decide to delete or not once new implementation tested
     /// <summary>
