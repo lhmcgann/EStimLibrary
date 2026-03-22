@@ -2,6 +2,27 @@
 
 namespace EStimLibrary.Extensions.SpatialModel.StringHierarchy;
 
+/// <summary>
+/// Represents a parsed string hierarchy specification consisting of an ordered
+/// sequence of optioned region names and an optional set of directional
+/// modifiers. All string components are normalized to lowercase with edge
+/// whitespace trimmed on construction. At least one non-empty region is
+/// required; construction throws if the region set would be empty.
+/// </summary>
+/// <remarks>
+/// The canonical string format is:
+/// <c>"[option(s) ]region1, region2, ... | modifier1, modifier2, ..."</c>
+/// where the modifier half is optional. See <see cref="ExamplePath"/> for a
+/// concrete example and the x_DELIMITER constants for the separators used.
+/// </remarks>
+/// <param name="regionSet">An ordered array of optioned region name strings.
+/// Null arrays and null/whitespace-only elements are silently dropped. Must
+/// yield at least one non-empty token after normalization.</param>
+/// <param name="modifierSet">An array of directional modifier strings. Null
+/// arrays and null/whitespace-only elements are silently dropped. May be
+/// empty or null.</param>
+/// <exception cref="ArgumentException">Thrown if no non-empty region remains
+/// after normalization of <paramref name="regionSet"/>.</exception>
 public record StringHierarchySpec(string[] regionSet, string[] modifierSet)
 {
     /// <summary>
@@ -28,17 +49,39 @@ public record StringHierarchySpec(string[] regionSet, string[] modifierSet)
         .Select(m => m.Trim().ToLower())
         .Where(m => m.Length > 0)
         .ToArray();
+    /// <summary>
+    /// The full canonical string representation of this spec, combining
+    /// <see cref="RegionSpec"/> and <see cref="ModifierSpec"/> with
+    /// <see cref="REGIONS_MODIFIERS_DELIMITER"/>. Equivalent to
+    /// <see cref="ToString"/>.
+    /// </summary>
     public string FullSpec => JoinFullSpec(this.RegionSet, this.ModifierSet);
+    /// <summary>
+    /// The canonical joined string of the optionedregion sequence, with each 
+    /// token separated by <see cref="REGIONS_DELIMITER"/> and a space.
+    /// </summary>
     public string RegionSpec => JoinRegionSet(this.RegionSet);
+    /// <summary>
+    /// The canonical joined string of the modifier set, with each token
+    /// separated by <see cref="MODIFIERS_DELIMITER"/> and a space. Empty string
+    /// if <see cref="ModifierSet"/> is empty.
+    /// </summary>
     public string ModifierSpec => JoinModifierSet(this.ModifierSet);
 
-    // Throws if the normalized region set is empty; used by RegionSet initializer.
+    /// <summary>
+    /// Validates that <paramref name="regions"/> contains at least one element.
+    /// </summary>
+    /// <param name="regions">The already-normalized (lowercase, trimmed,
+    /// null-filtered) region array to validate.</param>
+    /// <returns><paramref name="regions"/> unchanged.</returns>
+    /// <exception cref="ArgumentException">Thrown when the array is empty.
+    /// </exception>
     private static string[] _ValidateNonEmpty(string[] regions)
     {
         if (regions.Length == 0)
             throw new ArgumentException(
                 "A StringHierarchySpec requires at least one non-empty region.",
-                "regionSet");
+                nameof(regions));
         return regions;
     }
 
@@ -117,7 +160,10 @@ public record StringHierarchySpec(string[] regionSet, string[] modifierSet)
     /// <param name="fullSpec">The full modified region string specification.
     /// </param>
     /// <returns>A tuple of string arrays: the first is the ordered optioned
-    /// region no non-empty modifiers are present.</returns>
+    /// region name sequence (may be empty if the region part contained only
+    /// whitespace or empty tokens); the second is the modifier set, which is
+    /// empty if no <c>|</c> separator is present or no non-empty modifier
+    /// tokens remain.</returns>
     public static (string[] regionSet, string[] modifierSet) ParseFullSpec(
         string fullSpec)
     {
@@ -397,6 +443,13 @@ public record StringHierarchySpec(string[] regionSet, string[] modifierSet)
             this.ModifierSet.OrderBy(x => x).SequenceEqual(other.ModifierSet.OrderBy(x => x));
     }
 
+    /// <summary>
+    /// Returns the full canonical string representation of this spec, equal to
+    /// <see cref="FullSpec"/>.
+    /// </summary>
+    /// <returns>The full spec string in the form
+    /// <c>"region1, region2 | modifier1, modifier2"</c>, or just the region
+    /// spec if there are no modifiers.</returns>
     public override string ToString()
     {
         return this.FullSpec;
