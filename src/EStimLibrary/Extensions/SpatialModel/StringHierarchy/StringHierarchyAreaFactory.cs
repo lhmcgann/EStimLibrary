@@ -114,7 +114,14 @@ public class StringHierarchyAreaFactory : IFactory<IArea>
         // Create and return the product if param values valid.
         if (valid)
         {
-            product = new StringHierarchyArea((string)value!);
+            try
+            {
+                product = new StringHierarchyArea((string)value!);
+            }
+            catch (ArgumentException)
+            {
+                return false;
+            }
         }
         return valid;
     }

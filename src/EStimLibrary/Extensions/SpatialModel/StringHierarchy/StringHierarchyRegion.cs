@@ -219,6 +219,13 @@ public class StringHierarchyRegion
         // Split full region spec into sequence of option+region names.
         var regionSet = StringHierarchySpec.ParseRegionSpec(regionSpec);
 
+        // Fail immediately if the spec is empty (no regions to navigate).
+        if (regionSet.Length == 0)
+        {
+            foundSubregion = null;
+            return false;
+        }
+
         // Navigate the nodal graph to find the region.
         // Start searching in this region.
         foundSubregion = this;
@@ -248,9 +255,17 @@ public class StringHierarchyRegion
             // If searching in current region, compare option+region names.
             if (searchCurrentRegion)
             {
+                // Rebuild the normalized form (single space, already
+                // lowercased/trimmed by TryParseOptionedRegionName) so that
+                // extra internal whitespace like "left   base" still matches
+                // the canonical "left base" stored in OptionedRegionNames.
+                var normalizedName = searchOption.Length > 0
+                    ? $"{searchOption}{StringHierarchySpec.OPTION_REGION_DELIMITER}{searchBaseName}"
+                    : searchBaseName;
+
                 // If search name found, look for next item in subregions.
                 if (foundSubregion!.OptionedRegionNames.Contains(
-                    optionedRegionName))
+                    normalizedName))
                 {
                     searchCurrentRegion = false;
                 }

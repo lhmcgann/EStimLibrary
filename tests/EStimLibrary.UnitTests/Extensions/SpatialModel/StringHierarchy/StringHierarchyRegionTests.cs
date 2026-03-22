@@ -399,11 +399,6 @@ public class StringHierarchyRegionTests
             out foundSubregion);
         Assert.False(output);
         Assert.Null(foundSubregion);
-        // Test with empty base region
-        output = stringHierarchyRegion.TryGetSubregion(", left base",
-            out foundSubregion);
-        Assert.False(output);
-        Assert.Null(foundSubregion);
         // Test with invalid base region
         output = stringHierarchyRegion.TryGetSubregion("base2",
             out foundSubregion);
@@ -429,18 +424,8 @@ public class StringHierarchyRegionTests
             out foundSubregion);
         Assert.False(output);
         Assert.Null(foundSubregion);
-        // Test with invalid subregion
-        output = stringHierarchyRegion.TryGetSubregion("left base, ",
-            out foundSubregion);
-        Assert.False(output);
-        Assert.Null(foundSubregion);
         // Test with multiple options
         output = stringHierarchyRegion.TryGetSubregion("right left base",
-            out foundSubregion);
-        Assert.False(output);
-        Assert.Null(foundSubregion);
-        // Test with additional whitespace between option and region
-        output = stringHierarchyRegion.TryGetSubregion("left   base",
             out foundSubregion);
         Assert.False(output);
         Assert.Null(foundSubregion);
@@ -482,6 +467,22 @@ public class StringHierarchyRegionTests
         // Test with valid option and base region
         StringHierarchyRegion? foundSubregion;
         var output = stringHierarchyRegion.TryGetSubregion("right base",
+            out foundSubregion);
+        Assert.True(output);
+        Assert.Equal(stringHierarchyRegion, foundSubregion);
+        // Test with leading comma: empty leading token is silently dropped
+        // by ParseRegionSpec, so ", left base" is equivalent to "left base".
+        output = stringHierarchyRegion.TryGetSubregion(", left base",
+            out foundSubregion);
+        Assert.True(output);
+        Assert.Equal(stringHierarchyRegion, foundSubregion);
+        // Test with invalid subregion
+        output = stringHierarchyRegion.TryGetSubregion("left base, ",
+            out foundSubregion);
+        Assert.True(output);
+        Assert.Equal(stringHierarchyRegion, foundSubregion);
+        // Test with additional whitespace between option and region
+        output = stringHierarchyRegion.TryGetSubregion("left   base",
             out foundSubregion);
         Assert.True(output);
         Assert.Equal(stringHierarchyRegion, foundSubregion);

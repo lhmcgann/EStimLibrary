@@ -114,7 +114,14 @@ public class StringHierarchyLocationFactory :
         // Create and return the product if param values valid.
         if (valid)
         {
-            product = new StringHierarchyLocation((string)value!);
+            try
+            {
+                product = new StringHierarchyLocation((string)value!);
+            }
+            catch (ArgumentException)
+            {
+                return false;
+            }
         }
         return valid;
     }
