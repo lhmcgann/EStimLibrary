@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
@@ -25,6 +25,8 @@
     <None Remove="Extensions\Stimulation\Patterns\" />
     <None Remove="Extensions\Stimulation\Trains\" />
     <None Remove="Extensions\SpatialModel\StringHierarchy\" />
+    <None Remove="Core\Data\" />
+    <None Remove="Extensions\Data\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Core\" />
@@ -44,9 +46,11 @@
     <Folder Include="Extensions\Stimulation\Patterns\" />
     <Folder Include="Extensions\Stimulation\Trains\" />
     <Folder Include="Extensions\SpatialModel\StringHierarchy\" />
+    <Folder Include="Core\Data\" />
+    <Folder Include="Extensions\Data\" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="System.IO.Ports" Version="7.0.0" />
+    <PackageReference Include="System.IO.Ports" Version="9.0.1" />
     <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
