@@ -774,6 +774,17 @@ public class StringHierarchySpecTests
     }
 
     /// <summary>
+    /// Test the Equals method. Uses the same object for comparison.
+    /// </summary>
+    [Fact]
+    public void Equals_SameObject_ShouldSucceed()
+    {
+        var spec1 = new StringHierarchySpec(new[] { "RegionA", "RegionB" }, new[] { "Modifier1", "Modifier2" });
+        bool result = spec1.Equals(spec1);
+        Assert.True(result);
+    }
+
+    /// <summary>
     /// Test the Equals method. Uses null as "other".
     /// </summary>
     [Fact]
