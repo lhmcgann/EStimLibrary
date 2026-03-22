@@ -198,6 +198,33 @@ public class StringHierarchyBodyModelBuilder : BodyModelBuilderBase
             }
         }
 
+        // Warn if any modifier axes share values. Region.IsValidModifierSpec will
+        // still produce deterministic output in that case, but the axis a
+        // shared value is assigned to depends on spec listing order and
+        // Modifiers insertion order — not on explicit caller intent.
+        var allValues = region.Modifiers.Values.SelectMany(v => v);
+        var duplicateValues = allValues
+            .GroupBy(v => v)
+            .Where(g => g.Count() > 1)
+            .Select(g => g.Key)
+            .ToList();
+        if (duplicateValues.Count > 0)
+        {
+            var axisDescriptions = region.Modifiers
+                .Select(kvp =>
+                    $"{kvp.Key}:[{string.Join(',', kvp.Value)}]")
+                .ToList();
+            Console.WriteLine($"{_WarnParse}: Region '{regionName}' has " +
+                $"modifier axes with overlapping values: " +
+                $"[{string.Join(',', duplicateValues)}] appear in more than " +
+                $"one axis ({string.Join(", ", axisDescriptions)}). " +
+                $"When validating a modifier spec, a shared value is assigned " +
+                $"to the first available axis in definition order. Spec listing " +
+                $"order determines which modifier claims which axis when " +
+                $"frequencies are equal. Consider making modifier axis values " +
+                $"disjoint to avoid ambiguous assignment.");
+        }
+
         // Throw exception if not all required modifiers are present.
         var missingModifiers = this._RequiredModifiers.Except(
             region.Modifiers.Keys);

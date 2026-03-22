@@ -293,14 +293,37 @@ public class StringHierarchyRegion
     /// Check if a modifier specification is valid within this region.
     /// Valid if:
     ///     - formatted (delimited) correctly
-    ///     - all modifiers values are found in the possible value sets of the 
+    ///     - all modifier values are found in the possible value sets of the
     ///       modifier axes of this region
-    ///     - each modifier axis is used at most once
+    ///     - each modifier axis is used at most once (at most one value per
+    ///       axis, and at most as many modifier values as there are axes)
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Axis assignment when values overlap across axes:</b> modifiers are
+    /// sorted by ascending frequency (how many axes contain that value) before
+    /// assignment. This ensures a value that appears on only one axis is
+    /// assigned there first, leaving shared-value axes available for modifiers
+    /// that could go elsewhere. However, when two modifiers have equal
+    /// frequency, the sort is stable and preserves their <i>spec listing
+    /// order</i>. The first modifier in that order claims the first axis
+    /// (in <c>Modifiers</c> dictionary insertion order) that contains it.
+    /// </para>
+    /// <para>
+    /// As a result, the assignment in <paramref name="modifierAxisValuePairs"/>
+    /// is execution-deterministic but semantically opaque: a caller cannot
+    /// express "assign value X to axis Y specifically" through the spec string
+    /// alone when X appears in multiple axes. If such precision is needed,
+    /// modifier axes should be defined with disjoint value sets.
+    /// </para>
+    /// </remarks>
     /// <param name="modifierSpec">The modifier specification to check.</param>
-    /// <param name="modifierAxisValuePairs">Output variable. Modifier values matched 
-    /// to their respective 'axes': { axis1: value1, axis2: value2, ...} </param>
-    /// <returns>T/F if the spec is valid in this region.</returns>
+    /// <param name="modifierAxisValuePairs">Output variable. Each modifier
+    /// value matched to the axis it was assigned to:
+    /// { axisName: modifierValue, ... }. Empty on return value false.
+    /// </param>
+    /// <returns>True if the spec is valid in this region, false otherwise.
+    /// </returns>
     public bool IsValidModifierSpec(string modifierSpec,
         out Dictionary<string, string> modifierAxisValuePairs)
     {
@@ -309,22 +332,22 @@ public class StringHierarchyRegion
 
         // Split into modifier set.
         var modifierSet = StringHierarchySpec.ParseModifierSpec(modifierSpec);
+
         // Sort modifiers by their frequency across axis option sets, ascending
         // order so duplicate modifier values (e.g., "center" as a valid value
         // on two axes) doesn't use the only axis another modifier value may be
         // valid for. I.e., duplicate modifier values "used" for the most 
         // restricted axis first.
-        // TODO: FIX THIS!!!
         var sortedModifierSet = modifierSet.OrderBy(modifier =>
             this._modifierFrequencyDict.ContainsKey(modifier) ?
             this._modifierFrequencyDict[modifier] : 0)
             .ToList();
 
-        // Foreach modifier, search for it in the value set of all unused
-        // modifier axes.
+        // Foreach modifier (in sorted order), search for it in the value set
+        // of all unused modifier axes.
         List<string> unusedAxes = new(this.Modifiers.Keys);
 
-        foreach (var modifier in modifierSet)
+        foreach (var modifier in sortedModifierSet)
         {
             bool found = false;
             string usedAxis;
@@ -346,8 +369,10 @@ public class StringHierarchyRegion
                 }
             }
             // If modifier value could not be found in remaining axes, fail.
+            // Clear the output dict so callers always get an empty result on false.
             if (!found)
             {
+                modifierAxisValuePairs = new();
                 return false;
             }
         }
@@ -456,14 +481,14 @@ public class StringHierarchyRegion
         {
             modifierLists.Add($"[{string.Join(',', modifierSet)}]");
         }
-        var modifierSpec = string.Join(StringHierarchySpec.MODIFIERS_DELIMITER,
+        var modifierSpec = string.Join($"{StringHierarchySpec.MODIFIERS_DELIMITER} ",
             modifierLists);
 
         // The full line for this region: {indent}{fullPathSpec}{DELIM}{mods}
         var indent = new string(' ', indentLevel * 4);
         var fullSpec = $"{indent}{regionSpec}" +
             ((modifierSpec.Length == 0) ? "" :
-            $"{StringHierarchySpec.REGIONS_MODIFIERS_DELIMITER}{modifierSpec}");
+            $" {StringHierarchySpec.REGIONS_MODIFIERS_DELIMITER} {modifierSpec}");
 
         // Recursively get subregion spec strings. Init final list w/ this spec.
         List<string> subregionStrings = new() { fullSpec };
