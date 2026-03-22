@@ -1,22 +1,77 @@
-﻿namespace EStimLibrary.Extensions.SpatialModel.StringHierarchy;
+﻿using System.Collections.Immutable;
 
+namespace EStimLibrary.Extensions.SpatialModel.StringHierarchy;
 
 public record StringHierarchySpec(string[] regionSet, string[] modifierSet)
 {
-    public string[] RegionSet { get; } = regionSet.Select(r => r.ToLower()).ToArray();
-    public string[] ModifierSet { get; } = modifierSet.Select(m => m.ToLower()).ToArray();
+    /// <summary>
+    /// The ordered sequence of optioned region names in this spec, normalized to
+    /// lowercase with edge whitespace trimmed. Null input arrays or null/empty
+    /// elements are silently dropped.
+    /// </summary>
+    /// <exception cref="ArgumentException">Thrown during construction if no
+    /// non-empty region remains after normalization.</exception>
+    public string[] RegionSet { get; } = _ValidateNonEmpty(
+        (regionSet ?? Array.Empty<string>())
+            .Where(r => r != null)
+            .Select(r => r.Trim().ToLower())
+            .Where(r => r.Length > 0)
+            .ToArray());
+    
+    /// <summary>
+    /// The set of directional modifiers in this spec, normalized to lowercase
+    /// with edge whitespace trimmed. May be empty. Null input arrays or
+    /// null/empty elements are silently dropped.
+    /// </summary>
+    public string[] ModifierSet { get; } = (modifierSet ?? Array.Empty<string>())
+        .Where(m => m != null)
+        .Select(m => m.Trim().ToLower())
+        .Where(m => m.Length > 0)
+        .ToArray();
     public string FullSpec => JoinFullSpec(this.RegionSet, this.ModifierSet);
     public string RegionSpec => JoinRegionSet(this.RegionSet);
     public string ModifierSpec => JoinModifierSet(this.ModifierSet);
 
-    public const char OPTION_REGION_DELIMITER = ' ';
-    public const string REGIONS_DELIMITER = ", ";
-    public const string REGIONS_MODIFIERS_DELIMITER = " | ";
-    public const string MODIFIERS_DELIMITER = REGIONS_DELIMITER;
+    // Throws if the normalized region set is empty; used by RegionSet initializer.
+    private static string[] _ValidateNonEmpty(string[] regions)
+    {
+        if (regions.Length == 0)
+            throw new ArgumentException(
+                "A StringHierarchySpec requires at least one non-empty region.",
+                "regionSet");
+        return regions;
+    }
 
-    public static string ExamplePath = $"option1{OPTION_REGION_DELIMITER}" +
-        $"region1{REGIONS_DELIMITER}no-option-region2{REGIONS_DELIMITER}..." +
-        $"{REGIONS_MODIFIERS_DELIMITER}modifier{MODIFIERS_DELIMITER}...";
+    /// <summary>
+    /// Delimiter character separating region option(s) from the base region 
+    /// name.
+    /// </summary>
+    public const char OPTION_REGION_DELIMITER = ' ';
+    /// <summary>
+    /// Delimiter used to <b>join</b> region or modifier names into their spec
+    /// strings (output). Input parsing splits on <c>,</c> alone, so surrounding
+    /// whitespace is tolerated and empty tokens are filtered out.
+    /// </summary>
+    public const char REGIONS_DELIMITER = ',';
+    /// <summary>
+    /// Delimiter used to <b>join</b> the region spec and modifier spec into a
+    /// full spec string (output). Input parsing splits on the first <c>|</c>
+    /// character regardless of surrounding whitespace; content after a second
+    /// <c>|</c> is ignored.
+    /// </summary>
+    public const char REGIONS_MODIFIERS_DELIMITER = '|';
+    /// <inheritdoc cref="REGIONS_DELIMITER"/>
+    public const char MODIFIERS_DELIMITER = REGIONS_DELIMITER;
+
+    /// <summary>
+    /// An example of a full string specification demonstrating the expected
+    /// format: optioned region names joined by <see cref="REGIONS_DELIMITER"/>,
+    /// optionally followed by <see cref="REGIONS_MODIFIERS_DELIMITER"/> and
+    /// modifiers joined by <see cref="MODIFIERS_DELIMITER"/>.
+    /// </summary>
+    public static readonly string ExamplePath = $"option1{OPTION_REGION_DELIMITER}" +
+        $"region1{REGIONS_DELIMITER} no-option-region2{REGIONS_DELIMITER} ..." +
+        $" {REGIONS_MODIFIERS_DELIMITER} modifier{MODIFIERS_DELIMITER} ...";
 
     /// <summary>
     /// Create a new StringHierarchySpec from a full modified region string 
@@ -26,6 +81,8 @@ public record StringHierarchySpec(string[] regionSet, string[] modifierSet)
     /// </summary>
     /// <param name="fullSpec">The full string specification, delimited 
     /// appropriately.</param>
+    /// <exception cref="ArgumentException">Thrown if no non-empty region is
+    /// found after parsing.</exception>
     public StringHierarchySpec(string fullSpec) :
         this(ParseFullSpec(fullSpec))
     {
@@ -40,39 +97,52 @@ public record StringHierarchySpec(string[] regionSet, string[] modifierSet)
     /// <param name="tuple">First element is a string array containing the 
     /// ordered optioned region names to include in the spec. Second element is
     /// a string array of the unique string directional modifiers.</param>
+    /// <exception cref="ArgumentException">Thrown if the region set is empty
+    /// after dropping null/whitespace-only elements.</exception>
     public StringHierarchySpec(
         (string[] RegionSet, string[] ModifierSet) tuple) :
         this(tuple.RegionSet, tuple.ModifierSet)
     {
     }
 
-    /*
-    public StringHierarchySpec(
-        (string[] RegionSet, string[] ModifierSet) tuple) :
-        this(tuple.RegionSet, tuple.ModifierSet)
-    {
-    }*/
-
     /// <summary>
-    /// Parse a string hierarchy specification into the optioned region names 
-    /// and modifier lists according to the x_DELIMITERS, lowercasing and 
-    /// trimming.
+    /// Parse a full string hierarchy specification into the optioned region
+    /// names and modifier list. Tolerant of whitespace variations and malformed
+    /// input: splits on the first <c>|</c> character (no surrounding spaces
+    /// required), ignores everything after a second <c>|</c>, and delegates to
+    /// <see cref="ParseRegionSpec"/> and <see cref="ParseModifierSpec"/> which
+    /// split on <c>,</c> and filter empty tokens. Returns empty arrays if the
+    /// input is null or whitespace-only.
     /// </summary>
     /// <param name="fullSpec">The full modified region string specification.
     /// </param>
-    /// <returns>A tuple of string arrays, the first containing the string
-    /// sequence of the region specification, the second containing the set of
-    /// directional modifiers. The latter may be empty if no modifiers are
-    /// included.</returns>
+    /// <returns>A tuple of string arrays: the first is the ordered optioned
+    /// region no non-empty modifiers are present.</returns>
     public static (string[] regionSet, string[] modifierSet) ParseFullSpec(
         string fullSpec)
     {
-        var parts = fullSpec.Split(REGIONS_MODIFIERS_DELIMITER);
-        var regionSet = ParseRegionSpec(parts[0]);
-        var modifierSet = parts.Length > 1 ? ParseModifierSpec(parts[1]) :
-            new string[0];
+        if (string.IsNullOrWhiteSpace(fullSpec))
+            return (Array.Empty<string>(), Array.Empty<string>());
 
-        return (regionSet, modifierSet);
+        // Split on the first '|' only; content after a second '|' is ignored.
+        var delimIdx = fullSpec.IndexOf(REGIONS_MODIFIERS_DELIMITER);
+        string regionPart, modifierPart;
+        if (delimIdx < 0)
+        {
+            regionPart = fullSpec;
+            modifierPart = string.Empty;
+        }
+        else
+        {
+            regionPart = fullSpec[..delimIdx];
+            var modifierRaw = fullSpec[(delimIdx + 1)..];
+            var secondDelimIdx = modifierRaw.IndexOf(REGIONS_MODIFIERS_DELIMITER);
+            modifierPart = secondDelimIdx >= 0
+                ? modifierRaw[..secondDelimIdx]
+                : modifierRaw;
+        }
+
+        return (ParseRegionSpec(regionPart), ParseModifierSpec(modifierPart));
     }
 
     /// <summary>
@@ -81,13 +151,14 @@ public record StringHierarchySpec(string[] regionSet, string[] modifierSet)
     /// </summary>
     /// <param name="regionSpec">The string region specification, i.e., the 
     /// first half of a full string specification.</param>
-    /// <returns>The string array of optioned region names, parsed by the 
-    /// REGIONS_DELIMITER, converted to lowercase and trimmed of edge 
-    /// whitespace.</returns>
+    /// <returns>The string array of optioned region names, split on <c>,</c>
+    /// (whitespace around it tolerated), converted to lowercase, trimmed, and
+    /// with any empty tokens removed.</returns>
     public static string[] ParseRegionSpec(string regionSpec)
     {
         return regionSpec.Split(REGIONS_DELIMITER)
-            .Select(s => s.ToLower().Trim())
+            .Select(s => s.Trim().ToLower())
+            .Where(s => s.Length > 0)
             .ToArray();
     }
 
@@ -97,13 +168,14 @@ public record StringHierarchySpec(string[] regionSet, string[] modifierSet)
     /// </summary>
     /// <param name="modifierSpec">The string modifier specification, i.e., the
     /// second half of a full string specification.</param>
-    /// <returns>The string array of modifiers, parsed by the 
-    /// MODIFIERS_DELIMITER, converted to lowercase and trimmed of edge 
-    /// whitespace.</returns>
+    /// <returns>The string array of modifiers, split on <c>,</c> (whitespace
+    /// around it tolerated), converted to lowercase, trimmed, and with any
+    /// empty tokens removed.</returns>
     public static string[] ParseModifierSpec(string modifierSpec)
     {
         return modifierSpec.Split(MODIFIERS_DELIMITER)
-            .Select(s => s.ToLower().Trim())
+            .Select(s => s.Trim().ToLower())
+            .Where(s => s.Length > 0)
             .ToArray();
     }
 
@@ -121,8 +193,7 @@ public record StringHierarchySpec(string[] regionSet, string[] modifierSet)
         var regionSpec = JoinRegionSet(regionSet);
         var modifierSpec = JoinModifierSet(modifierSet);
         return (modifierSpec.Length != 0) ?
-            string.Join(REGIONS_MODIFIERS_DELIMITER, new[] { regionSpec,
-                modifierSpec }) :
+            $"{regionSpec} {REGIONS_MODIFIERS_DELIMITER} {modifierSpec}" :
             regionSpec;
     }
 
@@ -136,7 +207,7 @@ public record StringHierarchySpec(string[] regionSet, string[] modifierSet)
     /// <returns>The single joined string region spec.</returns>
     public static string JoinRegionSet(string[] regionSet)
     {
-        return string.Join(REGIONS_DELIMITER, regionSet);
+        return string.Join($"{REGIONS_DELIMITER} ", regionSet);
     }
 
     /// <summary>
@@ -148,25 +219,25 @@ public record StringHierarchySpec(string[] regionSet, string[] modifierSet)
     /// <returns>The single join string modifier spec.</returns>
     public static string JoinModifierSet(string[] modifierSet)
     {
-        return string.Join(MODIFIERS_DELIMITER, modifierSet);
+        return string.Join($"{MODIFIERS_DELIMITER} ", modifierSet);
     }
 
     /// <summary>
-    /// Parse the region option - if there is one - and base name from a full
-    /// optioned region name.
+    /// Parse zero or more option tokens and the base name from a full optioned
+    /// region name. The last whitespace-separated token is the base name; all
+    /// preceding tokens are options. Extra/multiple whitespace between tokens
+    /// are collapsed. Returns false only if the input is null or whitespace-only.
     /// </summary>
     /// <param name="optionedRegionName">The full optioned region name to parse.
     /// </param>
-    /// <param name="baseName">An output parameter: the whitesapce trimmed base 
-    /// name upon success, else an empty string.</param>
-    /// <param name="option">An output parameter: the whitespace trimmed option 
-    /// name if there is any, else an empty string.</param>
-    /// <param name="optionedRegionName">The full region name to parse.</param>
-    /// <param name="baseName">An output parameter: the base name upon success,
-    /// else and empty string.</param>
-    /// <param name="options">An output parameter: the string that contains the option if
-    /// there is any, empty if not.</param>
-    /// <returns>True if valid parse, False if not.</returns>
+    /// <param name="baseName">An output parameter: the last whitespace-separated
+    /// token upon success. An empty string upon failure.</param>
+    /// <param name="options">An output parameter: all preceding tokens joined
+    /// by a single space (e.g., <c>"left index"</c> for input
+    /// <c>"left index finger"</c>), or an empty string if there are none.
+    /// </param>
+    /// <returns>True if at least one token is present; false for empty or
+    /// whitespace-only input.</returns>
     public static bool TryParseOptionedRegionName(string optionedRegionName,
         out string baseName, out string options)
     {
@@ -177,23 +248,24 @@ public record StringHierarchySpec(string[] regionSet, string[] modifierSet)
             return false;
         }
 
-        // Split name elements by OPTION_REGION_DELIMITER
+        // Split by OPTION_REGION_DELIMITER, collapsing multiple.
         var nameElements = optionedRegionName
-            .Split(OPTION_REGION_DELIMITER, 
+            .Split(OPTION_REGION_DELIMITER,
                 StringSplitOptions.RemoveEmptyEntries)
             .Select(e => e.Trim())
+            .Where(e => e.Length > 0)
             .ToArray();
 
-        // Fail if more than 2 elements are present
-        if (nameElements.Length > 2)
+        // Fail if no tokens are found after splitting and filtering.
+        if (nameElements.Length == 0)
         {
             baseName = options = "";
             return false;
         }
 
-        // Process one or two elements
-        baseName = nameElements[^1].Trim();
-        options = nameElements.Length == 2 ? nameElements[0].Trim() : "";
+        // Last token is the base region name; all preceding tokens are options.
+        baseName = nameElements[^1];
+        options = string.Join(OPTION_REGION_DELIMITER, nameElements[..^1]);
         return true;
     }
 
@@ -224,13 +296,13 @@ public record StringHierarchySpec(string[] regionSet, string[] modifierSet)
     }
 
 
-    // TODO: decide to delete or not once new implementation tested
+    // TODO: decide to delete or not once new overlap implementation tested in bodymodel
     /// <summary>
     /// Check if another spec's region shares any parent path spec.
     /// </summary>
     /// <param name="other">The other StringHierarchySpec with which to check
     /// for a shared path.</param>
-    /// <param name="regionSetOfOverlap">The shared parent region path spec.
+    /// <param name="sharedRegionSet">The shared parent region path spec.
     /// Ignore if no shared path hierarchy is found.
     /// </param>
     /// <returns>T/F if a shared parent path is found.</returns>
@@ -254,7 +326,7 @@ public record StringHierarchySpec(string[] regionSet, string[] modifierSet)
         return endIndex > 0;
     }
 
-    // TODO: delete or rename once new implementation tested
+    // TODO: delete or rename once new overlap implementation tested in bodymodel
     //public bool ModifiersAllowOverlap_OLD(StringHierarchySpec other,
     //    out string[] commonModifiers)
     //{
@@ -277,46 +349,52 @@ public record StringHierarchySpec(string[] regionSet, string[] modifierSet)
     //    return commonModifiers.Length == lessSpecificModSet.Length;
     //}
 
+    /// <summary>
+    /// Serves as the default hash function.
+    /// Computes a combined hash code based on the exact sequence of the <see cref="RegionSet"/> 
+    /// and the order-independent elements of the <see cref="ModifierSet"/>.
+    /// </summary>
+    /// <returns>A hash code for the current object.</returns>
+    public override int GetHashCode()
+    {
+        var hash = new HashCode();
+
+        foreach (var item in this.RegionSet)
+        {
+            hash.Add(item);
+        }
+
+        foreach (var item in this.ModifierSet.OrderBy(x => x))
+        {
+            hash.Add(item);
+        }
+
+        return hash.ToHashCode();
+    }
+
+    /// <summary>
+    /// Determines whether the specified <see cref="StringHierarchySpec"/> is equal to the current object.
+    /// Equality requires an exact sequence match for the <see cref="RegionSet"/> and an 
+    /// order-independent match for the <see cref="ModifierSet"/>.
+    /// </summary>
+    /// <param name="other">The <see cref="StringHierarchySpec"/> to compare with the current object.</param>
+    /// <returns>
+    /// <c>true</c> if the specified object is equal to the current object; otherwise, <c>false</c>.
+    /// </returns>
     public virtual bool Equals(StringHierarchySpec? other)
     {
-        // Note: virtual so can be overridden in derived classes if needed.
-
         if (other is null)
         {
             return false;
         }
 
-        // Check if RegionSet arrays are the same reference or have the same
-        // elements in the same order.
-        if (!this.RegionSet.SequenceEqual(other.RegionSet))
+        if (ReferenceEquals(this, other))
         {
-            return false;
+            return true;
         }
 
-        // Check if ModifierSet arrays have the same elements, irrespective of
-        // order.
-        if (!this.ModifierSet.OrderBy(x => x).SequenceEqual(
-            other.ModifierSet.OrderBy(x => x)))
-        {
-            return false;
-        }
-
-        return true;
-    }
-
-    public override int GetHashCode()
-    {
-        // Combine hash codes of RegionSet and sorted ModifierSet.
-        int hashRegionSet = this.RegionSet != null ?
-            this.RegionSet.Aggregate(0,
-                (hash, item) => hash ^ item.GetHashCode()) :
-            0;
-        int hashModifierSet = this.ModifierSet != null ?
-            this.ModifierSet.OrderBy(x => x).Aggregate(0,
-                (hash, item) => hash ^ item.GetHashCode()) :
-            0;
-
-        return hashRegionSet ^ hashModifierSet;
+        return this.RegionSet.SequenceEqual(other.RegionSet) &&
+            this.ModifierSet.OrderBy(x => x).SequenceEqual(other.ModifierSet.OrderBy(x => x));
     }
 
     public override string ToString()
@@ -325,63 +403,5 @@ public record StringHierarchySpec(string[] regionSet, string[] modifierSet)
     }
 
 
-    #region OLD Spec Overlap Methods
-    // Incorrect for the intended function of spec overlap, but leaving here
-    // for now since may be useful for other things later.
-
-
-    // TODO: decide to delete or not once new implementation tested
-    /// <summary>
-    /// Check if another spec's region shares any parent path spec.
-    /// </summary>
-    /// <param name="other">The other StringHierarchySpec with which to check
-    /// for a shared path.</param>
-    /// <param name="regionSetOfOverlap">The shared parent region path spec.
-    /// Ignore if no shared path hierarchy is found.
-    /// </param>
-    /// <returns>T/F if a shared parent path is found.</returns>
-    // public bool RegionSetSharesPath(StringHierarchySpec other,
-    //     out string[] sharedRegionSet)
-    // {
-    //     // Shares path if first differing element is not the first one.
-
-    //     // Only search up to the length of the shorter path.
-    //     var minLength = Math.Min(this.RegionSet.Length,
-    //         other.RegionSet.Length);
-
-    //     // Get the index of the first differing element.
-    //     var endIndex = Enumerable.Range(0, minLength).FirstOrDefault(
-    //         i => !this.RegionSet[i].Equals(other.RegionSet[i]),
-    //         minLength); // Idx = min length if no differences found.
-
-    //     // DIFFERENT: Get the shared path spec (up to first differing idx).
-    //     sharedRegionSet = this.RegionSet.Take(endIndex).ToArray();
-    //     // Return T/F that any similar elements were found.
-    //     return endIndex > 0;
-    // }
-
-    // TODO: delete or rename once new implementation tested
-    //public bool ModifiersAllowOverlap_OLD(StringHierarchySpec other,
-    //    out string[] commonModifiers)
-    //{
-    //    // Overlaps if all modifiers in shorter set are in longer set.
-    //    string[] lessSpecificModSet; // Temp variables to store mod set references.
-    //    string[] moreSpecificModSet;
-    //    if (this.ModifierSet.Length < other.ModifierSet.Length)
-    //    {
-    //        lessSpecificModSet = this.ModifierSet;
-    //        moreSpecificModSet = other.ModifierSet;
-    //    }
-    //    else
-    //    {
-    //        lessSpecificModSet = other.ModifierSet;
-    //        moreSpecificModSet = this.ModifierSet;
-    //    }
-    //    commonModifiers = lessSpecificModSet.Intersect(moreSpecificModSet)
-    //        .ToArray();
-    //    //bool modifiersOverlap = shorterModSet.All(m => longerModSet.Contains(m));
-    //    return commonModifiers.Length == lessSpecificModSet.Length;
-    //}
-    #endregion OLD Spec Overlap Methods
 }
 
