@@ -237,6 +237,8 @@ public class StringHierarchyRegion
         {
             // Split search name into base name and option. Fail if
             // invalid format.
+            // Should never be hit due to the initial whitespace check, but added 
+            //  for safety.
             if (!StringHierarchySpec.TryParseOptionedRegionName(
                 optionedRegionName, out var searchBaseName,
                 out var searchOption))

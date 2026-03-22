@@ -303,6 +303,8 @@ public record StringHierarchySpec(string[] regionSet, string[] modifierSet)
             .ToArray();
 
         // Fail if no tokens are found after splitting and filtering.
+        // Should never be hit due to the initial whitespace check, but added 
+        //  for safety.
         if (nameElements.Length == 0)
         {
             baseName = options = "";
