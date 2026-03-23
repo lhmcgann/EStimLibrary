@@ -3,14 +3,6 @@
 
 public interface IArea : ISelectable
 {
-    bool IsLocationCompatible(ILocation location);
-    bool IsAreaCompatible(IArea area);
-
-    bool ContainsLocation(ILocation location);
-
-    bool TryGetOverlap(IArea area,
-        out IArea overlappingArea,
-        out bool fullyContainsArea);
 }
 
 //public interface IArea<LocationType, AreaType> : ISelectable

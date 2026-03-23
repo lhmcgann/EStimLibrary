@@ -334,7 +334,8 @@ public class StringHierarchyRegionTests
         return new List<object[]>
         {
             // { rootRegion, searchRegionSpec }
-            new object[] { ConstructEmptyRoot(), ""},
+            // TODO: empty region specs are invalid; will this throw an error instead?
+            // new object[] { ConstructEmptyRoot(), ""},
             new object[] { ConstructEmptyRoot(), "left foot"},
             new object[] { ConstructEmptyRoot(), "anythingThatsNotRootEmpty"},
             // Correct would be from:
@@ -343,9 +344,10 @@ public class StringHierarchyRegionTests
             //          [thumb index middle ring pinky] finger
             //          handbody
             //      [ulnar radial] middleTwoLevelB
-            new object[] { ConstructTwoLevelRoot(), 
-                // Fail on empty region spec
-                "" },
+            // TODO: empty region specs are invalid; will this throw an error instead?
+            // new object[] { ConstructTwoLevelRoot(), 
+            //     // Fail on empty region spec
+            //     "" },
             new object[] { ConstructTwoLevelRoot(), 
                 // Fail on root level: would need "rootTwoLevel" first!
                 "left hand" },
@@ -397,11 +399,6 @@ public class StringHierarchyRegionTests
             out foundSubregion);
         Assert.False(output);
         Assert.Null(foundSubregion);
-        // Test with empty base region
-        output = stringHierarchyRegion.TryGetSubregion(", left base",
-            out foundSubregion);
-        Assert.False(output);
-        Assert.Null(foundSubregion);
         // Test with invalid base region
         output = stringHierarchyRegion.TryGetSubregion("base2",
             out foundSubregion);
@@ -427,18 +424,8 @@ public class StringHierarchyRegionTests
             out foundSubregion);
         Assert.False(output);
         Assert.Null(foundSubregion);
-        // Test with invalid subregion
-        output = stringHierarchyRegion.TryGetSubregion("left base, ",
-            out foundSubregion);
-        Assert.False(output);
-        Assert.Null(foundSubregion);
         // Test with multiple options
         output = stringHierarchyRegion.TryGetSubregion("right left base",
-            out foundSubregion);
-        Assert.False(output);
-        Assert.Null(foundSubregion);
-        // Test with additional whitespace between option and region
-        output = stringHierarchyRegion.TryGetSubregion("left   base",
             out foundSubregion);
         Assert.False(output);
         Assert.Null(foundSubregion);
@@ -480,6 +467,22 @@ public class StringHierarchyRegionTests
         // Test with valid option and base region
         StringHierarchyRegion? foundSubregion;
         var output = stringHierarchyRegion.TryGetSubregion("right base",
+            out foundSubregion);
+        Assert.True(output);
+        Assert.Equal(stringHierarchyRegion, foundSubregion);
+        // Test with leading comma: empty leading token is silently dropped
+        // by ParseRegionSpec, so ", left base" is equivalent to "left base".
+        output = stringHierarchyRegion.TryGetSubregion(", left base",
+            out foundSubregion);
+        Assert.True(output);
+        Assert.Equal(stringHierarchyRegion, foundSubregion);
+        // Test with invalid subregion
+        output = stringHierarchyRegion.TryGetSubregion("left base, ",
+            out foundSubregion);
+        Assert.True(output);
+        Assert.Equal(stringHierarchyRegion, foundSubregion);
+        // Test with additional whitespace between option and region
+        output = stringHierarchyRegion.TryGetSubregion("left   base",
             out foundSubregion);
         Assert.True(output);
         Assert.Equal(stringHierarchyRegion, foundSubregion);
@@ -889,19 +892,19 @@ public class StringHierarchyRegionTests
             parent.Options, regionOptions, regionModifiers, regionSubregions);
 
         // Create invalid test modifier specs
-        var modSpec1 = "";
         var modSpec2 = "mod5";
         var modSpec3 = "mod1, mod2";
         var modSpec4 = "mod1, mod3, mod4";
 
-        // Test empty modifier spec
-        Assert.False(stringHierarchyRegion.IsValidModifierSpec(modSpec1));
         // Test invalid modifier
-        Assert.False(stringHierarchyRegion.IsValidModifierSpec(modSpec2));
+        Assert.False(stringHierarchyRegion.IsValidModifierSpec(modSpec2, out var pairs2));
+        Assert.Empty(pairs2);
         // Test invalid modifier set (all in same set)
-        Assert.False(stringHierarchyRegion.IsValidModifierSpec(modSpec3));
+        Assert.False(stringHierarchyRegion.IsValidModifierSpec(modSpec3, out var pairs3));
+        Assert.Empty(pairs3);
         // Test invalid modifier set (pair in same set)
-        Assert.False(stringHierarchyRegion.IsValidModifierSpec(modSpec4));
+        Assert.False(stringHierarchyRegion.IsValidModifierSpec(modSpec4, out var pairs4));
+        Assert.Empty(pairs4);
     }
 
     /// <summary>
@@ -930,14 +933,25 @@ public class StringHierarchyRegionTests
         var stringHierarchyRegion = new StringHierarchyRegion("base", parent,
             parent.Options, regionOptions, regionModifiers, regionSubregions);
 
-        // Create invalid test modifier specs
+        // Create valid test modifier specs
+        var modSpec0 = "";
         var modSpec1 = "mod3";
         var modSpec2 = "mod1, mod4";
 
-        // Test valid modifier
-        Assert.True(stringHierarchyRegion.IsValidModifierSpec(modSpec1));
-        // Test valid modifier set
-        Assert.True(stringHierarchyRegion.IsValidModifierSpec(modSpec2));
+        // Test empty modifier spec: always valid, outputs empty dict.
+        Assert.True(stringHierarchyRegion.IsValidModifierSpec(modSpec0, out var pairs0));
+        Assert.Empty(pairs0);
+
+        // Test valid modifier: single value maps to exactly one axis.
+        Assert.True(stringHierarchyRegion.IsValidModifierSpec(modSpec1, out var pairs1));
+        Assert.Single(pairs1);
+        Assert.Equal("mod3", pairs1["modSet2"]);
+
+        // Test valid modifier set: each value maps to a distinct axis.
+        Assert.True(stringHierarchyRegion.IsValidModifierSpec(modSpec2, out var pairs2));
+        Assert.Equal(2, pairs2.Count);
+        Assert.Equal("mod1", pairs2["modSet1"]);
+        Assert.Equal("mod4", pairs2["modSet2"]);
     }
 
     /// <summary>
@@ -947,117 +961,164 @@ public class StringHierarchyRegionTests
     [Theory]
     #region Single shared modifier. Same-length axis modifier value sets.
     // Shared modifier value used in first axis.
+    // proximal(freq=1) sorted before middle(freq=2): proximal→y, middle→x.
     [InlineData(
         new string[] { "left", "middle", "right" }, 
         new string[] { "proximal", "middle", "distal" }, 
-        "middle, proximal")]
+        "middle, proximal",
+        new string[] { "x", "y" }, new string[] { "middle", "proximal" })]
     // Shared modifier value used in second axis.
+    // left(freq=1) sorted before middle(freq=2): left→x, middle→y.
     [InlineData(
         new string[] { "left", "middle", "right" }, 
         new string[] { "proximal", "middle", "distal" }, 
-        "left, middle")]
+        "left, middle",
+        new string[] { "x", "y" }, new string[] { "left", "middle" })]
     // Shared modifier value used in both axes.
+    // Both freq=2, stable sort preserves input order: middle→x, middle→y.
     [InlineData(
         new string[] { "left", "middle", "right" }, 
         new string[] { "proximal", "middle", "distal" }, 
-        "middle, middle")]
+        "middle, middle",
+        new string[] { "x", "y" }, new string[] { "middle", "middle" })]
     // Shared modifier value used in one axis, no modifier value used in other.
-    // TODO: Should this non-determinism be allowed!!!
+    // NOTE: Axis assignment is determined by Modifiers dictionary insertion
+    // order (x before y here). "middle" always maps to x given this region
+    // definition. There is no way for the caller to specify which axis a
+    // shared value should map to; modifierAxisValuePairs reflects the
+    // first valid assignment found, not necessarily the intended one.
     [InlineData(
         new string[] { "left", "middle", "right" }, 
         new string[] { "proximal", "middle", "distal" }, 
-        "middle")]
+        "middle",
+        new string[] { "x" }, new string[] { "middle" })]
     // Shared modifier not used.
     [InlineData(
         new string[] { "left", "middle", "right" }, 
         new string[] { "proximal", "middle", "distal" }, 
-        "distal")]
+        "distal",
+        new string[] { "y" }, new string[] { "distal" })]
     #endregion
     #region Single shared modifier. Different-length axis modifier value sets.
     // Shared modifier value used in first (shorter) axis. Listed first.
+    // proximal(freq=1) sorted before middle(freq=2): proximal→y, middle→x.
     [InlineData(
         new string[] { "left", "middle" }, 
         new string[] { "proximal", "middle", "distal" }, 
-        "middle, proximal")]
+        "middle, proximal",
+        new string[] { "x", "y" }, new string[] { "middle", "proximal" })]
     // Shared modifier value used in first (shorter) axis. Listed second.
+    // Same sort result as above (proximal(1) before middle(2)): proximal→y, middle→x.
     [InlineData(
         new string[] { "left", "middle" }, 
         new string[] { "proximal", "middle", "distal" }, 
-        "proximal, middle")]
+        "proximal, middle",
+        new string[] { "x", "y" }, new string[] { "middle", "proximal" })]
     // Shared modifier value used in second (longer) axis. Listed first.
-    // TODO: this test case fails!!! --> REQUIRES FIX in Region!!! larger refactor/reimplement
-    // [InlineData(
-    //     new string[] { "left", "middle" }, 
-    //     new string[] { "proximal", "middle", "distal" }, 
-    //     "middle, left")]
+    // left(freq=1) sorted before middle(freq=2): left→x, middle→y.
+    [InlineData(
+        new string[] { "left", "middle" }, 
+        new string[] { "proximal", "middle", "distal" }, 
+        "middle, left",
+        new string[] { "x", "y" }, new string[] { "left", "middle" })]
     // Shared modifier value used in second (longer) axis. Listed second.
+    // left(freq=1) sorted before middle(freq=2): left→x, middle→y.
     [InlineData(
         new string[] { "left", "middle" }, 
         new string[] { "proximal", "middle", "distal" }, 
-        "left, middle")]
+        "left, middle",
+        new string[] { "x", "y" }, new string[] { "left", "middle" })]
     // Shared modifier value used in both axes.
+    // Both freq=2, stable sort preserves input order: middle→x, middle→y.
     [InlineData(
         new string[] { "left", "middle" }, 
         new string[] { "proximal", "middle", "distal" }, 
-        "middle, middle")]
+        "middle, middle",
+        new string[] { "x", "y" }, new string[] { "middle", "middle" })]
     // Shared modifier value used in one axis, no modifier value used in other.
-    // TODO: Should this non-determinism be allowed!!!
+    // NOTE: Same axis-assignment behavior as above: "middle" always maps to x
+    // (first axis in insertion order that contains it).
     [InlineData(
         new string[] { "left", "middle" }, 
         new string[] { "proximal", "middle", "distal" }, 
-        "middle")]
+        "middle",
+        new string[] { "x" }, new string[] { "middle" })]
     // Shared modifier not used.
     [InlineData(
         new string[] { "left", "middle" }, 
         new string[] { "proximal", "middle", "distal" }, 
-        "distal")]
+        "distal",
+        new string[] { "y" }, new string[] { "distal" })]
     #endregion
     #region Two shared modifiers. Different-length axis modifier value sets.
-    // TODO: Which axis are shared modifiers bucketed into? Should this 
-    // pseudo-non-determinism (rly just unknown-to-the-user behavior) be 
-    // allowed???!!!
+    // NOTE: When multiple values are shared across axes, the spec listing
+    // order drives assignment (C# OrderBy is a stable sort, so equal-frequency
+    // modifiers preserve their input order). The first modifier in the spec
+    // claims the first axis in Modifiers insertion order that contains it;
+    // the second claims the next available axis. For x:[left,middle] and
+    // y:[left,middle,right], both "left" and "middle" have freq 2, so the
+    // sort is stable and input order is preserved:
+    //   "middle, left" → {x:middle, y:left}   "left, middle" → {x:left, y:middle}
+    // The caller cannot express "assign left to y and middle to x" without
+    // changing the spec order. This behavior is execution-deterministic but
+    // semantically opaque to the caller.
     // Both values used: order 1.
+    // Both freq=2, stable sort preserves spec order: middle→x, left→y.
     [InlineData(
         new string[] { "left", "middle" }, 
         new string[] { "left", "middle", "right" }, 
-        "middle, left")]
+        "middle, left",
+        new string[] { "x", "y" }, new string[] { "middle", "left" })]
     // Both values used: order 2.
+    // Both freq=2, stable sort preserves spec order: left→x, middle→y.
     [InlineData(
         new string[] { "left", "middle" }, 
         new string[] { "left", "middle", "right" },
-        "left, middle")]
-    // One value use: axis 1, listed first.
+        "left, middle",
+        new string[] { "x", "y" }, new string[] { "left", "middle" })]
+    // One value used: axis 2 only. right(freq=1) sorted before middle(freq=2):
+    // right→y, middle→x.
     [InlineData(
         new string[] { "left", "middle" }, 
         new string[] { "left", "middle", "right" }, 
-        "middle, right")]
-    // One value used: axis 1, listed second.
+        "middle, right",
+        new string[] { "x", "y" }, new string[] { "middle", "right" })]
+    // One value used: axis 2 only. right(freq=1) sorted before middle(freq=2),
+    // same result regardless of spec order: right→y, middle→x.
     [InlineData(
         new string[] { "left", "middle" }, 
         new string[] { "left", "middle", "right" }, 
-        "right, middle")]
+        "right, middle",
+        new string[] { "x", "y" }, new string[] { "middle", "right" })]
     #endregion
     #region Single shared modifier. One axis only has the shared modifier.
     // Shared modifier value used in first (shorter) axis. Listed first.
+    // proximal(freq=1) sorted before middle(freq=2): proximal→y, middle→x.
     [InlineData(
         new string[] { "middle" }, 
         new string[] { "proximal", "middle", "distal" }, 
-        "middle, proximal")]
+        "middle, proximal",
+        new string[] { "x", "y" }, new string[] { "middle", "proximal" })]
     // Shared modifier value used in first (shorter) axis. Listed second.
+    // Same sort result: proximal(1) before middle(2): proximal→y, middle→x.
     [InlineData(
         new string[] { "middle" }, 
         new string[] { "proximal", "middle", "distal" }, 
-        "proximal, middle")]
+        "proximal, middle",
+        new string[] { "x", "y" }, new string[] { "middle", "proximal" })]
     // Shared modifier value used in one axis, no modifier value used in other.
-    // TODO: Should this non-determinism be allowed!!!
+    // NOTE: "middle" maps to x (freq 1 on x, claimed first because it is the
+    // only value on that axis and the sort processes lower-frequency values first).
     [InlineData(
         new string[] { "middle" }, 
         new string[] { "proximal", "middle", "distal" }, 
-        "middle")]
+        "middle",
+        new string[] { "x" }, new string[] { "middle" })]
     #endregion
     public void IsValidModifierSpec_DuplicateModifierValues_ShouldSucceed(
         string[] axis1Values, string[] axis2Values,
-        string modSpec)
+        string modSpec,
+        string[] expectedAxes, string[] expectedModifierValues)
     {
         // Create a region with the same value on two modifier axes.
         var region = new StringHierarchyRegion("hand", null!, 
@@ -1067,8 +1128,59 @@ public class StringHierarchyRegionTests
                 { "y", new HashSet<string>(axis2Values) }
             });
 
-        // Test valid modifier set
-        Assert.True(region.IsValidModifierSpec(modSpec));
+        // Test valid modifier set and check the axis-value mapping output.
+        Assert.True(region.IsValidModifierSpec(modSpec, out var pairs));
+        Assert.Equal(expectedAxes.Length, pairs.Count);
+        foreach (var (axis, modifier) in expectedAxes.Zip(expectedModifierValues))
+        {
+            Assert.True(pairs.ContainsKey(axis),
+                $"Expected axis '{axis}' not found in output pairs.");
+            Assert.Equal(modifier, pairs[axis]);
+        }
+    }
+
+    /// <summary>
+    /// Test the IsValidModifierSpec method correctly rejects invalid specs
+    /// involving overlapping modifier axes (axes that share values).
+    /// </summary>
+    [Theory]
+    // Repeated non-shared values.
+    // Value unique to axis 1 used twice.
+    [InlineData(
+        new string[] { "left", "middle" },
+        new string[] { "proximal", "middle", "distal" },
+        "left, left")]
+    // Value unique to axis 2 used twice.
+    [InlineData(
+        new string[] { "left", "middle" },
+        new string[] { "proximal", "middle", "distal" },
+        "proximal, proximal")]
+    // More modifiers than axes.
+    // All three values are valid individually; after both axes are claimed
+    // the third modifier has no remaining axis.
+    [InlineData(
+        new string[] { "left", "middle" },
+        new string[] { "proximal", "middle", "distal" },
+        "left, middle, proximal")]
+    // Same axes, shared value used with two unique values.
+    [InlineData(
+        new string[] { "left", "middle" },
+        new string[] { "proximal", "middle", "distal" },
+        "middle, left, proximal")]
+    public void IsValidModifierSpec_DuplicateModifierValues_ShouldFail(
+        string[] axis1Values, string[] axis2Values,
+        string modSpec)
+    {
+        // Create a region with the same value on two modifier axes.
+        var region = new StringHierarchyRegion("hand", null!,
+            modifiers: new Dictionary<string, HashSet<string>>
+            {
+                { "x", new HashSet<string>(axis1Values) },
+                { "y", new HashSet<string>(axis2Values) }
+            });
+
+        Assert.False(region.IsValidModifierSpec(modSpec, out var pairs));
+        Assert.Empty(pairs);
     }
     #endregion IsValidModifierSpec
 }

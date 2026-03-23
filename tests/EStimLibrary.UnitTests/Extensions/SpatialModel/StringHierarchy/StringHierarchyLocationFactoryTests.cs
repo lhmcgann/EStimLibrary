@@ -73,29 +73,7 @@ public class StringHierarchyLocationFactoryTests
 
     #region TryCreate Tests
 
-    /// <summary>
-    /// Test the TryCreate method with skipping value validation but 
-    /// paramValues missing "fullSpec" value.
-    /// </summary>
-    [Fact]
-    public void TryCreate_ShouldNotValidateShouldNotCreate()
-    {
-        // Create base region.
-        StringHierarchyRegion region = new("base", null!);
 
-        // Create factory with non-null base region.
-        StringHierarchyLocationFactory factory = new(region);
-
-        // Create empty dictionary of parameter values.
-        Dictionary<string, object> paramValues = new();
-
-        // Check TryCreate return and product.
-        bool valid = factory.TryCreate(paramValues, out ILocation? product, 
-            skipValueValidation: true);
-        
-        Assert.False(valid);
-        Assert.Null(product);
-    }
 
     
     #region TryCreate Helpers
@@ -222,8 +200,8 @@ public class StringHierarchyLocationFactoryTests
 
 
     /// <summary>
-    /// Test the TryCreate method with skipping value validation and 
-    /// paramValues including a "fullSpec" item with valid and invalid values.
+    /// Test the TryCreate method with skipping value validation and a valid
+    /// "fullSpec" paramValue. Expects successful creation.
     /// </summary>
     [Fact]
     public void TryCreate_ShouldNotValidateShouldCreate()
@@ -234,31 +212,44 @@ public class StringHierarchyLocationFactoryTests
         // Create factory with non-null base region
         StringHierarchyLocationFactory factory = new(region);
 
-
-        // Test specs to TryCreate with.
         // Valid spec in params dictionary.
-        var paramValues1 = new Dictionary<string, object>() {
+        var paramValues = new Dictionary<string, object>() {
             { "fullSpec", "left base, child1" } };
 
-        // Invalid spec in params dictionary.
-        var paramValues2 = new Dictionary<string, object>() { 
-            { "fullSpec", "" } };
-
-
         // Check TryCreate return and product for valid spec
-        bool valid = factory.TryCreate(paramValues1, out ILocation? product,
+        bool valid = factory.TryCreate(paramValues, out ILocation? product,
             skipValueValidation: true);
         Assert.True(valid);
         Assert.NotNull(product);
         Assert.Equal(new StringHierarchyLocation("left base, child1"),
             product);
+    }
 
-        // Check TryCreate return and product for invalid spec
-        valid = factory.TryCreate(paramValues2, out product,
+    /// <summary>
+    /// Test the TryCreate method with skipping value validation and a
+    /// "fullSpec" paramValue that cannot produce a valid product: either the
+    /// key is missing entirely (<c>null</c>) or the value is an empty string
+    /// whose constructor invariant cannot be bypassed even when validation is
+    /// skipped. Creation should fail in both cases.
+    /// </summary>
+    /// <param name="fullSpec"><c>null</c> to omit the "fullSpec" key from the
+    /// params dictionary; otherwise the value to supply for that key.</param>
+    [Theory]
+    [InlineData(null)]  // missing "fullSpec" key
+    [InlineData("")]    // empty string — constructor invariant cannot be skipped
+    public void TryCreate_ShouldNotValidateShouldNotCreate(string? fullSpec)
+    {
+        StringHierarchyRegion region = CreateTwoChildParentRegion();
+        StringHierarchyLocationFactory factory = new(region);
+
+        var paramValues = fullSpec is null
+            ? new Dictionary<string, object>()
+            : new Dictionary<string, object>() { { "fullSpec", fullSpec } };
+
+        bool valid = factory.TryCreate(paramValues, out ILocation? product,
             skipValueValidation: true);
-        Assert.True(valid);
-        Assert.NotNull(product);
-        Assert.Equal(new StringHierarchyLocation(""), product);
+        Assert.False(valid);
+        Assert.Null(product);
     }
 
     /// <summary>

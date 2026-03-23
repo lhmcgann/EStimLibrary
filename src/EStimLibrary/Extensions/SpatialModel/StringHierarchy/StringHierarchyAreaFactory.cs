@@ -75,7 +75,8 @@ public class StringHierarchyAreaFactory : IFactory<IArea>
             this._baseRegion.TryGetSubregion(parts[0], out var subregion) &&
             // Then - if any given - check if the modifiers valid in the model.
             ((parts.Length > 1) ?
-                subregion.IsValidModifierSpec(parts[1]) : true);
+                subregion.IsValidModifierSpec(parts[1], out _) : 
+                true);
     }
 
     /// <summary>
@@ -113,7 +114,14 @@ public class StringHierarchyAreaFactory : IFactory<IArea>
         // Create and return the product if param values valid.
         if (valid)
         {
-            product = new StringHierarchyArea((string)value!);
+            try
+            {
+                product = new StringHierarchyArea((string)value!);
+            }
+            catch (ArgumentException)
+            {
+                return false;
+            }
         }
         return valid;
     }

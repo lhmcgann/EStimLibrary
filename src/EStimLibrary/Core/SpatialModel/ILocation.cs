@@ -6,8 +6,6 @@
 
 public interface ILocation : ISelectable
 {
-    //bool Equals(LocationType other);
-    bool IsLocationCompatible(ILocation location);
 }
 
 

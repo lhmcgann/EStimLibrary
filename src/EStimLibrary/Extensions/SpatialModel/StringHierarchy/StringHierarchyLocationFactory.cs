@@ -75,7 +75,7 @@ public class StringHierarchyLocationFactory :
             this._baseRegion.TryGetSubregion(parts[0], out var subregion) &&
             // Then - if any given - check if the modifiers valid in the model.
             ((parts.Length > 1) ?
-                subregion.IsValidModifierSpec(parts[1]) : true);
+                subregion.IsValidModifierSpec(parts[1], out _) : true);
     }
 
     /// <summary>
@@ -114,7 +114,14 @@ public class StringHierarchyLocationFactory :
         // Create and return the product if param values valid.
         if (valid)
         {
-            product = new StringHierarchyLocation((string)value!);
+            try
+            {
+                product = new StringHierarchyLocation((string)value!);
+            }
+            catch (ArgumentException)
+            {
+                return false;
+            }
         }
         return valid;
     }
