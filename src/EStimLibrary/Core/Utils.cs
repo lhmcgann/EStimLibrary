@@ -3,7 +3,6 @@ using System.IO.Ports;
 using System.Reflection;
 
 using EStimLibrary.Core.Data;
-using EStimLibrary.Core.Stimulation.Stimulators;
 
 
 namespace EStimLibrary.Core;
@@ -68,12 +67,12 @@ public static class Utils
 
     #region Reflection Functions
     /// <summary>
-    /// Get all specific implemented or derived Types of T available in this
+    /// Get all concrete implemented or derived Types of T available in this
     /// AppDomain.
     /// </summary>
     /// <typeparam name="T">The type to search for. Must be a subclass of
     /// ISelectable.</typeparam>
-    /// <returns>A dictionary of (string name, Type) pairs.</returns>
+    /// <returns>A dictionary of (string name, Type) pairs found.</returns>
     public static Dictionary<string, Type> GetAvailableTypes<T>()
         where T : ISelectable
     {
@@ -81,7 +80,7 @@ public static class Utils
     }
 
     /// <summary>
-    /// Get all specific implemented or derived Types of T available in this
+    /// Get all concrete implemented or derived Types of T available in this
     /// AppDomain.
     /// </summary>
     /// <param name="searchType">The type to search for. Must be a subclass of
@@ -102,54 +101,132 @@ public static class Utils
         return types.ToDictionary(t => t.Name, t => t);
     }
 
-    public static bool IsAssignableFromType(Type baseTargetType,
-        Type derivedTestType)
+    /// <summary>
+    /// Determines whether the derived test type can be assigned to the base target type,
+    /// handling both non-generic and generic types.
+    /// </summary>
+    /// <param name="baseTargetType">The base type or interface.</param>
+    /// <param name="derivedTestType">The type to test for assignability.</param>
+    /// <returns>True if the derivedTestType is assignable to the baseTargetType; otherwise, false.</returns>
+    /// 
+
+    public static bool IsAssignableFromType(Type baseTargetType, Type derivedTestType)
     {
-        // If target type is simple and not a generic type, use existing check.
+        // If the base type is not generic:
         if (!baseTargetType.IsGenericType)
         {
+            // If the derived type is an open generic, try checking its implemented interfaces.
+            if (derivedTestType.IsGenericType && !derivedTestType.IsConstructedGenericType)
+            {
+                foreach (var iface in derivedTestType.GetInterfaces())
+                {
+                    if (baseTargetType.IsAssignableFrom(iface))
+                        return true;
+                }
+                return false;
+            }
+            // Otherwise, use the built‐in check.
             return baseTargetType.IsAssignableFrom(derivedTestType);
         }
 
-        // Otherwise, perform a more in-depth evaluation for the generic type.
-        // 1) Check the derived type directly.
-        if (derivedTestType.IsGenericType)
+        // If the base type is generic and the built‐in check returns true, then return true.
+        if (baseTargetType.IsAssignableFrom(derivedTestType))
         {
-            return Utils.IsGenericAssignableFrom(baseTargetType,
-                derivedTestType);
+            return true;
         }
-        // 2) Check if the derived type inherits from a base type that is
-        // generic. BaseType property returns null if from Object or interface.
-        var derivedBaseType = derivedTestType.BaseType;
-        if (derivedBaseType is not null && derivedBaseType.IsGenericType)
+
+        // For generic types, work with the generic type definition.
+        Type baseGenericDef = baseTargetType.IsGenericTypeDefinition
+            ? baseTargetType
+            : baseTargetType.GetGenericTypeDefinition();
+
+        // Traverse the base class chain.
+        for (Type current = derivedTestType; current != null; current = current.BaseType)
         {
-            return Utils.IsGenericAssignableFrom(baseTargetType,
-                derivedBaseType);
-        }
-        // 3) Check if the derived type implements any interfaces that are
-        // generic types.
-        var interfaceTypes = derivedTestType.GetInterfaces();
-        bool success = false;
-        foreach (var iType in interfaceTypes)
-        {
-            if (iType.IsGenericType)
+            if (current.IsGenericType)
             {
-                success |= Utils.IsGenericAssignableFrom(baseTargetType, iType);
+                Type currentGenericDef = current.GetGenericTypeDefinition();
+                if (currentGenericDef == baseGenericDef)
+                {
+                    // If both are constructed generics, check type parameter compatibility.
+                    if (baseTargetType.IsConstructedGenericType && current.IsConstructedGenericType)
+                    {
+                        return AreTypeParametersCompatible(baseTargetType, current);
+                    }
+                    return true;
+                }
             }
         }
-        // Return if any acceptable interface found.
-        return success;
 
-        //if (baseTargetType.IsGenericTypeDefinition)
-        //{
-        //    Type[] derivedBaseTypeGenericArgs = derivedTestType.BaseType?.GetGenericArguments();
-        //    if (derivedBaseTypeGenericArgs != null && derivedBaseTypeGenericArgs.Length > 0)
-        //    {
-        //        Type baseTypeDefinition = derivedTestType.BaseType.GetGenericTypeDefinition();
-        //        return baseTypeDefinition == baseTargetType;
-        //    }
-        //}
+        // Traverse the implemented interfaces.
+        foreach (Type iface in derivedTestType.GetInterfaces())
+        {
+            if (iface.IsGenericType)
+            {
+                Type ifaceGenericDef = iface.GetGenericTypeDefinition();
+                if (ifaceGenericDef == baseGenericDef)
+                {
+                    if (baseTargetType.IsConstructedGenericType && iface.IsConstructedGenericType)
+                    {
+                        return AreTypeParametersCompatible(baseTargetType, iface);
+                    }
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
+
+
+    //public static bool IsAssignableFromType(Type baseTargetType,
+    //    Type derivedTestType)
+    //{
+    //    // If target type is simple and not a generic type, use existing check.
+    //    if (!baseTargetType.IsGenericType)
+    //    {
+    //        return baseTargetType.IsAssignableFrom(derivedTestType);
+    //    }
+
+    //    // Otherwise, perform a more in-depth evaluation for the generic type.
+    //    // 1) Check the derived type directly.
+    //    if (derivedTestType.IsGenericType)
+    //    {
+    //        return Utils.IsGenericAssignableFrom(baseTargetType,
+    //            derivedTestType);
+    //    }
+    //    // 2) Check if the derived type inherits from a base type that is
+    //    // generic. BaseType property returns null if from Object or interface.
+    //    var derivedBaseType = derivedTestType.BaseType;
+    //    if (derivedBaseType is not null && derivedBaseType.IsGenericType)
+    //    {
+    //        return Utils.IsGenericAssignableFrom(baseTargetType,
+    //            derivedBaseType);
+    //    }
+    //    // 3) Check if the derived type implements any interfaces that are
+    //    // viable generic types, i.e., if secondarily implements base type.
+    //    var interfaceTypes = derivedTestType.GetInterfaces();
+    //    bool success = false;
+    //    foreach (var iType in interfaceTypes)
+    //    {
+    //        if (iType.IsGenericType)
+    //        {
+    //            success |= Utils.IsGenericAssignableFrom(baseTargetType, iType);
+    //        }
+    //    }
+    //    // Return if any acceptable interface found.
+    //    return success;
+
+    //    //if (baseTargetType.IsGenericTypeDefinition)
+    //    //{
+    //    //    Type[] derivedBaseTypeGenericArgs = derivedTestType.BaseType?.GetGenericArguments();
+    //    //    if (derivedBaseTypeGenericArgs != null && derivedBaseTypeGenericArgs.Length > 0)
+    //    //    {
+    //    //        Type baseTypeDefinition = derivedTestType.BaseType.GetGenericTypeDefinition();
+    //    //        return baseTypeDefinition == baseTargetType;
+    //    //    }
+    //    //}
+    //}
 
     /// <summary>
     /// Test if a generic base type can be assigned from a test generic type,
@@ -206,7 +283,8 @@ public static class Utils
                     Type testParamType = testParamTypes[i];
                     // Fail if a test param is not derived from the base param
                     // type.
-                    if (!Utils.IsAssignableFromType(baseParamType, testParamType))
+                    if (!Utils.IsAssignableFromType(baseParamType,
+                        testParamType))
                     {
                         return false;
                     }
@@ -243,6 +321,14 @@ public static class Utils
         return matchingTypes.ToDictionary(t => t.Name, t => t);
     }
 
+    /// <summary>
+    /// Checks whether two generic types have compatible type parameters.
+    /// The method returns true if both types share the same generic type definition
+    /// and for each corresponding type argument in typeA is assignable from the type argument in typeB.
+    /// </summary>
+    /// <param name="typeA">The first generic type.</param>
+    /// <param name="typeB">The second generic type.</param>
+    /// <returns>True if the generic type parameters are compatible; otherwise, false.</returns>
     public static bool AreTypeParametersCompatible(Type typeA, Type typeB)
     {
         // Check if typeA and typeB are generic types.
@@ -275,28 +361,6 @@ public static class Utils
         return false;
     }
 
-    // TODO: can delete once the above is tested for Stimulator
-    /// <summary>
-    /// Get all specific Stimulator derived class Types available in this
-    /// AppDomain.
-    /// </summary>
-    /// <returns>A dictionary of derived stimulator class (string name, Type)
-    /// pairs.</returns>
-    public static Dictionary<string, Type> GetAvailableStimulatorTypes()
-    {
-        // Get a list of all the derived classes (Types) of Stimulator.
-        List<Type> stimTypes = AppDomain.CurrentDomain.GetAssemblies()
-            .SelectMany(x => x.GetTypes())
-            .Where(x => typeof(Stimulator).IsAssignableFrom(x) &&
-                !x.IsInterface && !x.IsAbstract)
-            .ToList();
-        // Return a dictionary of string names of derived classes to the class
-        // Type.
-        return stimTypes
-            .Select(t => (t.Name, t))
-            .ToDictionary(tuple => tuple.Name, tuple => tuple.t);
-    }
-
     /// <summary>
     /// Check if a certain type is a manufacturable product, i.e., it has an
     /// IFactory associated with it within this assembly.
@@ -325,6 +389,15 @@ public static class Utils
         return TypeDescriptor.GetConverter(expectedType).IsValid(userInput);
     }
 
+    /// <summary>
+    /// Attempts to convert a string input to the specified target type using the associated type converter.
+    /// </summary>
+    /// <param name="userInput">The string input to convert.</param>
+    /// <param name="targetType">The target type for conversion.</param>
+    /// <param name="convertedVal">
+    /// When this method returns, contains the converted value if successful; otherwise, null.
+    /// </param>
+    /// <returns>True if conversion was successful (convertedVal is not null); otherwise, false.</returns>
     public static bool TryConvertFromType(string userInput, Type targetType,
         out object convertedVal)
     {
@@ -385,7 +458,7 @@ public static class Utils
     /// <param name="readInput">A function to capture information from the
     /// user.</param>
     /// <returns></returns>
-    public static bool TryFactoryCreate(dynamic factory, out dynamic product,
+    public static bool TryFactoryCreate<TProduct>(IFactory<TProduct> factory, out TProduct product,
         Action<string> displayOutput, Func<string> readInput)
     {
         // Get the parameter values.
@@ -396,7 +469,7 @@ public static class Utils
         // TODO: got an error saying invalid params given for the best
         // overloaded method found for this definition, but nothing incorrect...
         // Maybe issue w/ having an optional param?
-        return factory.TryCreate(paramValues, out product);
+        return factory.TryCreate(paramValues, out product, false);
     }
 
     //public static bool TryFactoryCreate(Type productType, out dynamic product,
@@ -430,9 +503,18 @@ public static class Utils
     //}
 
     // Will return the details pertaining to the first constructor defined.
+
+    /// <summary>
+    /// Retrieves parameter names and types for the first public constructor of the specified type.
+    /// </summary>
+    /// <param name="desiredType">The type for which to get constructor parameters.</param>
+    /// <returns>
+    /// A tuple containing a list of parameter names and a dictionary mapping parameter names to their types.
+    /// </returns>
+    /// <exception cref="ArgumentException">Thrown if no public constructor is found.</exception>
     public static (List<string>, Dictionary<string, Type>)
         GetConstructorParamInfo(Type desiredType)
-    {
+    {   
         // Get the first or default (empty) constructor of the given type.
         ConstructorInfo constructor =
             desiredType.GetConstructors().FirstOrDefault();
@@ -454,6 +536,13 @@ public static class Utils
         return GetMethodParamInfo(constructor);
     }
 
+    /// <summary>
+    /// Retrieves parameter names and types for the given method.
+    /// </summary>
+    /// <param name="methodInfo">The method for which to extract parameter information.</param>
+    /// <returns>
+    /// A tuple containing a list of parameter names (in order) and a dictionary mapping parameter names to their types.
+    /// </returns>
     public static (List<string>, Dictionary<string, Type>)
         GetMethodParamInfo(MethodBase methodInfo)
     {
@@ -466,6 +555,14 @@ public static class Utils
         return (orderedParamNames, paramTypes);
     }
 
+    /// <summary>
+    /// Creates an instance of the specified type by invoking the constructor that matches the provided parameter values.
+    /// </summary>
+    /// <param name="desiredType">The type to instantiate.</param>
+    /// <param name="parameterNames">An ordered list of parameter names corresponding to the constructor.</param>
+    /// <param name="parameterValues">A dictionary mapping parameter names to their values.</param>
+    /// <returns>The newly created object instance.</returns>
+    /// <exception cref="ArgumentException">Thrown if no matching constructor is found.</exception>
     public static object CreateObjectOfType(Type desiredType,
         List<string> parameterNames,
         Dictionary<string, object> parameterValues)
@@ -489,6 +586,16 @@ public static class Utils
         return constructor.Invoke(constructorArgs);
     }
 
+    /// <summary>
+    /// Retrieves the value of a specified property from the given object instance.
+    /// </summary>
+    /// <param name="instance">The object instance from which to get the property.</param>
+    /// <param name="objectType">The type of the object (used to locate the property).</param>
+    /// <param name="propertyName">The name of the property to retrieve.</param>
+    /// <param name="propertyValue">
+    /// When this method returns, contains the property value if found; otherwise, null.
+    /// </param>
+    /// <returns>True if the property was found and its value retrieved; otherwise, false.</returns>
     public static bool GetObjectProperty(object instance, Type objectType,
         string propertyName, out object propertyValue)
     {
@@ -502,6 +609,17 @@ public static class Utils
         return false;
     }
 
+    /// <summary>
+    /// Invokes a method on the given object instance using reflection.
+    /// </summary>
+    /// <param name="instance">The object instance on which to invoke the method.</param>
+    /// <param name="objectType">The type of the object (used to locate the method).</param>
+    /// <param name="methodName">The name of the method to invoke.</param>
+    /// <param name="methodParams">An array of parameters to pass to the method.</param>
+    /// <param name="returnValue">
+    /// When this method returns, contains the result of the method invocation if successful; otherwise, null.
+    /// </param>
+    /// <returns>True if the method was successfully invoked (i.e. a non-null return value was obtained); otherwise, false.</returns>
     public static bool CallObjectMethod(object instance, Type objectType,
         string methodName, object[] methodParams, out object returnValue)
     {
@@ -515,7 +633,7 @@ public static class Utils
         return returnValue != null;
     }
 
-    #endregion Reflections Functions
+    #endregion Reflection Functions
 
 
     public static string ReadJSON(string filePath)
@@ -588,6 +706,20 @@ public static class Utils
     public delegate bool ParseAndValidateFunc<T>(string userInput,
         out T parsedUserInput);
     // Note: all Funcs return something whereas all Actions return void
+
+    /// <summary>
+    /// Repeatedly requests user input until a valid value is provided, converting the input to type T.
+    /// </summary>
+    /// <typeparam name="T">The target type for conversion.</typeparam>
+    /// <param name="prompt">The prompt message to display to the user.</param>
+    /// <param name="errorMsg">The error message displayed when the input is invalid.</param>
+    /// <param name="confMsg">The confirmation message displayed after valid input is received.</param>
+    /// <param name="displayOutput">An action to display messages to the user.</param>
+    /// <param name="readInput">A function to read user input.</param>
+    /// <param name="parseAndValidateInput">
+    /// A delegate that attempts to parse and validate the user input. Returns true if the conversion is successful.
+    /// </param>
+    /// <returns>The user input converted to type T.</returns>
     public static T RequestUserInput<T>(string prompt, string errorMsg,
         string confMsg, Action<string> displayOutput, Func<string> readInput,
         //Func<string, bool> isValidInput, Func<string, T> parseInput)
@@ -623,6 +755,12 @@ public static class Utils
         return parsedUserInput;
     }
 
+    /// <summary>
+    /// Displays a list of string options to the user and returns the selected option.
+    /// </summary>
+    /// <param name="options">An array of options to choose from.</param>
+    /// <returns>The option selected by the user as a string.</returns>
+
     public static string SelectFromList(string[] options)
     {
         // Build the prompt message of selections.
@@ -650,6 +788,15 @@ public static class Utils
         return options[optSelect - 1];
     }
 
+    /// <summary>
+    /// Displays a list of types to the user and returns the selected type.
+    /// </summary>
+    /// <param name="typeDict">A dictionary mapping type names to Type objects.</param>
+    /// <param name="typeName">
+    /// When this method returns, contains the name of the type selected.
+    /// </param>
+    /// <returns>The selected Type.</returns>
+
     public static Type SelectType(Dictionary<string, Type> typeDict,
         out string typeName)
     {
@@ -661,19 +808,7 @@ public static class Utils
         return typeDict[typeName];
     }
 
-    #region TODO: delete once the generalized functions are tested
-    public static Type SelectStimulatorType(
-        Dictionary<string, Type> stimTypeDict,
-        out string stimTypeName)
-    {
-        // Get the list of string names of all stim types.
-        string[] stimTypeStrs = stimTypeDict.Keys.ToArray();
-        // Get the user selection.
-        stimTypeName = SelectFromList(stimTypeStrs);
-        // Return the stim Type selection.
-        return stimTypeDict[stimTypeName];
-    }
-
+    #region TODO: delete once the generalized functions are tested??
     /// <summary>
     /// SelectPort() retrieves the list of available serial ports, asks the user to
     /// choose one, and returns the selected port name in a string.
@@ -694,6 +829,12 @@ public static class Utils
     }
     #endregion
 
+    /// <summary>
+    /// Prompts the user to input an integer and returns the parsed value.
+    /// </summary>
+    /// <param name="intName">A descriptive name for the integer being requested.</param>
+    /// <param name="intNameExtension">Additional text appended to the prompt (optional).</param>
+    /// <returns>The integer provided by the user.</returns>
     public static int GetInt(string intName, string intNameExtension = "")
     {
         // The prompt, error, and confirmation messages.
@@ -708,6 +849,14 @@ public static class Utils
                 int.TryParse(userInput, out hwID));
     }
 
+    /// <summary>
+    /// Retrieves constructor parameter values by prompting the user for each parameter
+    /// required by the first public constructor of the given type.
+    /// </summary>
+    /// <param name="desiredType">The type for which to retrieve constructor parameters.</param>
+    /// <returns>
+    /// A tuple containing an array of parameter values (in order) and a dictionary mapping parameter names to values.
+    /// </returns>
     public static (object[], Dictionary<string, object>)
         RequestConstructorParameterValues(Type desiredType)
     {
@@ -719,6 +868,14 @@ public static class Utils
         return RequestParameterValues(orderedParamNames, paramTypes);
     }
 
+    /// <summary>
+    /// Prompts the user for values for each parameter in the provided ordered list.
+    /// </summary>
+    /// <param name="orderedParamNames">A list of parameter names in order.</param>
+    /// <param name="paramTypes">A dictionary mapping parameter names to their types.</param>
+    /// <returns>
+    /// A tuple containing an array of parameter values (in order) and a dictionary mapping parameter names to values.
+    /// </returns>
     public static (object[], Dictionary<string, object>) RequestParameterValues(
         List<string> orderedParamNames, Dictionary<string, Type> paramTypes)
     {
