@@ -7,6 +7,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{7E35BD38-108
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EStimLibrary", "src\EStimLibrary\EStimLibrary.csproj", "{23710686-EDC8-41FC-AAC8-52B002F488D6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EStimLibrary.UnitTests", "tests\EStimLibrary.UnitTests\EStimLibrary.UnitTests.csproj", "{044DDF63-A529-49FD-AD5C-995B68EEAF2D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

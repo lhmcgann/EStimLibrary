@@ -1,5 +1,6 @@
 ﻿namespace EStimLibrary.Core.SpatialModel;
 
+
 /// <summary>
 /// A record to represent event localization results.
 /// </summary>
@@ -10,6 +11,12 @@
 public record LocalizationData(IEnumerable<int> AreasFullyContaining,
     IEnumerable<int> AreasPartiallyContaining)
 {
+    // Modify the properties using ToList() to create shallow copies during init
+    public IEnumerable<int> AreasFullyContaining { get; init; } =
+        AreasFullyContaining.ToList();
+    public IEnumerable<int> AreasPartiallyContaining { get; init; } =
+        AreasPartiallyContaining.ToList();
+
     /// <summary>
     /// Merge this LocalizationData object with another by taking the set union
     /// per property. Neither initial object should be modified, and the product
