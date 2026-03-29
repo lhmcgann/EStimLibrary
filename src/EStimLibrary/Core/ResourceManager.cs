@@ -8,13 +8,15 @@ public class ResourceManager<ResourceType>
 
     public readonly int MaxNumResources;
 
-    public int NumTotalResources => this.IdPool.NumUsedIds;
+    public int NumTotalResources => this.Resources.Count;
 
+    // Constructor
     public ResourceManager(int baseId = 0, int initialNumResourceIds = 0,
         int maxNumResources = Constants.POS_INFINITY)
     {
         this.IdPool = new(baseId, initialNumResourceIds);
         this.Resources = new();
+        if (maxNumResources < 0) maxNumResources = Constants.POS_INFINITY;
         this.MaxNumResources = maxNumResources;
     }
 
@@ -29,7 +31,10 @@ public class ResourceManager<ResourceType>
     {
         // TODO: does Used check validity again?
         return this.IdPool.IsValidId(globalId) &&
-            this.IdPool.IsUsed(globalId);
+            this.IdPool.IsUsed(globalId) &&
+            this.Resources.ContainsKey(globalId);
+        //return this.IdPool.IsValidId(globalId) &&
+        //    this.IdPool.IsUsed(globalId);
     }
 
     public bool TryGetNextAvailableId(out int globalId)
@@ -40,9 +45,11 @@ public class ResourceManager<ResourceType>
         while (!this.IdPool.TryGetNextFreeId(out globalId))
         {
             // If max capacity already used, return failure.
+            //if (this.IdPool.NumUsedIds >= this.MaxNumResources)
             if (!Utils.IsWithinUpperBound(this.IdPool.NumUsedIds,
-                this.MaxNumResources))
+                this.MaxNumResources, inclusive: false))
             {
+                globalId = default;
                 return false;
             }
             // Else increment the number of IDs in the pool and try again.
