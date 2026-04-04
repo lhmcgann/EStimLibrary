@@ -72,7 +72,7 @@ public class HapticSession
     public SortedSet<int> LeadIds => new(this._leadManager.Resources.Keys);
     public Dictionary<int, Lead> Leads => this._leadManager.Resources;
 
-    public List<string> BodyModelKeys => this._modelManager.BodyModelKeys;
+    //public List<string> BodyModelKeys => this._modelManager.BodyModelKeys;
 
     public HapticSession()
     {
@@ -98,8 +98,10 @@ public class HapticSession
 
     public bool TryGetBodyModel(string bodyModelKey, out IBodyModel bodyModel)
     {
-        return this._modelManager._BodyModels.TryGetValue(bodyModelKey,
-            out bodyModel);
+        //return this._modelManager._BodyModels.TryGetValue(bodyModelKey,
+        //    out bodyModel);
+        //_modelManager._NameToIDs.TryGetValue(bodyModelKey, out int id);
+        return _modelManager._TryGetBodyModel(bodyModelKey, out bodyModel);
     }
     #endregion
 
