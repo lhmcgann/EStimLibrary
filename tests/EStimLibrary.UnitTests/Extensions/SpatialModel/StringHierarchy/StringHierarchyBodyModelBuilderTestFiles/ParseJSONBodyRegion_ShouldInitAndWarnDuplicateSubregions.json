@@ -1,0 +1,27 @@
+{
+    "_requiredModifiers": [ "x", "y", "z" ],
+    "baseBodyRegion1": {
+        "options": [ "independentOptionA1", "independentOptionAN" ],
+        "modifiers": {
+            "x": [ "medial", "central", "lateral" ],
+            "y": [ "superior", "inferior" ],
+            "z": [ "anterior", "posterior" ]
+        },
+        "subregions": {
+            "subregion1": {
+                "modifiers": {
+                    "y": [ "proximal", "intermediate", "distal" ]
+                }
+            },
+            "subregion1": {
+                "modifiers": {
+                    "y": [ "proximal", "intermediate", "distal" ]
+                }
+            },
+            "subregionN": {
+                "modifiers": {
+                }
+            }
+        }
+    }
+}
